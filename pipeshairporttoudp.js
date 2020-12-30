@@ -33,7 +33,7 @@ if (settings.audioSourceDisplayName == hostname) {
 common.setPriority(process.pid, settings.processPriority)
 
 
-ntp = require('./readntp.js')
+
 
 global.buffertoudp = require('./buffertoudp.js')
 
@@ -62,32 +62,17 @@ function generateRandomPort() {
     return Math.floor((Math.random() * 28231) + 32768)
 }
 
-let testPath = `/home/${settings.username}/audio/`
+let testPath = process.cwd()
+let audiofifo = '/audiofifo_shairport_'
+audiofifo = audiofifo.concat(settings.folderName)
+let audiofifopath = testPath.concat(audiofifo)
+let configpath = testPath.concat('/shairport-sync-', settings.folderName, '.conf')
 
-testPath =  testPath.concat(settings.folderName)
-
-if (fs.existsSync(testPath)) {
-    console.log('dir exists', testPath)
+if (fs.existsSync(audiofifopath)) {
+    console.log('audiofifo exists', audiofifopath)
 } else {
-    console.log('dir does not exist', testPath)
-    execSync(`sudo mkdir ${testPath}`)
-}
-testPath =  testPath.concat('/shairport-sync')
-
-if (fs.existsSync(testPath)) {
-    console.log('dir exists',testPath)
-} else {
-    console.log('dir does not exist', testPath)
-    execSync(`sudo mkdir ${testPath}`)
-}
-
-testPath =  testPath.concat('/audiofifo')
-
-if (fs.existsSync(testPath)) {
-    console.log('audiofifo exists',testPath)
-} else {
-    console.log('audiofifo does not exist', testPath)
-    execSync(`sudo mkfifo ${testPath}`)
+    console.log('audiofifo does not exist', audiofifopath)
+    execSync(`mkfifo ${audiofifopath}`)
 }
 
 
@@ -103,13 +88,14 @@ function spawnshairport() {
             return target.split(search).join(replacement);
         };
 
-        var result = data.replaceAll('player_name', settings.folderName);
+        var result = data.replaceAll('player_name', settings.audioSourceDisplayName);
+        result = result.replaceAll('pathtopipe', audiofifopath);
         result = result.replaceAll('airplayPort', generateRandomPort());
 
-        fs.writeFile(`${settings.folderName}/shairport-sync/shairport-sync.conf`, result, 'utf8', function (err) {
+        fs.writeFile(configpath, result, 'utf8', function (err) {
             if (err) return console.log(err);
 
-            shairport = spawn('./shairport-sync', ['-a', settings.audioSourceDisplayName, '-u', '-c', `${settings.folderName}/shairport-sync/shairport-sync.conf`]);
+            shairport = spawn('./shairport-sync', ['-a', settings.audioSourceDisplayName, '-u', '-c', `${configpath}`]);
             shairport.stdout.on('data', (data) => {
                 console.log('shairport', String(data))
             });
@@ -161,7 +147,7 @@ function spawnshairport() {
 }
 
 
-var readStream = fs.createReadStream(`${settings.folderName}/shairport-sync/audiofifo`);
+var readStream = fs.createReadStream(audiofifopath);
 var sendTime = 0
 var lastData = 0
 var sampleIndex = 0

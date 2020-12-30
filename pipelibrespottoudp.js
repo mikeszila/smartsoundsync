@@ -1,6 +1,5 @@
 const { exec, spawn, execSync } = require('child_process');
 common = require('./common.js')
-ntp = require('./readntp.js')
 buffertoudp = require('./buffertoudp.js')
 
 
@@ -39,7 +38,7 @@ if (settings.audioSourceDisplayName == hostname) {
     settings.source_period_size = settings.source_period_size * 6
 }
 
-common.setPriority(process.pid, settings.processPriority)
+//common.setPriority(process.pid, settings.processPriority)
 
 global.reported_exact_rate = settings.source_rate
 global.reported_buffer_size = settings.source_buffer_periods * settings.source_period_size
@@ -65,39 +64,37 @@ if (source_buffer_time > playback_buffer_time) {
 
 let highVolumeLimit = true
 
+console.log(process.cwd())
 
-let testPath = `/home/${settings.username}/audio/`
+console.log('hello')
 
-testPath = testPath.concat(settings.folderName)
 
-if (fs.existsSync(testPath)) {
-    console.log('dir exists', testPath)
+let testPath = process.cwd()
+
+console.log('workingdir', testPath)
+
+let cachefolder = testPath.concat('/librespotcache')
+
+if (fs.existsSync(cachefolder)) {
+    console.log('dir exists', cachefolder)
 } else {
-    console.log('dir does not exist', testPath)
-    execSync(`sudo mkdir ${testPath}`)
-}
-testPath = testPath.concat('/librespot')
-
-if (fs.existsSync(testPath)) {
-    console.log('dir exists', testPath)
-} else {
-    console.log('dir does not exist', testPath)
-    execSync(`sudo mkdir ${testPath}`)
+    console.log('dir does not exist', cachefolder)
+    execSync(`mkdir ${cachefolder}`)
 }
 
-testPath = testPath.concat('/audiofifo')
+let audiofifopath = testPath.concat('/audiofifo_librespot_', settings.folderName)
 
-if (fs.existsSync(testPath)) {
-    console.log('audiofifo exists', testPath)
+if (fs.existsSync(audiofifopath)) {
+    console.log('audiofifo exists', audiofifopath)
 } else {
-    console.log('audiofifo does not exist', testPath)
-    execSync(`sudo mkfifo ${testPath}`)
+    console.log('audiofifo does not exist', audiofifopath)
+    execSync(`mkfifo ${audiofifopath}`)
 }
 
 function spawnlibrespot() {
 
     console.log('starting librespot')
-    librespot = spawn('./librespot', ['-v', '-n', settings.audioSourceDisplayName, '-b', '320', '-c', `${settings.folderName}/librespot`, '--enable-volume-normalisation', '--backend', 'pipe', '--device', `${settings.folderName}/librespot/audiofifo`]);
+    librespot = spawn(`${process.cwd()}/librespot`, ['-v', '-n', settings.audioSourceDisplayName, '-b', '320', '-c', `${cachefolder}`, '--enable-volume-normalisation', '--backend', 'pipe', '--device', `${audiofifopath}`]);
     librespot.stdout.on('data', (data) => {
         console.log('librespot', String(data))
     });
@@ -151,7 +148,7 @@ function spawnlibrespot() {
 }
 
 
-var readStream = fs.createReadStream(`${settings.folderName}/librespot/audiofifo`);
+var readStream = fs.createReadStream(`${audiofifopath}`);
 var sendTime = 0
 var lastData = 0
 var sampleIndex = 0

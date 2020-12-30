@@ -74,7 +74,20 @@ function spawnSpeedup() {
     });
 }
 
-spawnSpeedup()
+global.ntpCorrection = 1
+
+function readNTP() {
+    let data = Number(execSync(`cat /var/lib/ntp/ntp.drift`))
+    //console.log(Number(data))
+
+    ntpCorrection = 1 + (1 / (1000000 / Number(data)))
+    //console.log(ntpCorrection)
+
+}
+
+setInterval(readNTP, 1000)
+
+//spawnSpeedup()
 
 function setPriority(pid, priority) {
     exec(`chrt -p ${priority} ${pid}`, (err, stdout, stderr) => {
@@ -99,6 +112,8 @@ function setPriority(pid, priority) {
         });
     });
 }
+
+
 
 module.exports = {
     setPriority
