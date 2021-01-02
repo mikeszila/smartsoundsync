@@ -32,6 +32,7 @@ socketControlLocal.on('message', function (controlMessage, remote) {
     let controlMessageObj = JSON.parse(String(controlMessage))
 
     if (controlMessageObj.type == 'Source Subscribe') {
+
         processSourceSubscribe(controlMessageObj, remote)
     }
 
@@ -252,7 +253,7 @@ function sendSubscribe() {
     });
 }
 
-socketControlLocal.bind(settings.localControllerPort);
+socketControlLocal.bind(settings.ControllerPort);
 if (hostname != 'Audioserv') {
     socketControlGroupClient.bind(0);
     setInterval(sendSubscribe, 5000)

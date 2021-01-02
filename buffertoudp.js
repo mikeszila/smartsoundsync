@@ -176,6 +176,7 @@ function setupControl() {
     socketControl.on('listening', () => {
         let address = socketControl.address();
         console.log(new Date().toISOString(), `socketControl listening ${address.address}:${address.port}`);
+        console.log('connecting to controller', settings.ControllerHostname, 'at port', settings.ControllerPort)
         setInterval(sendStatusUpdatetoControl, 5000)
         socketControlReady = true
     });
