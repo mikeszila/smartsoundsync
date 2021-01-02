@@ -63,10 +63,23 @@ function generateRandomPort() {
 }
 
 let testPath = process.cwd()
+
 let audiofifo = '/audiofifo_shairport_'
 audiofifo = audiofifo.concat(settings.folderName)
-let audiofifopath = testPath.concat(audiofifo)
-let configpath = testPath.concat('/shairport-sync-', settings.folderName, '.conf')
+
+let audiofifopath = testPath.concat('/tmp', audiofifo)
+let configpath = testPath.concat('/tmp/shairport-sync-', settings.folderName, '.conf')
+
+let tmpfolder = testPath.concat('/tmp')
+
+if (fs.existsSync(tmpfolder)) {
+    console.log('dir exists', tmpfolder)
+} else {
+    console.log('dir does not exist', tmpfolder)
+    execSync(`mkdir ${tmpfolder}`)
+}
+
+
 
 if (fs.existsSync(audiofifopath)) {
     console.log('audiofifo exists', audiofifopath)

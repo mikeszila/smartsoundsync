@@ -35,7 +35,7 @@ if (settings.audioSourceDisplayName == hostname) {
     settings.folderName = 'local'
 } else {
     settings.folderName = settings.audioSourceDisplayName
-    settings.source_period_size = settings.source_period_size * 6
+    //settings.source_period_size = settings.source_period_size * 6
 }
 
 //common.setPriority(process.pid, settings.processPriority)
@@ -82,7 +82,16 @@ if (fs.existsSync(cachefolder)) {
     execSync(`mkdir ${cachefolder}`)
 }
 
-let audiofifopath = testPath.concat('/audiofifo_librespot_', settings.folderName)
+let tmpfolder = testPath.concat('/tmp')
+
+if (fs.existsSync(tmpfolder)) {
+    console.log('dir exists', tmpfolder)
+} else {
+    console.log('dir does not exist', tmpfolder)
+    execSync(`mkdir ${tmpfolder}`)
+}
+
+let audiofifopath = testPath.concat('/tmp/audiofifo_librespot_', settings.folderName)
 
 if (fs.existsSync(audiofifopath)) {
     console.log('audiofifo exists', audiofifopath)

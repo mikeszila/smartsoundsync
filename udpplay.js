@@ -104,12 +104,8 @@ if (!settings.ecasound) {
     }
 }
 
-//settings.localControllerHostname = 'Livingroom'
-
 global.volumeOut = settings.volume_db_min
 volume.set_volume(volumeOut)
-
-console.log(settings.localControllerHostname, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
 
 const outputbytesPerSample = settings.bytesPerSample * settings.outputChannels
 const sourcebytesPerSample = settings.bytesPerSample * settings.source_channels
@@ -172,12 +168,12 @@ function sendSubscribe() {
     var statusObject = {
         type: 'Sink Subscribe',
         hostname: hostname,
-        hostnameForMatch: settings.localControllerHostname,
+        hostnameForMatch: settings.ControllerHostname,
         port: socketControl.address().port
     }
 
     let statusBuffer = Buffer.from(JSON.stringify(statusObject))
-    socketControl.send(statusBuffer, 0, statusBuffer.length, settings.localControllerPort, settings.localControllerHostname, function (err, bytes) {
+    socketControl.send(statusBuffer, 0, statusBuffer.length, settings.ControllerPort, settings.ControllerHostname, function (err, bytes) {
         if (err) throw err;
     });
 }

@@ -209,7 +209,7 @@ function sendStatusUpdatetoControl() {
 
 
 
-        socketControl.send(statusBuffer, 0, statusBuffer.length, settings.localControllerPort, settings.localControllerHostname, function (err, bytes) {
+        socketControl.send(statusBuffer, 0, statusBuffer.length, settings.ControllerPort, settings.ControllerHostname, function (err, bytes) {
             if (err) throw err;
         });
     }

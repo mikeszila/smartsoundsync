@@ -17,19 +17,19 @@ existingServices = existingServices.split(/\r?\n/)
 existingServices.forEach(function (value, index) {
     if (value.length > 0) {
         console.log('stopping ', value)
-        try {execSync(`systemctl stop ${value}`)}
-        catch (error) {console.log('Error: could not stop', value, error) }
+        try { execSync(`systemctl stop ${value}`) }
+        catch (error) { console.log('Error: could not stop', value, error) }
         console.log('disabling ', value)
-        try {execSync(`systemctl disable ${value}`)}
-        catch (error) {console.log('Error: could not disable', value, error) }
+        try { execSync(`systemctl disable ${value}`) }
+        catch (error) { console.log('Error: could not disable', value, error) }
         console.log('removing service file ', value)
-        try {execSync(`rm /lib/systemd/system/${value}`)}
-        catch (error) {console.log('Error: could not remove', value, error) }
+        try { execSync(`rm /lib/systemd/system/${value}`) }
+        catch (error) { console.log('Error: could not remove', value, error) }
         console.log('removed', value)
     }
 })
 
-search = `${installLocation}/` 
+search = `${installLocation}/`
 replacer = new RegExp(search, 'g')
 
 let existingAudioFifos = String(execSync(`find ${installLocation} -name 'audiofifo*'`))
@@ -39,13 +39,13 @@ existingAudioFifos = existingAudioFifos.split(/\r?\n/)
 existingAudioFifos.forEach(function (value, index) {
     if (value.length > 0) {
         console.log('removing ', value)
-        try {execSync(`rm ${installLocation}/${value}`)}
-        catch (error) {console.log('Error: could not remove', value, error) }
+        try { execSync(`rm ${installLocation}/${value}`) }
+        catch (error) { console.log('Error: could not remove', value, error) }
         console.log('removed', value)
     }
 })
 
-search = `${installLocation}/` 
+search = `${installLocation}/`
 replacer = new RegExp(search, 'g')
 
 let existingShairportConfs = String(execSync(`find ${installLocation} -name 'shairport-sync-*.conf'`))
@@ -57,8 +57,8 @@ existingShairportConfs.forEach(function (value, index) {
     if (value.length > 0 && !value.includes('shairport-sync/scripts') && !value.includes('template')) {
         console.log(value)
         console.log('removing ', value)
-        try {execSync(`rm ${installLocation}/${value}`)}
-        catch (error) {console.log('Error: could not remove', value, error) }
+        try { execSync(`rm ${installLocation}/${value}`) }
+        catch (error) { console.log('Error: could not remove', value, error) }
         console.log('removed', value)
     }
 
@@ -77,12 +77,18 @@ function writeServiceFile(serviceName, serviceTemplate) {
 
 function serviceStart(serviceName) {
     console.log(`enabling ${serviceName}`)
-    try {execSync(`systemctl enable ${serviceName}`)}
-    catch (error) {console.log('Error: could not enable', serviceName, error) }
+    try { execSync(`systemctl enable ${serviceName}`) }
+    catch (error) { console.log('Error: could not enable', serviceName, error) }
 
     console.log(`starting ${serviceName}`)
-    try {execSync(`systemctl start ${serviceName}`)}
-    catch (error) {console.log('Error: could not start', serviceName, error) }    
+    try { execSync(`systemctl start ${serviceName}`) }
+    catch (error) { console.log('Error: could not start', serviceName, error) }
+}
+
+function execArgumentsParse(execArguments) {
+    execArguments = JSON.stringify(execArguments)
+    execArguments = execArguments.replace(/\\/g, "\\\\").replace(/\$/g, "\\$").replace(/'/g, "\\'").replace(/"/g, "\\\"");
+    return execArguments
 }
 
 let serviceName = ''
@@ -91,9 +97,20 @@ let servicesToStart = []
 let execArguments = ''
 let priority = 1
 
-//control
+let settings = require('./config.js')
+console.log(settings)
 
-serviceTemplate = `[Unit]
+
+if (settings.controller) {
+    execArguments = ''
+    if (settings.controller.length) {
+        execArguments = `"${execArgumentsParse(settings.controller)}"`
+    }
+
+
+    //control
+
+    serviceTemplate = `[Unit]
 Description=Audio local control
 After=network-online.target sound.target
 Requires=network-online.target
@@ -101,62 +118,53 @@ Wants=avahi-daemon.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/node ${installLocation}/control.js
+ExecStart=/usr/bin/node ${installLocation}/control.js ${execArguments} 
 
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 `
-serviceName = `smartsoundsynccontrol.service`
+    serviceName = `smartsoundsynccontrol.service`
 
-writeServiceFile(serviceName, serviceTemplate)
-servicesToStart.push(serviceName)
+    writeServiceFile(serviceName, serviceTemplate)
+    servicesToStart.push(serviceName)
 
-let test = [
-    { audioSourceClients: ['Kitchen', 'Sunroom'] },
-    { audioSourceClients: ['Kitchen', 'Livingroom'] },
-    { audioSourceClients: ['Kitchen', 'Familyroom'] },
-    { audioSourceClients: ['Familyroom', 'Livingroom'] },
-    { audioSourceClients: ['Bedroom', 'Kitchen'] },
-    { audioSourceClients: ['Familyroom', 'Laundry'] },
-    { audioSourceClients: ['Kitchen', 'Livingroom', 'Sunroom']},
-    { audioSourceClients: ['Bedroom', 'Kitchen', 'Livingroom']},
-    { audioSourceClients: ['Kitchen', 'Familyroom', 'Livingroom']},
-    { audioSourceClients: ['Kitchen', 'Familyroom', 'Livingroom', 'Sunroom']},
-    { audioSourceClients: ['Bedroom', 'Kitchen', 'Familyroom', 'Livingroom']},
-    { audioSourceClients: ['Kitchen', 'Familyroom', 'Laundry', 'Livingroom', 'Sunroom']},
-    
-    { audioSourceClients: ['All'] },
-]
+}
 
+if (settings.source) {
 
-//"{\"setupPriority\": 21, \"audioSourcePort\": 40021, \"audioSourceDisplayName\": \"KitSun\", \"audioSourceClients\":[\"Kitchen\", \"Sunroom\"]}"
-//"{\"outputChannels\": 8, \"useEcasound\": true, \"cardName\": \"hw:0,3\"}"
+    let settingsSourceCommon = JSON.parse(JSON.stringify(settings.source))
+    delete settingsSourceCommon.sources
 
-
-test.forEach(function (value, index) {
-    //librespot
-
-
-    if (!value.audioSourceDisplayName && value.audioSourceClients) {
-        if (value.audioSourceClients.length > 1) {
-            value.audioSourceDisplayName = ''
-            value.audioSourceClients.forEach(function (value2, index) {
-                value.audioSourceDisplayName = value.audioSourceDisplayName.concat(value2.slice(0,3))        
-            })
-        } else {
-            value.audioSourceDisplayName = value.audioSourceClients[0]
-        }       
+    if (!settings.source.sources) {
+        settings.source.sources = [{ audioSourceClients: ['hostname'] }]
     }
 
-    value.setupPriority = priority
-    priority = priority + 1
-    execArguments = JSON.stringify(value)
-    execArguments = execArguments.replace(/\\/g, "\\\\").replace(/\$/g, "\\$").replace(/'/g, "\\'").replace(/"/g, "\\\"");
+    console.log('HELLO!!!', settings.source)
 
-    serviceTemplate = `[Unit]
-Description=${value.audioSourceDisplayName} Pipe Librespot to UDP
+    settings.source.sources.forEach(function (value, index) {
+        //librespot
+
+        let sourceSettings = { ...settingsSourceCommon, ...value }
+
+
+        if (!sourceSettings.audioSourceDisplayName && sourceSettings.audioSourceClients) {
+            if (sourceSettings.audioSourceClients.length > 1) {
+                sourceSettings.audioSourceDisplayName = ''
+                sourceSettings.audioSourceClients.forEach(function (value2, index) {
+                    sourceSettings.audioSourceDisplayName = sourceSettings.audioSourceDisplayName.concat(value2.slice(0, 3))
+                })
+            } else {
+                sourceSettings.audioSourceDisplayName = sourceSettings.audioSourceClients[0]
+            }
+        }
+
+        sourceSettings.setupPriority = priority
+        priority = priority + 1
+
+        serviceTemplate = `[Unit]
+Description=${sourceSettings.audioSourceDisplayName} Pipe Librespot to UDP
 After=network-online.target sound.target
 Requires=network-online.target
 Wants=avahi-daemon.service
@@ -164,28 +172,27 @@ Wants=avahi-daemon.service
 [Service]
 Type=simple
 WorkingDirectory=${installLocation}
-ExecStart=/usr/bin/node ${installLocation}/pipelibrespottoudp.js "${execArguments}" 
+ExecStart=/usr/bin/node ${installLocation}/pipelibrespottoudp.js "${execArgumentsParse(sourceSettings)}" 
 
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 `
-    serviceName = `smartsoundsyncspotify${value.audioSourceDisplayName}.service`
+        serviceName = `smartsoundsyncspotify${sourceSettings.audioSourceDisplayName}.service`
 
-    writeServiceFile(serviceName, serviceTemplate)
-    servicesToStart.push(serviceName)
-
-
+        writeServiceFile(serviceName, serviceTemplate)
+        servicesToStart.push(serviceName)
 
 
-    //shairport
-    value.setupPriority = priority
-    priority = priority + 1
-    execArguments = JSON.stringify(value)
-    execArguments = execArguments.replace(/\\/g, "\\\\").replace(/\$/g, "\\$").replace(/'/g, "\\'").replace(/"/g, "\\\"");
-    serviceTemplate = `[Unit]
-Description=${value.audioSourceDisplayName} Pipe shairport to UDP
+
+
+        //shairport
+        sourceSettings.setupPriority = priority
+        priority = priority + 1
+
+        serviceTemplate = `[Unit]
+Description=${sourceSettings.audioSourceDisplayName} Pipe shairport to UDP
 After=network-online.target sound.target
 Requires=network-online.target
 Wants=avahi-daemon.service
@@ -193,18 +200,20 @@ Wants=avahi-daemon.service
 [Service]
 Type=simple
 WorkingDirectory=${installLocation}
-ExecStart=/usr/bin/node ${installLocation}/pipeshairporttoudp.js "${execArguments}" 
+ExecStart=/usr/bin/node ${installLocation}/pipeshairporttoudp.js "${execArgumentsParse(sourceSettings)}"  
 
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 `
-    serviceName = `smartsoundsyncairplay${value.audioSourceDisplayName}.service`
+        serviceName = `smartsoundsyncairplay${sourceSettings.audioSourceDisplayName}.service`
 
-    writeServiceFile(serviceName, serviceTemplate)
-    servicesToStart.push(serviceName)
-})
+        writeServiceFile(serviceName, serviceTemplate)
+        servicesToStart.push(serviceName)
+    })
+
+}
 
 execSync(`systemctl daemon-reload`)
 

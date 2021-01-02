@@ -17,24 +17,11 @@ global.messageTypeJSON = Buffer.from(pad('JSON', 10, ' '))
 global.messageHostname = Buffer.from(pad(hostname, 20, ' '))
 
 
-
-/*
-UDP
-
-localControllerHostname
-volume_db_min
-bytesPerSample
-outputChannels
-processPriority
-localControllerPort
-cardName
-*/
-
 global.settings = {
     audioSourceDisplayName: hostname,
     audioSourceClients: [hostname],
-    localControllerHostname: hostname,
-    localControllerPort: 5656,
+    ControllerHostname: hostname,
+    ControllerPort: 5656,
     remoteControllerHostname: 'Audioserv',
     remoteControllerPort: 5656,
     source_rate: 44100,
