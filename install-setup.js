@@ -156,30 +156,6 @@ if (!stopOnly) {
     console.log('starting ntp')
     execSync(`systemctl start ntp`)
 
-    try{fs.statSync(`${installLocation}/librespot`)}
-    catch(error) {
-        console.log('librespot not installed')
-
-        if (fs.existsSync(`${installLocation}/build`)) {
-            console.log('dir exists', `${installLocation}/build`)
-        } else {
-            console.log('dir does not exist', `${installLocation}/build`)
-            execSync(`mkdir ${installLocation}/build`)
-        }
-
-        if (fs.existsSync(`${installLocation}/build/librespot`)) {
-            console.log('dir exists', `${installLocation}/build/librespot`, 'removing')
-            execSync(`rm -r ${installLocation}/build/librespot`)
-        } else {
-            console.log('dir does not exist', `${installLocation}/build/librespot`, 'getting')
-        }
-
-        execSync(`cd ${installLocation}/build`)
-        execSync(`git clone git@github.com:mikeszila/librespot.git`)
-    }
-
-
-
     let serviceName = ''
     let serviceTemplate = ''
     let servicesToStart = []
