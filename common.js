@@ -64,12 +64,18 @@ function spawnSpeedup() {
 global.ntpCorrection = 1
 
 function readNTP() {
+    try {
+
+        fs.statSync('/var/lib/ntp/ntp.drift')
     let data = Number(execSync(`cat /var/lib/ntp/ntp.drift`))
     //console.log(Number(data))
 
     ntpCorrection = 1 + (1 / (1000000 / Number(data)))
     //console.log(ntpCorrection)
-
+    }
+    catch (error) {
+        ntpCorrection = 1
+    }
 }
 
 setInterval(readNTP, 1000)

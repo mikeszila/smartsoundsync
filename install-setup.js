@@ -1,9 +1,27 @@
 "use strict";
 
+const os = require('os')
+
+String.prototype.replaceAll = function (search, replacement) {
+    var target = this;
+    return target.split(search).join(replacement);
+};
+
 const fs = require('fs');
 const { exec, spawn, execSync } = require('child_process');
 
 //remove existing services
+
+let stopOnly = false
+
+process.argv.forEach(function (value, index) {
+    console.log(value)
+
+    if (value == '--stop') { stopOnly = true }
+
+})
+
+
 
 let installLocation = process.cwd()
 
@@ -91,26 +109,96 @@ function execArgumentsParse(execArguments) {
     return execArguments
 }
 
-let serviceName = ''
-let serviceTemplate = ''
-let servicesToStart = []
-let execArguments = ''
-let priority = 1
 
-let settings = require('./config.js')
-console.log(settings)
+if (!stopOnly) {
+
+    let dependencies = ['npm', 'ntp']
+
+    dependencies.forEach(function (value, index) {
+        let installed = execSync(`apt-cache policy ${value}`)
+        if (installed.includes('Installed: (none)')) {
+            console.log(`apt-get install ${value} -y`)
+            execSync(`apt install ${value} -y`)
+        }
+    })
+
+    let npmDependencies = ['pad']
+
+    npmDependencies.forEach(function (value, index) {
+        let installed = String(execSync(`npm list --depth=0 --loglevel=error`))
+        console.log(installed)
+        console.log(installed.length)
+        if (!installed.includes(value)) {
+            console.log(`npm install ${value} -y`)
+            try { execSync(`npm install ${value} -y`) }
+            catch (error) { console.log('Error: could not install', value, error) }
+        }
+    })
 
 
-if (settings.controller) {
-    execArguments = ''
-    if (settings.controller.length) {
-        execArguments = `"${execArgumentsParse(settings.controller)}"`
+    let settings = require('./config.js')
+
+    console.log('stopping ntp')
+    execSync(`systemctl stop ntp`)
+    let ntpConfigTemplate
+
+    if (settings.ntpServerHostname && settings.ntpServerHostname != os.hostname()) {
+        console.log('writing ntp client config')
+        ntpConfigTemplate = fs.readFileSync('./ntp-client-template.conf', 'utf8')
+        ntpConfigTemplate = ntpConfigTemplate.replaceAll('settings.ntpServerHostname', settings.ntpServerHostname)
+    } else {
+        console.log('writing ntp server config')
+        ntpConfigTemplate = fs.readFileSync('./ntp-server-template.conf', 'utf8')
+    }
+
+    fs.writeFileSync(`/etc/ntp.conf`, ntpConfigTemplate, 'utf8')
+
+    console.log('starting ntp')
+    execSync(`systemctl start ntp`)
+
+    try{fs.statSync(`${installLocation}/librespot`)}
+    catch(error) {
+        console.log('librespot not installed')
+
+        if (fs.existsSync(`${installLocation}/build`)) {
+            console.log('dir exists', `${installLocation}/build`)
+        } else {
+            console.log('dir does not exist', `${installLocation}/build`)
+            execSync(`mkdir ${installLocation}/build`)
+        }
+
+        if (fs.existsSync(`${installLocation}/build/librespot`)) {
+            console.log('dir exists', `${installLocation}/build/librespot`, 'removing')
+            execSync(`rm -r ${installLocation}/build/librespot`)
+        } else {
+            console.log('dir does not exist', `${installLocation}/build/librespot`, 'getting')
+        }
+
+        execSync(`cd ${installLocation}/build`)
+        execSync(`git clone git@github.com:mikeszila/librespot.git`)
     }
 
 
-    //control
 
-    serviceTemplate = `[Unit]
+    let serviceName = ''
+    let serviceTemplate = ''
+    let servicesToStart = []
+    let execArguments = ''
+    let priority = 1
+
+    console.log(settings)
+
+
+    if (settings.controller) {
+        execArguments = ''
+        if (settings.controller.length) {
+            execArguments = `"${execArgumentsParse(settings.controller)}"`
+        }
+
+
+        //control
+
+        serviceTemplate = `[Unit]
 Description=Audio local control
 After=network-online.target sound.target
 Requires=network-online.target
@@ -125,45 +213,45 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 `
-    serviceName = `smartsoundsynccontrol.service`
+        serviceName = `smartsoundsynccontrol.service`
 
-    writeServiceFile(serviceName, serviceTemplate)
-    servicesToStart.push(serviceName)
+        writeServiceFile(serviceName, serviceTemplate)
+        servicesToStart.push(serviceName)
 
-}
-
-if (settings.source) {
-
-    let settingsSourceCommon = JSON.parse(JSON.stringify(settings.source))
-    delete settingsSourceCommon.sources
-
-    if (!settings.source.sources) {
-        settings.source.sources = [{ audioSourceClients: ['hostname'] }]
     }
 
-    console.log('HELLO!!!', settings.source)
+    if (settings.source) {
 
-    settings.source.sources.forEach(function (value, index) {
-        //librespot
+        let settingsSourceCommon = JSON.parse(JSON.stringify(settings.source))
+        delete settingsSourceCommon.sources
 
-        let sourceSettings = { ...settingsSourceCommon, ...value }
-
-
-        if (!sourceSettings.audioSourceDisplayName && sourceSettings.audioSourceClients) {
-            if (sourceSettings.audioSourceClients.length > 1) {
-                sourceSettings.audioSourceDisplayName = ''
-                sourceSettings.audioSourceClients.forEach(function (value2, index) {
-                    sourceSettings.audioSourceDisplayName = sourceSettings.audioSourceDisplayName.concat(value2.slice(0, 3))
-                })
-            } else {
-                sourceSettings.audioSourceDisplayName = sourceSettings.audioSourceClients[0]
-            }
+        if (!settings.source.sources) {
+            settings.source.sources = [{ audioSourceClients: ['hostname'] }]
         }
 
-        sourceSettings.setupPriority = priority
-        priority = priority + 1
+        console.log('HELLO!!!', settings.source)
 
-        serviceTemplate = `[Unit]
+        settings.source.sources.forEach(function (value, index) {
+            //librespot
+
+            let sourceSettings = { ...settingsSourceCommon, ...value }
+
+
+            if (!sourceSettings.audioSourceDisplayName && sourceSettings.audioSourceClients) {
+                if (sourceSettings.audioSourceClients.length > 1) {
+                    sourceSettings.audioSourceDisplayName = ''
+                    sourceSettings.audioSourceClients.forEach(function (value2, index) {
+                        sourceSettings.audioSourceDisplayName = sourceSettings.audioSourceDisplayName.concat(value2.slice(0, 3))
+                    })
+                } else {
+                    sourceSettings.audioSourceDisplayName = sourceSettings.audioSourceClients[0]
+                }
+            }
+
+            sourceSettings.setupPriority = priority
+            priority = priority + 1
+
+            serviceTemplate = `[Unit]
 Description=${sourceSettings.audioSourceDisplayName} Pipe Librespot to UDP
 After=network-online.target sound.target
 Requires=network-online.target
@@ -179,19 +267,19 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 `
-        serviceName = `smartsoundsyncspotify${sourceSettings.audioSourceDisplayName}.service`
+            serviceName = `smartsoundsyncspotify${sourceSettings.audioSourceDisplayName}.service`
 
-        writeServiceFile(serviceName, serviceTemplate)
-        servicesToStart.push(serviceName)
-
-
+            writeServiceFile(serviceName, serviceTemplate)
+            servicesToStart.push(serviceName)
 
 
-        //shairport
-        sourceSettings.setupPriority = priority
-        priority = priority + 1
 
-        serviceTemplate = `[Unit]
+
+            //shairport
+            sourceSettings.setupPriority = priority
+            priority = priority + 1
+
+            serviceTemplate = `[Unit]
 Description=${sourceSettings.audioSourceDisplayName} Pipe shairport to UDP
 After=network-online.target sound.target
 Requires=network-online.target
@@ -207,16 +295,17 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 `
-        serviceName = `smartsoundsyncairplay${sourceSettings.audioSourceDisplayName}.service`
+            serviceName = `smartsoundsyncairplay${sourceSettings.audioSourceDisplayName}.service`
 
-        writeServiceFile(serviceName, serviceTemplate)
-        servicesToStart.push(serviceName)
+            writeServiceFile(serviceName, serviceTemplate)
+            servicesToStart.push(serviceName)
+        })
+
+    }
+
+    execSync(`systemctl daemon-reload`)
+
+    servicesToStart.forEach(function (value, index) {
+        serviceStart(value)
     })
-
 }
-
-execSync(`systemctl daemon-reload`)
-
-servicesToStart.forEach(function (value, index) {
-    serviceStart(value)
-})
