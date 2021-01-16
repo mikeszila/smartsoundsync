@@ -83,18 +83,19 @@ if (cmdSettingsJSON != 0) {
     var cmdSettingsObj = JSON.parse(String(cmdSettingsJSON))
     settings = { ...settings, ...cmdSettingsObj }
 }
-const volume = require(`/home/${settings.username}/volume.js`);
-let audiosettingsfile = `/home/${settings.username}` //os.homedir()  
+const volume = require(`./volume.js`);
 
-audiosettingsfile = audiosettingsfile.concat('/audiosettings.json')
+//let audiosettingsfile = `/home/${settings.username}` //os.homedir()  
 
-console.log(audiosettingsfile)
+//audiosettingsfile = audiosettingsfile.concat('/audiosettings.json')
 
-var usersettings = JSON.parse(loadData(audiosettingsfile))
+//console.log(audiosettingsfile)
 
-if (usersettings) {
-    settings = { ...settings, ...usersettings }
-}
+//var usersettings = JSON.parse(loadData(audiosettingsfile))
+
+//if (usersettings) {
+//    settings = { ...settings, ...usersettings }
+//}
 
 if (!settings.ecasound) {
     if (settings.mono) {

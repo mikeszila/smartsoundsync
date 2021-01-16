@@ -112,13 +112,13 @@ function execArgumentsParse(execArguments) {
 
 if (!stopOnly) {
 
-    let dependencies = ['npm', 'ntp']
+    let dependencies = ['npm', 'ntp', 'avahi-daemon', 'libavahi-client-dev', 'libconfig-dev', 'alsa-utils', 'alsa-tools', 'libasound2-plugins', 'ecasound', 'cmt', 'swh-plugins', 'ladspa-sdk'  ]
 
     dependencies.forEach(function (value, index) {
-        let installed = execSync(`apt-cache policy ${value}`)
+        let installed = execSync(`apt-cache policy ${value}`)  
         if (installed.includes('Installed: (none)')) {
             console.log(`apt-get install ${value} -y`)
-            execSync(`apt install ${value} -y`)
+            execSync(`apt-get install ${value} -y`)
         }
     })
 
@@ -134,7 +134,6 @@ if (!stopOnly) {
             catch (error) { console.log('Error: could not install', value, error) }
         }
     })
-
 
     let settings = require('./config.js')
 
@@ -156,6 +155,9 @@ if (!stopOnly) {
     console.log('starting ntp')
     execSync(`systemctl start ntp`)
 
+
+    // wget https://faculty.tru.ca/rtaylor/rt-plugins/rt-plugins-0.0.6.tar.gz
+
     let serviceName = ''
     let serviceTemplate = ''
     let servicesToStart = []
@@ -163,7 +165,6 @@ if (!stopOnly) {
     let priority = 1
 
     console.log(settings)
-
 
     if (settings.controller) {
         execArguments = ''
@@ -190,6 +191,37 @@ Restart=always
 WantedBy=multi-user.target
 `
         serviceName = `smartsoundsynccontrol.service`
+
+        writeServiceFile(serviceName, serviceTemplate)
+        servicesToStart.push(serviceName)
+
+    }
+
+    if (settings.sink) {
+        execArguments = ''
+        if (settings.sink.length) {
+            execArguments = `"${execArgumentsParse(settings.sink)}"`
+        }
+
+
+        //control
+
+        serviceTemplate = `[Unit]
+Description=Audio sink
+After=network-online.target sound.target
+Requires=network-online.target
+Wants=avahi-daemon.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/node ${installLocation}/udpplay.js ${execArguments} 
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+`
+        serviceName = `smartsoundsyncsink.service`
 
         writeServiceFile(serviceName, serviceTemplate)
         servicesToStart.push(serviceName)

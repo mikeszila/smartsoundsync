@@ -24,12 +24,6 @@ if (cmdSettingsJSON != 0) {
     settings = { ...settings, ...cmdSettingsObj }
 }
 
-if (settings.audioSourceDisplayName == hostname) {
-    settings.folderName = 'local'
-} else {
-    settings.folderName = settings.audioSourceDisplayName
-}
-
 common.setPriority(process.pid, settings.processPriority)
 
 
@@ -65,10 +59,10 @@ function generateRandomPort() {
 let testPath = process.cwd()
 
 let audiofifo = '/audiofifo_shairport_'
-audiofifo = audiofifo.concat(settings.folderName)
+audiofifo = audiofifo.concat(settings.audioSourceDisplayName)
 
 let audiofifopath = testPath.concat('/tmp', audiofifo)
-let configpath = testPath.concat('/tmp/shairport-sync-', settings.folderName, '.conf')
+let configpath = testPath.concat('/tmp/shairport-sync-', settings.audioSourceDisplayName, '.conf')
 
 let tmpfolder = testPath.concat('/tmp')
 
@@ -108,7 +102,7 @@ function spawnshairport() {
         fs.writeFile(configpath, result, 'utf8', function (err) {
             if (err) return console.log(err);
 
-            shairport = spawn('./shairport-sync', ['-a', settings.audioSourceDisplayName, '-u', '-c', `${configpath}`]);
+            shairport = spawn(`./shairport-sync-${process.arch}`, ['-a', settings.audioSourceDisplayName, '-u', '-c', `${configpath}`]);
             shairport.stdout.on('data', (data) => {
                 console.log('shairport', String(data))
             });

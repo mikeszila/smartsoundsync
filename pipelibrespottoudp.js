@@ -30,14 +30,6 @@ if (cmdSettingsJSON != 0) {
     settings = { ...settings, ...cmdSettingsObj }
 }
 
-
-if (settings.audioSourceDisplayName == hostname) {
-    settings.folderName = 'local'
-} else {
-    settings.folderName = settings.audioSourceDisplayName
-    //settings.source_period_size = settings.source_period_size * 6
-}
-
 //common.setPriority(process.pid, settings.processPriority)
 
 global.reported_exact_rate = settings.source_rate
@@ -91,7 +83,7 @@ if (fs.existsSync(tmpfolder)) {
     execSync(`mkdir ${tmpfolder}`)
 }
 
-let audiofifopath = testPath.concat('/tmp/audiofifo_librespot_', settings.folderName)
+let audiofifopath = testPath.concat('/tmp/audiofifo_librespot_', settings.audioSourceDisplayName)
 
 if (fs.existsSync(audiofifopath)) {
     console.log('audiofifo exists', audiofifopath)
@@ -103,7 +95,7 @@ if (fs.existsSync(audiofifopath)) {
 function spawnlibrespot() {
 
     console.log('starting librespot')
-    librespot = spawn(`${process.cwd()}/librespot`, ['-v', '-n', settings.audioSourceDisplayName, '-b', '320', '-c', `${cachefolder}`, '--enable-volume-normalisation', '--backend', 'pipe', '--device', `${audiofifopath}`]);
+    librespot = spawn(`${process.cwd()}/librespot-${process.arch}`, ['-v', '-n', settings.audioSourceDisplayName, '-b', '320', '-c', `${cachefolder}`, '--enable-volume-normalisation', '--backend', 'pipe', '--device', `${audiofifopath}`]);
     librespot.stdout.on('data', (data) => {
         console.log('librespot', String(data))
     });
