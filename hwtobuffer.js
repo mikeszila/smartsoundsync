@@ -25,7 +25,12 @@ var sampleTimeMS = 0
 var sampleIndex = 0
 
 
+let volumeCount = 0
+let volumeCountOn = 1 / (global.playback_period_time / 1000)
+let volumeCountOff = -15 / (global.playback_period_time / 1000)
 
+let restartCount = 0
+let restartCountGo = (60 * 60) / (global.playback_period_time / 1000)
 
 var sendTimeLast = 0
 var htstampLast = 0
@@ -110,26 +115,40 @@ function spawnpcmRecord() {
             let volumeRight = audioData.readInt16LE(2)
 
             //console.log(volumeLeft, volumeRight)
+
+            //console.log(volumeCount, volumeCountOn, volumeCountOff, hwCaptureState, restartCount, volumeLeft, volumeRight)
+
             if (volumeLeft == volumeLeftLast && volumeRight == volumeRightLast) {
-                if (silenceStartTime == 0) { silenceStartTime = Date.now() }
-                if (silenceStartTime != 0 && Date.now() > silenceStartTime + 15000 && !noInput) {
-                    //silenceStartTime = 0
-                    noInput = true
-                    console.log('no audio stopping send')
+                restartCount = restartCount + 1
+                if (restartCount > restartCountGo) {
+                    console.log('idle count exit!!!')
+                    process.exit()
                 }
-            } else {
-                volumeLeftLast = volumeLeft
-                volumeRightLast = volumeRight
-                silenceStartTime = 0
-                if (noInput) {
-                    noInput = false
-                    console.log('have audio resuming send')
+
+                if (volumeCount > 0 || hwCaptureState == 'active') {volumeCount = volumeCount - 1}
+                if (volumeCount < volumeCountOff && hwCaptureState == 'active') {
+                    hwCaptureState = 'idle'
+                    console.log('HWidle!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1')
+                    volumeCount = 0
+                }
+                
+            }
+            if (volumeLeft != volumeLeftLast || volumeRight != volumeRightLast) {
+                restartCount = 0
+                if (volumeCount < 0 || hwCaptureState != 'active') {volumeCount = volumeCount + 1}
+                if (volumeCount > volumeCountOn && hwCaptureState != 'active') {
+                    hwCaptureState = 'active'
+                    console.log('HWactive!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1')
+                    volumeCount = 0
                 }
             }
 
-            buffertoudp.sendAudioUDP(audioData, sendTime, sampleIndex)
+            volumeLeftLast = volumeLeft
+            volumeRightLast = volumeRight
 
-            
+            if (hwCaptureState == 'active') {
+                buffertoudp.sendAudioUDP(audioData, sendTime, sampleIndex)
+            }
 
             if (settings.verbose) {
 

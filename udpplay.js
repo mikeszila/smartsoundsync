@@ -483,6 +483,8 @@ async function spawnaplay() {
     console.log(sourceObj)
 
     console.log('Playback Setup Data', settings.cardName, sourceObj.reported_exact_rate, settings.outputChannels, sourceObj.playback_period_size, sourceObj.playback_buffer_size)
+console.log(process.cwd(), '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11111111')
+
 
     let teststr = `stdbuf -i0 -o0 -e0 ./pcm ${settings.cardName} ${sourceObj.reported_exact_rate} ${settings.outputChannels} ${sourceObj.playback_period_size} ${sourceObj.playback_buffer_size}`
 
@@ -907,4 +909,4 @@ async function spawnecasound() {
 socketControl.bind(0);
 socketAudio.bind(0);
 
-
+module.exports = settings

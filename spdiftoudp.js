@@ -13,7 +13,7 @@ var localSettings = {
 }
 
 
-settings = { ...settings, ...localSettings}
+settings = { ...settings, ...localSettings }
 
 //settings.verbose = true
 
@@ -33,7 +33,7 @@ global.buffertoudp = require('./buffertoudp.js')
 
 function spawndspset() {
     console.log(new Date().toISOString(), 'Writing DSP settings')
-    dspset = spawn('/home/pi/audio/dspsetup.sh');
+    dspset = spawn(`${process.cwd()}/dspsetup.sh`);
 
     dspset.stdout.on('data', (data) => {
         console.log(new Date().toISOString(), 'dspset', 'stdout', `${data}`)
@@ -58,32 +58,32 @@ function spawnremote() {
     remote.stdout.on('data', (data) => {
         //console.log(new Date().toISOString(), 'remote', 'stdout', `${data}`)
 
-      //  if (playbackHostname == hostname && playbackPort == audioSourcePort) {
+        //  if (playbackHostname == hostname && playbackPort == audioSourcePort) {
 
-            command = String(data)
+        command = String(data)
 
-            if (command.includes(' 01 ') == false && captureState == 'active') {
+        if (command.includes(' 01 ') == false && captureState == 'active') {
 
-                if (command.includes('KEY_VOLUMEUP')) {
-                    console.log('UP')
-                    volumeOut = volumeOut + settings.volume_db_step
-                }
-
-                if (command.includes('KEY_VOLUMEDOWN')) {
-                    console.log('DOWN')
-                    volumeOut = volumeOut - settings.volume_db_step
-                }
-
-                if (volumeOut > settings.volume_db_max) {
-                    volumeOut = settings.volume_db_max
-                }
-
-                if (volumeOut < settings.volume_db_min) {
-                    volumeOut = settings.volume_db_min
-                }
-                buffertoudp.sendStatusUpdatetoSink()
+            if (command.includes('KEY_VOLUMEUP')) {
+                console.log('UP')
+                volumeOut = volumeOut + settings.volume_db_step
             }
-      //  }
+
+            if (command.includes('KEY_VOLUMEDOWN')) {
+                console.log('DOWN')
+                volumeOut = volumeOut - settings.volume_db_step
+            }
+
+            if (volumeOut > settings.volume_db_max) {
+                volumeOut = settings.volume_db_max
+            }
+
+            if (volumeOut < settings.volume_db_min) {
+                volumeOut = settings.volume_db_min
+            }
+            buffertoudp.sendStatusUpdatetoSink()
+        }
+        //  }
     });
 
     remote.stderr.on('data', (data) => {
@@ -105,22 +105,14 @@ function checkState() {
         captureState = 'init'
 
     } else {
-        if (noInput) {
-            captureState = 'idle'
-        } else {
-            captureState = 'active'
-        }
+        captureState = hwCaptureState
     }
 
-
     if (captureState != captureStateLast) {
-
         buffertoudp.sendStatusUpdatetoControl()
         captureStateLast = captureState
     }
-
-
 }
 
-setInterval(checkState, 2000)
+setInterval(checkState, 1000)
 

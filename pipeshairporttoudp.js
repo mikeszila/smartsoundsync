@@ -8,7 +8,7 @@ var localSettings = {
     playback_buffer_periods: 4,
     processPriority: 80,
     setupPriority: 3,
-    audioSourceType: 'airplay',
+    audioSourceType: 'Airplay',
     volume_shairport_min: -30,
     volume_shairport_max: 0
 }
@@ -102,7 +102,7 @@ function spawnshairport() {
         fs.writeFile(configpath, result, 'utf8', function (err) {
             if (err) return console.log(err);
 
-            shairport = spawn(`./shairport-sync-${process.arch}`, ['-a', settings.audioSourceDisplayName, '-u', '-c', `${configpath}`]);
+            shairport = spawn(`./shairport-sync`, ['-a', settings.audioSourceDisplayName, '-u', '-c', `${configpath}`]);
             shairport.stdout.on('data', (data) => {
                 console.log('shairport', String(data))
             });

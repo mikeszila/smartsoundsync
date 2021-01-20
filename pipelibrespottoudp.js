@@ -14,7 +14,7 @@ var localSettings = {
     playback_buffer_periods: 4,
     processPriority: 80,
     setupPriority: 2,
-    audioSourceType: 'librespot',
+    audioSourceType: 'Spotify',
     volume_librespot_max: 65535,
     volume_librespot_min: 0,
     sourceSampleAdjust: 2
@@ -43,8 +43,6 @@ global.playback_buffer_size = settings.playback_period_size * settings.playback_
 global.playback_buffer_time = playback_period_time * settings.playback_buffer_periods
 
 let sampleTimeMS = 1 / reported_exact_rate * 1000
-
-
 
 if (source_buffer_time > playback_buffer_time) {
     global.desired_playback_delay = source_buffer_time + 50
@@ -95,7 +93,7 @@ if (fs.existsSync(audiofifopath)) {
 function spawnlibrespot() {
 
     console.log('starting librespot')
-    librespot = spawn(`${process.cwd()}/librespot-${process.arch}`, ['-v', '-n', settings.audioSourceDisplayName, '-b', '320', '-c', `${cachefolder}`, '--enable-volume-normalisation', '--backend', 'pipe', '--device', `${audiofifopath}`]);
+    librespot = spawn(`${process.cwd()}/librespot`, ['-v', '-n', settings.audioSourceDisplayName, '-b', '320', '-c', `${cachefolder}`, '--enable-volume-normalisation', '--backend', 'pipe', '--device', `${audiofifopath}`]);
     librespot.stdout.on('data', (data) => {
         console.log('librespot', String(data))
     });

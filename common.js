@@ -39,27 +39,8 @@ global.settings = {
 
 global.volumeOut = settings.initialVolume
 
+global.hwCaptureState = 'idle'
 global.captureState = 'idle'
-global.noInput = false
-
-var speedup
-
-function spawnSpeedup() {
-    console.log('speedup', 'spawn')
-    speedup = spawn('./speedup.sh');
-
-    speedup.stdout.on('data', (data) => {
-        console.log('speedup', data.toString())
-    });
-
-    speedup.stderr.on('data', (data) => {
-        console.error('speedup', data.toString())
-    });
-
-    speedup.on('close', (code) => {
-        console.error('speedup', 'close')
-    });
-}
 
 global.ntpCorrection = 1
 
@@ -79,8 +60,7 @@ function readNTP() {
 }
 
 setInterval(readNTP, 1000)
-
-//spawnSpeedup()
+execSync('./speedup.sh')
 
 function setPriority(pid, priority) {
     exec(`chrt -p ${priority} ${pid}`, (err, stdout, stderr) => {

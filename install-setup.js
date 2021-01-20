@@ -21,7 +21,14 @@ process.argv.forEach(function (value, index) {
 
 })
 
+let commandsToExecute = []
 
+function execSyncPrint(command) {
+    console.log(command)
+    let returnData = execSync(command, { stdio: 'inherit' })
+    //console.log(String(returnData))
+    return returnData
+}
 
 let installLocation = process.cwd()
 
@@ -34,16 +41,12 @@ existingServices = existingServices.split(/\r?\n/)
 
 existingServices.forEach(function (value, index) {
     if (value.length > 0) {
-        console.log('stopping ', value)
-        try { execSync(`systemctl stop ${value}`) }
+        try { execSyncPrint(`systemctl stop ${value}`) }
         catch (error) { console.log('Error: could not stop', value, error) }
-        console.log('disabling ', value)
-        try { execSync(`systemctl disable ${value}`) }
+        try { execSyncPrint(`systemctl disable ${value}`) }
         catch (error) { console.log('Error: could not disable', value, error) }
-        console.log('removing service file ', value)
-        try { execSync(`rm /lib/systemd/system/${value}`) }
+        try { execSyncPrint(`rm /lib/systemd/system/${value}`) }
         catch (error) { console.log('Error: could not remove', value, error) }
-        console.log('removed', value)
     }
 })
 
@@ -56,10 +59,8 @@ existingAudioFifos = existingAudioFifos.split(/\r?\n/)
 
 existingAudioFifos.forEach(function (value, index) {
     if (value.length > 0) {
-        console.log('removing ', value)
-        try { execSync(`rm ${installLocation}/${value}`) }
+        try { execSyncPrint(`rm ${installLocation}/${value}`) }
         catch (error) { console.log('Error: could not remove', value, error) }
-        console.log('removed', value)
     }
 })
 
@@ -73,11 +74,8 @@ existingShairportConfs = existingShairportConfs.split(/\r?\n/)
 existingShairportConfs.forEach(function (value, index) {
 
     if (value.length > 0 && !value.includes('shairport-sync/scripts') && !value.includes('template')) {
-        console.log(value)
-        console.log('removing ', value)
-        try { execSync(`rm ${installLocation}/${value}`) }
+        try { execSyncPrint(`rm ${installLocation}/${value}`) }
         catch (error) { console.log('Error: could not remove', value, error) }
-        console.log('removed', value)
     }
 
 })
@@ -85,21 +83,17 @@ existingShairportConfs.forEach(function (value, index) {
 function writeServiceFile(serviceName, serviceTemplate) {
     console.log(`writing service file ${serviceName}`)
     fs.writeFileSync(`${installLocation}/${serviceName}`, serviceTemplate, 'utf8')
-    console.log(`moving service file to systemd ${serviceName}`)
-    try { execSync(`mv ${installLocation}/${serviceName} /lib/systemd/system/${serviceName}`) }
+    try { execSyncPrint(`mv ${installLocation}/${serviceName} /lib/systemd/system/${serviceName}`) }
     catch (error) {
         console.log(`Error: error moving service file to systemd. deleting template ${serviceName}`, error)
-        execSync(`rm ${installLocation}/${serviceName}`)
+        execSyncPrint(`rm ${installLocation}/${serviceName}`)
     }
 }
 
 function serviceStart(serviceName) {
-    console.log(`enabling ${serviceName}`)
-    try { execSync(`systemctl enable ${serviceName}`) }
+    try { execSyncPrint(`systemctl enable ${serviceName}`) }
     catch (error) { console.log('Error: could not enable', serviceName, error) }
-
-    console.log(`starting ${serviceName}`)
-    try { execSync(`systemctl start ${serviceName}`) }
+    try { execSyncPrint(`systemctl start ${serviceName}`) }
     catch (error) { console.log('Error: could not start', serviceName, error) }
 }
 
@@ -109,16 +103,59 @@ function execArgumentsParse(execArguments) {
     return execArguments
 }
 
+let hasSpotify = false
+let hasAirplay = false
+let hasSPDIF = false
 
 if (!stopOnly) {
 
-    let dependencies = ['npm', 'ntp', 'avahi-daemon', 'libavahi-client-dev', 'libconfig-dev', 'alsa-utils', 'alsa-tools', 'libasound2-plugins', 'ecasound', 'cmt', 'swh-plugins', 'ladspa-sdk'  ]
+    let settings = require('./config.js')
+
+    let dependencies = ['npm', 'ntp',]
+
+    let dependenciesSpotify = ['git', 'build-essential', 'cargo']
+
+    let dependenciesshairport = ['build-essential', 'git', 'xmltoman', 'autoconf', 'automake', 'libtool', 'libdaemon-dev', 'libpopt-dev', 'avahi-daemon', 'libavahi-client-dev', 'libconfig-dev', 'libssl-dev']
+
+    let dependenciessink = ['alsa-utils', 'alsa-tools', 'libasound2-plugins', 'ecasound', 'cmt', 'swh-plugins', 'ladspa-sdk', 'libasound2-dev', 'cmake']
+
+    let dependenciesspdif = ['lirc']
+
+    if (settings.sink) {
+        dependencies = dependencies.concat(dependenciessink)
+    }
+
+    if (settings.sources) {
+        settings.sources.forEach(function (value, index) {
+
+            if (value.audioSourceType == 'Spotify') {
+                hasSpotify = true
+            }
+            if (value.audioSourceType == 'Airplay') {
+                hasAirplay = true
+            }
+            if (value.audioSourceType == 'spdif') {
+                hasSPDIF = true
+            }
+        })
+    }
+
+    if (hasAirplay) {
+        dependencies = dependencies.concat(dependenciesshairport)
+    }
+
+    if (hasSpotify) {
+        dependencies = dependencies.concat(dependenciesSpotify)
+    }
+
+    if (hasSPDIF) {
+        dependencies = dependencies.concat(dependenciesspdif)
+    }
 
     dependencies.forEach(function (value, index) {
-        let installed = execSync(`apt-cache policy ${value}`)  
+        let installed = execSync(`apt-cache policy ${value}`)
         if (installed.includes('Installed: (none)')) {
-            console.log(`apt-get install ${value} -y`)
-            execSync(`apt-get install ${value} -y`)
+            execSyncPrint(`apt-get install ${value} -y`)
         }
     })
 
@@ -126,19 +163,13 @@ if (!stopOnly) {
 
     npmDependencies.forEach(function (value, index) {
         let installed = String(execSync(`npm list --depth=0 --loglevel=error`))
-        console.log(installed)
-        console.log(installed.length)
         if (!installed.includes(value)) {
-            console.log(`npm install ${value} -y`)
-            try { execSync(`npm install ${value} -y`) }
+            try { execSyncPrint(`npm install ${value} -y`) }
             catch (error) { console.log('Error: could not install', value, error) }
         }
     })
 
-    let settings = require('./config.js')
-
-    console.log('stopping ntp')
-    execSync(`systemctl stop ntp`)
+    execSyncPrint(`systemctl stop ntp`)
     let ntpConfigTemplate
 
     if (settings.ntpServerHostname && settings.ntpServerHostname != os.hostname()) {
@@ -152,11 +183,74 @@ if (!stopOnly) {
 
     fs.writeFileSync(`/etc/ntp.conf`, ntpConfigTemplate, 'utf8')
 
-    console.log('starting ntp')
-    execSync(`systemctl start ntp`)
+    execSyncPrint(`systemctl start ntp`)
 
+    if (settings.sink) {
+        if (fs.existsSync(`${installLocation}/pcm`)) {
+            console.log('pcm exists, skipping')
+        } else {
+            execSyncPrint(`gcc pcmblock.c -o pcm -lasound`)
+        }
 
-    // wget https://faculty.tru.ca/rtaylor/rt-plugins/rt-plugins-0.0.6.tar.gz
+        if (fs.existsSync(`${installLocation}/pcmrecord`)) {
+            console.log('pcmrecord exists, skipping')
+        } else {
+            execSyncPrint(`gcc pcmrecord.c -o pcmrecord -lasound`)
+        }
+
+        if (fs.existsSync(`/usr/local/lib/ladspa/RTlowshelf.so`)) {
+            console.log('rtaylor filters exist, skipping')
+        } else {
+            execSyncPrint(`wget -q https://faculty.tru.ca/rtaylor/rt-plugins/rt-plugins-0.0.6.tar.gz -O ${installLocation}/tmp/rt-plugins-0.0.6.tar.gz `)
+            execSyncPrint(`cd ${installLocation}/tmp/ && tar xfz rt-plugins-0.0.6.tar.gz`)
+            execSyncPrint(`cd ${installLocation}/tmp/rt-plugins-0.0.6/build && cmake ..`)
+            execSyncPrint(`cd ${installLocation}/tmp/rt-plugins-0.0.6/build && make `)
+            execSyncPrint(`cd ${installLocation}/tmp/rt-plugins-0.0.6/build && make install `)
+        }
+    }
+
+    if (hasSpotify) {
+        if (fs.existsSync(`${installLocation}/librespot`)) {
+            console.log('librespot exists, skipping')
+        } else {
+            console.log('compiling librespot')
+            try { execSyncPrint(`rm -r ${installLocation}/tmp/librespot`) }
+            catch (error) { }
+            execSyncPrint(`cd ${installLocation}/tmp/ && git clone https://github.com/mikeszila/librespot.git`)
+            execSyncPrint(`curl https://sh.rustup.rs -sSf | sh -s -- -y`)
+            execSyncPrint(`cd ${installLocation}/tmp/librespot && cargo build --no-default-features --release`)
+            execSyncPrint(`cp ${installLocation}/tmp/librespot/target/release/librespot ${installLocation}/librespot`)
+        }
+    }
+
+    if (hasAirplay) {
+        if (fs.existsSync(`${installLocation}/shairport-sync`)) {
+            console.log('shairport exists, skipping')
+        } else {
+            console.log('compiling shairport')
+            try { execSyncPrint(`rm -r ${installLocation}/tmp/shairport-sync`) }
+            catch (error) { }
+            execSyncPrint(`cd ${installLocation}/tmp/ && git clone https://github.com/mikeszila/shairport-sync.git`)
+            execSyncPrint(`cd ${installLocation}/tmp/shairport-sync && autoreconf -i -f`)
+            execSyncPrint(`cd ${installLocation}/tmp/shairport-sync && ./configure --with-avahi --with-ssl=openssl --with-pipe`)
+            execSyncPrint(`cd ${installLocation}/tmp/shairport-sync && make`)
+            execSyncPrint(`cp ${installLocation}/tmp/shairport-sync/shairport-sync ${installLocation}/shairport-sync`)
+        }
+    }
+
+    if (hasSPDIF) {
+
+        try {execSync('which dsptoolkit')}
+        catch(error) {
+            execSyncPrint(`curl https://raw.githubusercontent.com/hifiberry/hifiberry-dsp/master/install-dsptoolkit`)
+        }
+        let dspchecksum = String(execSync('dsptoolkit get-checksum'))
+        if (dspchecksum.includes('7B03B17AD5B6B1A0E0DACB29BF31F024')) {
+            console.log('correct dsp profile installed, skipping')
+        } else {
+            execSyncPrint('dsptoolkit install-profile https://raw.githubusercontent.com/hifiberry/hifiberry-os/master/buildroot/package/dspprofiles/dspdac-12.xml')
+        }
+    }
 
     let serviceName = ''
     let serviceTemplate = ''
@@ -164,11 +258,11 @@ if (!stopOnly) {
     let execArguments = ''
     let priority = 1
 
-    console.log(settings)
-
     if (settings.controller) {
         execArguments = ''
         if (settings.controller.length) {
+            console.log('control array no code for this yet')
+        } else {
             execArguments = `"${execArgumentsParse(settings.controller)}"`
         }
 
@@ -183,6 +277,7 @@ Wants=avahi-daemon.service
 
 [Service]
 Type=simple
+WorkingDirectory=${installLocation}
 ExecStart=/usr/bin/node ${installLocation}/control.js ${execArguments} 
 
 Restart=always
@@ -200,11 +295,18 @@ WantedBy=multi-user.target
     if (settings.sink) {
         execArguments = ''
         if (settings.sink.length) {
+            console.log('sink array no code for this yet')
+        } else {
             execArguments = `"${execArgumentsParse(settings.sink)}"`
         }
 
 
-        //control
+        //sink
+
+        //        CPUSchedulingPolicy=rr
+        //      CPUSchedulingPriority=90
+
+
 
         serviceTemplate = `[Unit]
 Description=Audio sink
@@ -214,6 +316,8 @@ Wants=avahi-daemon.service
 
 [Service]
 Type=simple
+WorkingDirectory=${installLocation}
+
 ExecStart=/usr/bin/node ${installLocation}/udpplay.js ${execArguments} 
 
 Restart=always
@@ -228,21 +332,12 @@ WantedBy=multi-user.target
 
     }
 
-    if (settings.source) {
+    if (settings.sources) {
 
-        let settingsSourceCommon = JSON.parse(JSON.stringify(settings.source))
-        delete settingsSourceCommon.sources
-
-        if (!settings.source.sources) {
-            settings.source.sources = [{ audioSourceClients: ['hostname'] }]
-        }
-
-        console.log('HELLO!!!', settings.source)
-
-        settings.source.sources.forEach(function (value, index) {
+        settings.sources.forEach(function (value, index) {
             //librespot
 
-            let sourceSettings = { ...settingsSourceCommon, ...value }
+            let sourceSettings = value
 
 
             if (!sourceSettings.audioSourceDisplayName && sourceSettings.audioSourceClients) {
@@ -256,10 +351,37 @@ WantedBy=multi-user.target
                 }
             }
 
-            sourceSettings.setupPriority = priority
-            priority = priority + 1
 
-            serviceTemplate = `[Unit]
+            if (sourceSettings.audioSourceType == 'spdif') {
+
+                serviceTemplate = `[Unit]
+Description=${sourceSettings.audioSourceDisplayName} SPDIF to UDP
+After=network-online.target sound.target
+Requires=network-online.target
+Wants=avahi-daemon.service
+
+[Service]
+Type=simple
+WorkingDirectory=${installLocation}
+ExecStart=/usr/bin/node ${installLocation}/spdiftoudp.js "${execArgumentsParse(sourceSettings)}" 
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+`
+                serviceName = `smartsoundsyncspdif${sourceSettings.audioSourceDisplayName}.service`
+
+                writeServiceFile(serviceName, serviceTemplate)
+                servicesToStart.push(serviceName)
+
+            }
+
+
+
+            if (sourceSettings.audioSourceType == 'Spotify') {
+
+                serviceTemplate = `[Unit]
 Description=${sourceSettings.audioSourceDisplayName} Pipe Librespot to UDP
 After=network-online.target sound.target
 Requires=network-online.target
@@ -275,19 +397,21 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 `
-            serviceName = `smartsoundsyncspotify${sourceSettings.audioSourceDisplayName}.service`
+                serviceName = `smartsoundsyncspotify${sourceSettings.audioSourceDisplayName}.service`
 
-            writeServiceFile(serviceName, serviceTemplate)
-            servicesToStart.push(serviceName)
+                writeServiceFile(serviceName, serviceTemplate)
+                servicesToStart.push(serviceName)
+
+            }
 
 
+            if (sourceSettings.audioSourceType == 'Airplay') {
 
+                //shairport
+                sourceSettings.setupPriority = priority
+                priority = priority + 1
 
-            //shairport
-            sourceSettings.setupPriority = priority
-            priority = priority + 1
-
-            serviceTemplate = `[Unit]
+                serviceTemplate = `[Unit]
 Description=${sourceSettings.audioSourceDisplayName} Pipe shairport to UDP
 After=network-online.target sound.target
 Requires=network-online.target
@@ -303,15 +427,16 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 `
-            serviceName = `smartsoundsyncairplay${sourceSettings.audioSourceDisplayName}.service`
+                serviceName = `smartsoundsyncairplay${sourceSettings.audioSourceDisplayName}.service`
 
-            writeServiceFile(serviceName, serviceTemplate)
-            servicesToStart.push(serviceName)
+                writeServiceFile(serviceName, serviceTemplate)
+                servicesToStart.push(serviceName)
+
+            }
         })
-
     }
 
-    execSync(`systemctl daemon-reload`)
+    execSyncPrint(`systemctl daemon-reload`)
 
     servicesToStart.forEach(function (value, index) {
         serviceStart(value)

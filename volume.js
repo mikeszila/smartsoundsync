@@ -2,22 +2,25 @@ const { exec, spawn, execSync } = require('child_process');
 
 var child;
 
-let volume_db_max = 0
-let volume_db_min = -60
 
-let volumeOutMax = 255
-let volumeOutMin = 0
+
+//alsaVolumeControlName: 'DSPVolume',  //the name of the alsa volume control to adjust volume of your speakers.  look in alsamixer for the name. 
+  //  alsaVolumeControlUnit: '',      // hopefully your volume control supports decibels.  If not you'll get an error.  Set this to empty string and find the min and max values for your volume control and enter them below. User amixer -c "card number here" to find these values.   
+    //volumeOutMax: 255,  //This is the value sent to your volume control at max volume.  If your card supports db leave this alone.  
+    //volumeOutMin: 0, 
+
+
 
 var amixer
 
 function set_volume(volume_db) {
 
-  //let volumeOut = (volumeOutMin - volumeOutMax) / (volume_db_min - volume_db_max) * (volume_db - volume_db_min) + volumeOutMin
+  let volumeOut = (settings.volumeOutMin - settings.volumeOutMax) / (settings.volume_db_min - settings.volume_db_max) * (volume_db - settings.volume_db_min) + settings.volumeOutMin
 
 
-  console.log('VOLUMESET', volume_db)
+  console.log('VOLUMESET', volumeOut, settings.alsaVolumeControlName, settings.alsaVolumeControlUnit)
 
-  amixer = spawn('amixer', ['sset', 'Digital', '--', `${volume_db}db`]);
+  amixer = spawn('amixer', ['sset', settings.alsaVolumeControlName, '--', `${volumeOut}${settings.alsaVolumeControlUnit}`]);
 
   amixer.stdout.on('data', (data) => {
     //console.log('amixer stdout', String(data))
