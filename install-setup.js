@@ -185,6 +185,13 @@ if (!stopOnly) {
 
     execSyncPrint(`systemctl start ntp`)
 
+    if (fs.existsSync(`${installLocation}/tmp`)) {
+        console.log('dir exists', `${installLocation}/tmp`)
+    } else {
+        console.log('dir does not exist', `${installLocation}/tmp`)
+        execSync(`mkdir ${installLocation}/tmp`)
+    }
+
     if (settings.sink) {
         if (fs.existsSync(`${installLocation}/pcm`)) {
             console.log('pcm exists, skipping')
