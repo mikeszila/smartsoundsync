@@ -15,8 +15,7 @@ function initialCheck() {
 	fi
 }
 
-function installUnbound() {
-	# If Unbound isn't installed, install it
+function installStuff() {
 	if [[ ! -e /usr/bin/nodejs ]]; then
 		echo "Installing nodejs"
 		apt-get install -y nodejs
@@ -33,7 +32,7 @@ function installUnbound() {
 }		
 
 initialCheck
-installUnbound
+installStuff
 
 echo $PWD
 wget -q https://github.com/mikeszila/smartsoundsync/archive/main.zip -O ./main.zip
@@ -42,6 +41,7 @@ cp -r smartsoundsync-new/smartsoundsync-main smartsoundsync
 rm main.zip
 rm -r smartsoundsync-new
 cd smartsoundsync
+rm install.sh  #remove this script from the local project directory so someone doesn't get confused, run it, and install the application again inside itself.  
 node install-setup.js
 
 
