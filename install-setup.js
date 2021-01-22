@@ -109,6 +109,13 @@ let hasSPDIF = false
 
 if (!stopOnly) {
 
+    if (fs.existsSync(`${installLocation}/config.js`)) {
+        console.log('config exists', `${installLocation}/config.js`)
+    } else {
+        execSync(`cp ${installLocation}/config_templates/config.js`)
+        console.log(`No config file found.  Created standard config file at ${installLocation}/config.js.  Please ensure config is correct for your setup and re-run this script.`)
+    }
+
     let settings = require('./config.js')
 
     let dependencies = ['npm', 'ntp',]
@@ -174,11 +181,11 @@ if (!stopOnly) {
 
     if (settings.ntpServerHostname && settings.ntpServerHostname != os.hostname()) {
         console.log('writing ntp client config')
-        ntpConfigTemplate = fs.readFileSync('./ntp-client-template.conf', 'utf8')
+        ntpConfigTemplate = fs.readFileSync('./config_templates/ntp-client-template.conf', 'utf8')
         ntpConfigTemplate = ntpConfigTemplate.replaceAll('settings.ntpServerHostname', settings.ntpServerHostname)
     } else {
         console.log('writing ntp server config')
-        ntpConfigTemplate = fs.readFileSync('./ntp-server-template.conf', 'utf8')
+        ntpConfigTemplate = fs.readFileSync('./config_templates/ntp-server-template.conf', 'utf8')
     }
 
     fs.writeFileSync(`/etc/ntp.conf`, ntpConfigTemplate, 'utf8')
