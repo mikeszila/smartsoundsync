@@ -233,9 +233,12 @@ if (!stopOnly) {
             catch (error) { }
 
             execSyncPrint(`cd ${installLocation}/tmp/ && wget -q https://github.com/mikeszila/librespot/archive/dev.zip -O ./librespot.zip`)
-            execSyncPrint(`cd ${installLocation}/tmp/ && unzip -o librespot.zip -d librespot`)
+            execSyncPrint(`cd ${installLocation}/tmp/ && unzip -o librespot.zip -d librespot-new`)
+            execSyncPrint(`cd ${installLocation}/tmp/ && cp -r librespot-new/librespot-dev librespot`)
+
             execSyncPrint(`cd ${installLocation}/tmp/ && rm librespot.zip`)
-            execSyncPrint(`curl https://sh.rustup.rs -sSf | sh -s -- -y`)
+            execSyncPrint(`cd ${installLocation}/tmp/ && rm -r librespot-new`)
+            //execSyncPrint(`curl https://sh.rustup.rs -sSf | sh -s -- -y`)
             execSyncPrint(`cd ${installLocation}/tmp/librespot && cargo build --no-default-features --release`)
             execSyncPrint(`cp ${installLocation}/tmp/librespot/target/release/librespot ${installLocation}/librespot`)
         }
@@ -250,7 +253,9 @@ if (!stopOnly) {
             catch (error) { }
 
             execSyncPrint(`cd ${installLocation}/tmp/ && wget -q https://github.com/mikeszila/shairport-sync/archive/master.zip -O ./shairport-sync.zip`)
-            execSyncPrint(`cd ${installLocation}/tmp/ && unzip -o shairport-sync.zip -d shairport-sync`)
+            execSyncPrint(`cd ${installLocation}/tmp/ && unzip -o shairport-sync.zip -d shairport-sync-new`)
+            execSyncPrint(`cd ${installLocation}/tmp/ && cp -r shairport-sync-new/shairport-sync-main shairport-sync`)
+            execSyncPrint(`cd ${installLocation}/tmp/ && rm -r shairport-sync-new`)
             execSyncPrint(`cd ${installLocation}/tmp/ && rm shairport-sync.zip`)
             execSyncPrint(`cd ${installLocation}/tmp/shairport-sync && autoreconf -i -f`)
             execSyncPrint(`cd ${installLocation}/tmp/shairport-sync && ./configure --with-avahi --with-ssl=openssl --with-pipe`)
