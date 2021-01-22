@@ -37,7 +37,7 @@ installStuff
 echo $PWD
 wget -q https://github.com/mikeszila/smartsoundsync/archive/main.zip -O ./main.zip
 unzip -o main.zip -d smartsoundsync-new
-cp -v -r smartsoundsync-new/smartsoundsync-main smartsoundsync
+cp -v -r smartsoundsync-new/smartsoundsync-main/ smartsoundsync/
 rm main.zip
 rm -r smartsoundsync-new
 cd smartsoundsync
