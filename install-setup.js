@@ -235,7 +235,7 @@ if (!stopOnly) {
             execSyncPrint(`cd ${installLocation}/tmp/ && wget -q https://github.com/mikeszila/librespot/archive/dev.zip -O ./librespot.zip`)
             execSyncPrint(`cd ${installLocation}/tmp/ && unzip -o librespot.zip -d librespot`)
             execSyncPrint(`cd ${installLocation}/tmp/ && rm librespot.zip`)
-            //execSyncPrint(`curl https://sh.rustup.rs -sSf | sh -s -- -y`)
+            execSyncPrint(`curl https://sh.rustup.rs -sSf | sh -s -- -y`)
             execSyncPrint(`cd ${installLocation}/tmp/librespot && cargo build --no-default-features --release`)
             execSyncPrint(`cp ${installLocation}/tmp/librespot/target/release/librespot ${installLocation}/librespot`)
         }
