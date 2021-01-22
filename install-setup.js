@@ -141,7 +141,7 @@ if (!stopOnly) {
             if (value.audioSourceType == 'Airplay') {
                 hasAirplay = true
             }
-            if (value.audioSourceType == 'spdif') {
+            if (value.audioSourceType == 'SPDIF') {
                 hasSPDIF = true
             }
         })
@@ -366,7 +366,7 @@ WantedBy=multi-user.target
             }
 
 
-            if (sourceSettings.audioSourceType == 'spdif') {
+            if (sourceSettings.audioSourceType == 'SPDIF') {
 
                 serviceTemplate = `[Unit]
 Description=${sourceSettings.audioSourceDisplayName} SPDIF to UDP

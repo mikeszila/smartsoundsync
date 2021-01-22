@@ -12,7 +12,6 @@ var localSettings = {
     source_buffer_periods: 2,
     playback_period_size: 512,
     playback_buffer_periods: 4,
-    processPriority: 80,
     setupPriority: 2,
     audioSourceType: 'Spotify',
     volume_librespot_max: 65535,
@@ -29,8 +28,6 @@ if (cmdSettingsJSON != 0) {
     cmdSettingsObj = JSON.parse(String(cmdSettingsJSON))
     settings = { ...settings, ...cmdSettingsObj }
 }
-
-//common.setPriority(process.pid, settings.processPriority)
 
 global.reported_exact_rate = settings.source_rate
 global.reported_buffer_size = settings.source_buffer_periods * settings.source_period_size
@@ -98,15 +95,19 @@ function spawnlibrespot() {
         console.log('librespot', String(data))
     });
     librespot.stderr.on('data', (data) => {
-        console.error('librespot', String(data))
+        //console.error('librespot', String(data))
         message = String(data)
 
         if (message.includes('== Starting sink ==')) {
             captureState = 'active'
+            common.setPriority(process.pid, 80)
+            common.setPriority(librespot.pid, 80)
         }
 
         if (message.includes('== Stopping sink ==')) {
             captureState = 'idle'
+            common.setPriority(process.pid, -19)
+            common.setPriority(librespot.pid, -19)
         }
 
         if (message.includes('spotify volume:')) {
@@ -143,7 +144,7 @@ function spawnlibrespot() {
         console.log('hello after exit start')
         //setTimeout(spawnlibrespot, 2000)
     });
-    //common.setPriority(librespot.pid, 80)
+    
 }
 
 

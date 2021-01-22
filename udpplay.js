@@ -111,7 +111,7 @@ volume.set_volume(volumeOut)
 const outputbytesPerSample = settings.bytesPerSample * settings.outputChannels
 const sourcebytesPerSample = settings.bytesPerSample * settings.source_channels
 
-common.setPriority(process.pid, settings.processPriority)
+common.setPriority(process.pid, 99)
 
 var socketControl = dgram.createSocket({ type: "udp4", reuseAddr: true });
 
@@ -515,7 +515,7 @@ console.log(process.cwd(), '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     console.log('pcmPID:', pcmPID)
 
-    common.setPriority(pcmPID, 90)
+    common.setPriority(pcmPID, 99)
 }
 var sampleAdjustSinkTotal = 0
 
@@ -903,7 +903,7 @@ async function spawnecasound() {
     ecasoundPID = Number(execSync(`pidof ecasound`))
 
     console.log('ecasoundPID:', ecasoundPID)
-    common.setPriority(ecasoundPID.pid, 90)
+    common.setPriority(ecasoundPID.pid, 99)
 }
 
 socketControl.bind(0);

@@ -7,7 +7,6 @@ var localSettings = {
     source_buffer_periods: 2,
     playback_period_size: 441,
     playback_buffer_periods: 4,
-    processPriority: 80,
     setupPriority: 1,
     audioSourceType: 'spdif'
 }

@@ -6,7 +6,6 @@ var localSettings = {
     source_buffer_periods: 2,
     playback_period_size: 512,
     playback_buffer_periods: 4,
-    processPriority: 80,
     setupPriority: 3,
     audioSourceType: 'Airplay',
     volume_shairport_min: -30,
@@ -24,7 +23,7 @@ if (cmdSettingsJSON != 0) {
     settings = { ...settings, ...cmdSettingsObj }
 }
 
-common.setPriority(process.pid, settings.processPriority)
+
 
 
 
@@ -116,6 +115,9 @@ function spawnshairport() {
                     message.includes('bufferDuration/2:') || message.includes('start.sh')
                 ) {
                     captureState = 'active'
+                    common.setPriority(process.pid, 80)
+                    common.setPriority(shairport.pid, 80)
+
                     buffertoudp.sendStatusUpdatetoSink()
                     buffertoudp.sendStatusUpdatetoControl()
                 }
@@ -124,6 +126,8 @@ function spawnshairport() {
                     message.includes('stop.sh')
                 ) {
                     captureState = 'idle'
+                    common.setPriority(process.pid, -19)
+                    common.setPriority(shairport.pid, -19)
                     buffertoudp.sendStatusUpdatetoSink()
                     buffertoudp.sendStatusUpdatetoControl()
                 }
@@ -149,6 +153,7 @@ function spawnshairport() {
                 process.exit()
                 //setTimeout(spawnshairport, 2000)
             });
+            
         });
     });
 }
