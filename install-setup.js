@@ -234,7 +234,7 @@ if (!stopOnly) {
 
             execSyncPrint(`cd ${installLocation}/tmp/ && wget -q https://github.com/mikeszila/librespot/archive/dev.zip -O ./librespot.zip`)
             execSyncPrint(`cd ${installLocation}/tmp/ && unzip -o librespot.zip -d librespot-new` )
-            execSyncPrint(`cd ${installLocation}/tmp/ && cp -r librespot-new/librespot-dev librespot`)
+            execSyncPrint(`cd ${installLocation}/tmp/ && cp -v -a librespot-new/librespot-dev/. librespot`)
 
             execSyncPrint(`cd ${installLocation}/tmp/ && rm librespot.zip`)
             execSyncPrint(`cd ${installLocation}/tmp/ && rm -r librespot-new`)
@@ -254,7 +254,7 @@ if (!stopOnly) {
 
             execSyncPrint(`cd ${installLocation}/tmp/ && wget -q https://github.com/mikeszila/shairport-sync/archive/master.zip -O ./shairport-sync.zip`)
             execSyncPrint(`cd ${installLocation}/tmp/ && unzip -o shairport-sync.zip -d shairport-sync-new`)
-            execSyncPrint(`cd ${installLocation}/tmp/ && cp -r shairport-sync-new/shairport-sync-main shairport-sync`)
+            execSyncPrint(`cd ${installLocation}/tmp/ && cp -v -a shairport-sync-new/shairport-sync-main/. shairport-sync`)
             execSyncPrint(`cd ${installLocation}/tmp/ && rm -r shairport-sync-new`)
             execSyncPrint(`cd ${installLocation}/tmp/ && rm shairport-sync.zip`)
             execSyncPrint(`cd ${installLocation}/tmp/shairport-sync && autoreconf -i -f`)
