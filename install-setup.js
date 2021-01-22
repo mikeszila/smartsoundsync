@@ -112,7 +112,7 @@ if (!stopOnly) {
     if (fs.existsSync(`${installLocation}/config.js`)) {
         console.log('config exists', `${installLocation}/config.js`)
     } else {
-        execSync(`cp ${installLocation}/config_templates/config.js`)
+        execSync(`cp ${installLocation}/config_templates/config.js ${installLocation}/config.js`)
         console.log(`No config file found.  Created standard config file at ${installLocation}/config.js.  Please ensure config is correct for your setup and re-run this script.`)
     }
 
