@@ -44,4 +44,31 @@ settings.sources = [
     }
 ]
 
+
+
+
+
+
+spdifSourceExample = {
+    audioSourceType: 'SPDIF',
+    cardName: 'hw:0',
+    setupPriority: 1,
+    source_period_size: 512,
+    source_buffer_periods: 4,
+    playback_period_size: 512,
+    playback_buffer_periods: 4,
+    additional_requested_latency: 0,
+    audioSourceClients: [os.hostname()]
+}
+
+
+
+
+
+
+
+
+
+
+
 module.exports = settings
