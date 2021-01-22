@@ -1,1 +1,11 @@
+To install only:
+  wget https://raw.githubusercontent.com/mikeszila/smartsoundsync/main/install.sh -O - | sh
 
+To install as a git repository:
+  Go to https://github.com/mikeszila/smartsoundsync and fork the repository
+  git clone https://github.com/mikeszila/smartsoundsync.git
+  cd smartsoundsync
+  sudo apt install nodejs
+  sudo node install-setup.js 
+
+The first time you run the program it will complain that a config file does not exist, create a basic config file, and ask you to verify it.  Run the install again and it'll install and run.
