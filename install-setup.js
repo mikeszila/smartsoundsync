@@ -120,9 +120,9 @@ if (!stopOnly) {
 
     let dependencies = ['npm', 'ntp',]
 
-    let dependenciesSpotify = ['git', 'build-essential', 'cargo']
+    let dependenciesSpotify = ['build-essential', 'cargo']
 
-    let dependenciesshairport = ['build-essential', 'git', 'xmltoman', 'autoconf', 'automake', 'libtool', 'libdaemon-dev', 'libpopt-dev', 'avahi-daemon', 'libavahi-client-dev', 'libconfig-dev', 'libssl-dev']
+    let dependenciesshairport = ['build-essential', 'xmltoman', 'autoconf', 'automake', 'libtool', 'libdaemon-dev', 'libpopt-dev', 'avahi-daemon', 'libavahi-client-dev', 'libconfig-dev', 'libssl-dev']
 
     let dependenciessink = ['alsa-utils', 'alsa-tools', 'libasound2-plugins', 'ecasound', 'cmt', 'swh-plugins', 'ladspa-sdk', 'libasound2-dev', 'cmake']
 
@@ -230,8 +230,11 @@ if (!stopOnly) {
             console.log('compiling librespot')
             try { execSyncPrint(`rm -r ${installLocation}/tmp/librespot`) }
             catch (error) { }
-            execSyncPrint(`cd ${installLocation}/tmp/ && git clone https://github.com/mikeszila/librespot.git`)
-            execSyncPrint(`curl https://sh.rustup.rs -sSf | sh -s -- -y`)
+
+            execSyncPrint(`cd ${installLocation}/tmp/ && wget -q https://github.com/mikeszila/librespot/archive/dev.zip -O ./librespot.zip`)
+            execSyncPrint(`cd ${installLocation}/tmp/ && unzip -o librespot.zip -d librespot`)
+            execSyncPrint(`cd ${installLocation}/tmp/ && rm librespot.zip`)
+            //execSyncPrint(`curl https://sh.rustup.rs -sSf | sh -s -- -y`)
             execSyncPrint(`cd ${installLocation}/tmp/librespot && cargo build --no-default-features --release`)
             execSyncPrint(`cp ${installLocation}/tmp/librespot/target/release/librespot ${installLocation}/librespot`)
         }
@@ -244,7 +247,10 @@ if (!stopOnly) {
             console.log('compiling shairport')
             try { execSyncPrint(`rm -r ${installLocation}/tmp/shairport-sync`) }
             catch (error) { }
-            execSyncPrint(`cd ${installLocation}/tmp/ && git clone https://github.com/mikeszila/shairport-sync.git`)
+
+            execSyncPrint(`cd ${installLocation}/tmp/ && wget -q https://github.com/mikeszila/shairport-sync/archive/master.zip -O ./shairport-sync.zip`)
+            execSyncPrint(`cd ${installLocation}/tmp/ && unzip -o shairport-sync.zip -d shairport-sync`)
+            execSyncPrint(`cd ${installLocation}/tmp/ && rm shairport-sync.zip`)
             execSyncPrint(`cd ${installLocation}/tmp/shairport-sync && autoreconf -i -f`)
             execSyncPrint(`cd ${installLocation}/tmp/shairport-sync && ./configure --with-avahi --with-ssl=openssl --with-pipe`)
             execSyncPrint(`cd ${installLocation}/tmp/shairport-sync && make`)
