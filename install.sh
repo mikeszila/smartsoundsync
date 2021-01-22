@@ -39,4 +39,4 @@ wget -q https://github.com/mikeszila/smartsoundsync/archive/main.zip -O ./main.z
 unzip -o main.zip -d smartsoundsync
 rm main.zip
 cd smartsoundsync
-#node ./install-setup.js
+node ./install-setup.js
