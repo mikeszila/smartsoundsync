@@ -35,8 +35,8 @@ function installUnbound() {
 initialCheck
 installUnbound
 
-wget -q https://github.com/mikeszila/smartsoundsync/archive/main.zip -O ./smartsoundsync.zip
-unzip -o smartsoundsync.zip -d ./smartsoundsync
-rm main.zip
+wget -q https://github.com/mikeszila/smartsoundsync/archive/main.zip -O smartsoundsync.zip
+unzip -o smartsoundsync.zip
+rm smartsoundsync.zip
 echo "starting"
 cd smartsoundsync && node install-setup.js
