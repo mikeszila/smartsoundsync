@@ -12,7 +12,10 @@ socketAudio.bind(0);
 
 socketAudio.on('listening', () => {
     let address = socketAudio.address();
-    console.log(new Date().toISOString(), `socketAudio listening ${address.address}:${address.port}`);
+    
+
+    socketAudio.setSendBufferSize(180224 * 10)
+    console.log(new Date().toISOString(), `socketAudio listening ${address.address}:${address.port}`, 'buffer', String(socketAudio.getSendBufferSize()));
     setInterval(heartbeatsCheck, 1000)
     setupControl()
 });

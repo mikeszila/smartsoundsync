@@ -111,7 +111,7 @@ volume.set_volume(volumeOut)
 const outputbytesPerSample = settings.bytesPerSample * settings.outputChannels
 const sourcebytesPerSample = settings.bytesPerSample * settings.source_channels
 
-common.setPriority(process.pid, 99)
+common.setPriority(process.pid, 98)
 
 var socketControl = dgram.createSocket({ type: "udp4", reuseAddr: true });
 
@@ -184,7 +184,10 @@ var socketAudio = null
 socketAudio = dgram.createSocket({ type: "udp4", reuseAddr: true });
 
 socketAudio.on('listening', () => {
-    console.log(`server listening ${socketAudio.address().address}:${socketAudio.address().port}`);
+    
+    socketAudio.setRecvBufferSize(180224 * 10)
+
+    console.log(`server listening ${socketAudio.address().address}:${socketAudio.address().port}`, 'recvbuffer', String(socketAudio.getRecvBufferSize()));
     setInterval(audioConnectRequest, 1000)
 });
 
@@ -903,7 +906,7 @@ async function spawnecasound() {
     ecasoundPID = Number(execSync(`pidof ecasound`))
 
     console.log('ecasoundPID:', ecasoundPID)
-    common.setPriority(ecasoundPID.pid, 99)
+    common.setPriority(ecasoundPID.pid, 90)
 }
 
 socketControl.bind(0);
