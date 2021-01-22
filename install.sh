@@ -38,6 +38,5 @@ installUnbound
 wget -q https://github.com/mikeszila/smartsoundsync/archive/main.zip -O ./main.zip
 unzip -o main.zip -d smartsoundsync
 rm main.zip
-cd smartsoundsync
 echo "starting"
-node ./install-setup.js
+cd smartsoundsync && node install-setup.js
