@@ -233,7 +233,7 @@ if (!stopOnly) {
             catch (error) { }
 
             execSyncPrint(`cd ${installLocation}/tmp/ && wget -q https://github.com/mikeszila/librespot/archive/dev.zip -O ./librespot.zip`)
-            execSyncPrint(`cd ${installLocation}/tmp/ && unzip -o librespot.zip -d librespot-new`)
+            execSyncPrint(`cd ${installLocation}/tmp/ && unzip -o librespot.zip -d librespot-new` )
             execSyncPrint(`cd ${installLocation}/tmp/ && cp -r librespot-new/librespot-dev librespot`)
 
             execSyncPrint(`cd ${installLocation}/tmp/ && rm librespot.zip`)
