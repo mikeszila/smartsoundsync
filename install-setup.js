@@ -114,6 +114,7 @@ if (!stopOnly) {
     } else {
         execSync(`cp ${installLocation}/config_templates/config.js ${installLocation}/config.js`)
         console.log(`No config file found.  Created standard config file at ${installLocation}/config.js.  Please ensure config is correct for your setup and re-run this script.`)
+        process.exit()
     }
 
     let settings = require('./config.js')
