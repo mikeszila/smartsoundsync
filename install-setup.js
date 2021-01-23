@@ -268,8 +268,8 @@ if (!stopOnly) {
 
         try {execSync('which dsptoolkit')}
         catch(error) {
-            execSyncPrint(`wget https://raw.githubusercontent.com/mikeszila/smartsoundsync/main/install.sh -O - | sudo sh`)
-            //execSyncPrint(`curl https://raw.githubusercontent.com/hifiberry/hifiberry-dsp/master/install-dsptoolkit`)
+            //execSyncPrint(`wget https://raw.githubusercontent.com/hifiberry/hifiberry-dsp/master/install-dsptoolkit -O - | sudo sh`)
+            execSyncPrint(`curl https://raw.githubusercontent.com/hifiberry/hifiberry-dsp/master/install-dsptoolkit`)
         }
         let dspchecksum = String(execSync('dsptoolkit get-checksum'))
         if (dspchecksum.includes('7B03B17AD5B6B1A0E0DACB29BF31F024')) {
