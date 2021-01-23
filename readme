@@ -1,3 +1,25 @@
+Smartsoundsync is a distributed audio solution providing simple single client multiroom syncronized groups selectable through native spotify and airplay interfaces.  Smartsoundsync also provides alsa hw capture which can be used with an SPDIF capture card for TV audio.  A configurable priority system determines which source is played at each sink so source selection happens automatically.  
+
+The components which make up Smartsoundsync are modular for great flexibility in it's configuration.  An instance can be used for the left speaker and another for the right and they will remain in sync.  An instance can be installed behind a TV to capture SPDIF TV audio and transmit it to another instance running in your stereo cabinet.  An instance can run stand alone or connect to another instance configured to be a multiroom server.  
+
+Multiroom audio groups are pre-configured and setup on an instance of Smartsoundsync you determine to be the server.  These groups then show up on the native interface of spotify and airplay where they can be selected.  Individual clients may also be selected. In my home my client list looks like:
+
+Bedroom
+Kitchen
+Livingroom
+Familyroom
+Sunroom
+KitLiv
+KitFam
+KitSun
+BedKit
+KitLivSun
+KitLivFam
+KitLivFamSun
+All
+
+Any system can be the server, even one that's also an audio client.  It's best to put the server on a system that's hardwired into your network to prevent multiroom packets from having to traverse the network twice, but it's not strictly required.  
+
 To install only:
   wget https://raw.githubusercontent.com/mikeszila/smartsoundsync/main/install.sh -O - | sh
 
