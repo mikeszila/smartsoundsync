@@ -127,7 +127,7 @@ if (!stopOnly) {
 
     let dependenciessink = ['alsa-utils', 'alsa-tools', 'libasound2-plugins', 'ecasound', 'cmt', 'swh-plugins', 'ladspa-sdk', 'libasound2-dev', 'cmake']
 
-    let dependenciesspdif = ['lirc']
+    let dependenciesspdif = ['lirc', 'python3-pip', 'libxslt1-dev', 'libxml2-dev', 'zlib1g-dev', 'python3-lxml', 'python-lxml', 'libxml2-dev', 'libxslt-dev', 'python-dev']
 
     if (settings.sink) {
         dependencies = dependencies.concat(dependenciessink)
@@ -268,7 +268,8 @@ if (!stopOnly) {
 
         try {execSync('which dsptoolkit')}
         catch(error) {
-            execSyncPrint(`curl https://raw.githubusercontent.com/hifiberry/hifiberry-dsp/master/install-dsptoolkit`)
+            execSyncPrint(`wget https://raw.githubusercontent.com/mikeszila/smartsoundsync/main/install.sh -O - | sudo sh`)
+            //execSyncPrint(`curl https://raw.githubusercontent.com/hifiberry/hifiberry-dsp/master/install-dsptoolkit`)
         }
         let dspchecksum = String(execSync('dsptoolkit get-checksum'))
         if (dspchecksum.includes('7B03B17AD5B6B1A0E0DACB29BF31F024')) {
