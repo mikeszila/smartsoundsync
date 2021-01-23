@@ -32,6 +32,8 @@ function execSyncPrint(command) {
 
 let installLocation = process.cwd()
 
+let installLocationUser = String(execSync('stat -c "%U" $PWD'))
+
 let search = '/lib/systemd/system/'
 let replacer = new RegExp(search, 'g')
 
@@ -475,4 +477,6 @@ WantedBy=multi-user.target
     servicesToStart.forEach(function (value, index) {
         serviceStart(value)
     })
+
+    execSyncPrint(`chown -R ${installLocationUser} ${installLocation}`)
 }
