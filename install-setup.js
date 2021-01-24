@@ -146,7 +146,7 @@ if (!stopOnly) {
     npmDependencies.forEach(function (value, index) {
         let installed = String(execSync(`npm list --depth=0 --loglevel=error`))
         if (!installed.includes(value)) {
-            try { execSyncPrint(`npm install ${value} -y`) }
+            try { execSyncPrint(`npm install -g ${value} -y`) }
             catch (error) { console.log('Error: could not install', value, error) }
         }
     })
