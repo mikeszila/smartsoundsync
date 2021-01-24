@@ -75,7 +75,7 @@ function tryExec(commands) {
 }
 
 function speedup() {
-    commands = [
+    let commands = [
         'systemctl stop triggerhappy',
         'systemctl stop dbus',
         'killall console-kit-daemon',

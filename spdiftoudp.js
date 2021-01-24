@@ -31,7 +31,7 @@ global.hwtobuffer = require('./hwtobuffer.js')
 global.buffertoudp = require('./buffertoudp.js')
 
 function dspSet() {
-    commands = [
+    let commands = [
         'dsptoolkit set-volume 0%',
         'dsptoolkit set-limit 0db',
 
