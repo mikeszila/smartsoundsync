@@ -34,7 +34,6 @@ function installStuff() {
 initialCheck
 installStuff
 
-echo $PWD
 wget -q https://github.com/mikeszila/smartsoundsync/archive/main.zip -O /usr/local/src/main.zip
 unzip -o /usr/local/src/main.zip -d /usr/local/src/smartsoundsync-new
 cp -v -a /usr/local/src/smartsoundsync-new/smartsoundsync-main/. /usr/local/src/smartsoundsync/

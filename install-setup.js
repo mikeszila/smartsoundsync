@@ -23,7 +23,7 @@ process.argv.forEach(function (value, index) {
 
 })
 
-let configFilePath = '/user/local/etc/smartsoundsync.conf'
+let configFilePath = '/usr/local/etc/smartsoundsync.conf'
 
 
 function execSyncPrint(command) {
