@@ -13,15 +13,18 @@ const { exec, spawn, execSync } = require('child_process');
 //remove existing services
 
 let stopOnly = false
+let fullInstall = false
 
 process.argv.forEach(function (value, index) {
     console.log(value)
 
     if (value == '--stop') { stopOnly = true }
+    if (value == '--install') { fullInstall = true }
 
 })
 
-let commandsToExecute = []
+let configFilePath = '/user/local/etc/smartsoundsync.conf'
+
 
 function execSyncPrint(command) {
     console.log(command)
@@ -52,36 +55,6 @@ existingServices.forEach(function (value, index) {
     }
 })
 
-search = `${installLocation}/`
-replacer = new RegExp(search, 'g')
-
-let existingAudioFifos = String(execSync(`find ${installLocation} -name 'audiofifo*'`))
-existingAudioFifos = existingAudioFifos.replace(replacer, '')
-existingAudioFifos = existingAudioFifos.split(/\r?\n/)
-
-existingAudioFifos.forEach(function (value, index) {
-    if (value.length > 0) {
-        try { execSyncPrint(`rm ${installLocation}/${value}`) }
-        catch (error) { console.log('Error: could not remove', value, error) }
-    }
-})
-
-search = `${installLocation}/`
-replacer = new RegExp(search, 'g')
-
-let existingShairportConfs = String(execSync(`find ${installLocation} -name 'shairport-sync-*.conf'`))
-existingShairportConfs = existingShairportConfs.replace(replacer, '')
-existingShairportConfs = existingShairportConfs.split(/\r?\n/)
-
-existingShairportConfs.forEach(function (value, index) {
-
-    if (value.length > 0 && !value.includes('shairport-sync/scripts') && !value.includes('template')) {
-        try { execSyncPrint(`rm ${installLocation}/${value}`) }
-        catch (error) { console.log('Error: could not remove', value, error) }
-    }
-
-})
-
 function writeServiceFile(serviceName, serviceTemplate) {
     console.log(`writing service file ${serviceName}`)
     fs.writeFileSync(`${installLocation}/${serviceName}`, serviceTemplate, 'utf8')
@@ -110,16 +83,15 @@ let hasAirplay = false
 let hasSPDIF = false
 
 if (!stopOnly) {
-
-    if (fs.existsSync(`${installLocation}/config.js`)) {
-        console.log('config exists', `${installLocation}/config.js`)
+    if (fs.existsSync(configFilePath)) {
+        console.log('config exists', configFilePath)
     } else {
-        execSync(`cp ${installLocation}/config_templates/config.js ${installLocation}/config.js`)
-        console.log(`No config file found.  Created standard config file at ${installLocation}/config.js.  Please ensure config is correct for your setup and re-run this script.`)
+        execSync(`cp ${installLocation}/config_examples/standard.conf ${configFilePath}`)
+        console.log(`No config file found.  Created standard config file at ${configFilePath}.  Please ensure config is correct for your setup and re-run this script.`)
         process.exit()
     }
 
-    let settings = require('./config.js')
+    let settings = require(configFilePath)
 
     let dependencies = ['npm', 'ntp',]
 
@@ -184,11 +156,11 @@ if (!stopOnly) {
 
     if (settings.ntpServerHostname && settings.ntpServerHostname != os.hostname()) {
         console.log('writing ntp client config')
-        ntpConfigTemplate = fs.readFileSync('./config_templates/ntp-client-template.conf', 'utf8')
+        ntpConfigTemplate = fs.readFileSync('./templates/ntp-client-template.conf', 'utf8')
         ntpConfigTemplate = ntpConfigTemplate.replaceAll('settings.ntpServerHostname', settings.ntpServerHostname)
     } else {
         console.log('writing ntp server config')
-        ntpConfigTemplate = fs.readFileSync('./config_templates/ntp-server-template.conf', 'utf8')
+        ntpConfigTemplate = fs.readFileSync('./templates/ntp-server-template.conf', 'utf8')
     }
 
     fs.writeFileSync(`/etc/ntp.conf`, ntpConfigTemplate, 'utf8')

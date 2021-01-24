@@ -35,13 +35,12 @@ initialCheck
 installStuff
 
 echo $PWD
-wget -q https://github.com/mikeszila/smartsoundsync/archive/main.zip -O ./main.zip
-unzip -o main.zip -d smartsoundsync-new
-cp -v -a smartsoundsync-new/smartsoundsync-main/. smartsoundsync/
-rm main.zip
-rm -r smartsoundsync-new
-cd smartsoundsync
-rm install.sh  #remove this script from the local project directory so someone doesn't get confused, run it, and install the application again inside itself.  
-node install-setup.js
+wget -q https://github.com/mikeszila/smartsoundsync/archive/main.zip -O /usr/local/src/main.zip
+unzip -o /usr/local/src/main.zip -d /usr/local/src/smartsoundsync-new
+cp -v -a /usr/local/src/smartsoundsync-new/smartsoundsync-main/. /usr/local/src/smartsoundsync/
+rm /usr/local/src/main.zip
+rm -r /usr/local/src/smartsoundsync-new
+rm /usr/local/src/smartsoundsync/install.sh  #remove this script from the local project directory so someone doesn't get confused, run it, and install the application again inside itself.  
+node /usr/local/src/smartsoundsync/install-setup.js
 
 
