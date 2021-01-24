@@ -39,4 +39,6 @@ Installation:
   
 Configuration:
 
+Configuration examples are provided in the config_examples folder. 
+
 Sink names are based on the system's hostname by default but is configurable.  I've been modifying /etc/hostname and /etc/hosts directly to be able to configure hostnames with capital letters with no ill effects. 
