@@ -435,5 +435,5 @@ WantedBy=multi-user.target
         serviceStart(value)
     })
 
-    execSyncPrint(`chown -R ${installLocationUser} ${installLocation}`)
+    //execSyncPrint(`chown -R ${installLocationUser} ${installLocation}`)
 }
