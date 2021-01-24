@@ -43,15 +43,22 @@ global.captureState = 'idle'
 
 global.ntpCorrection = 1
 
+function execSyncPrint(command) {
+    console.log(command)
+    let returnData = execSync(command, { stdio: 'inherit' })
+    //console.log(String(returnData))
+    return returnData
+}
+
 function readNTP() {
     try {
 
         fs.statSync('/var/lib/ntp/ntp.drift')
-    let data = Number(execSync(`cat /var/lib/ntp/ntp.drift`))
-    //console.log(Number(data))
+        let data = Number(execSync(`cat /var/lib/ntp/ntp.drift`))
+        //console.log(Number(data))
 
-    ntpCorrection = 1 + (1 / (1000000 / Number(data)))
-    //console.log(ntpCorrection)
+        ntpCorrection = 1 + (1 / (1000000 / Number(data)))
+        //console.log(ntpCorrection)
     }
     catch (error) {
         ntpCorrection = 1
@@ -59,7 +66,34 @@ function readNTP() {
 }
 
 setInterval(readNTP, 1000)
-execSync('./speedup.sh')
+
+function tryExec(commands) {
+    try { execSyncPrint(commands) }
+    catch (error) {
+        console.log('could not execute', commands)
+    }
+}
+
+function speedup() {
+    commands = [
+        'systemctl stop triggerhappy',
+        'systemctl stop dbus',
+        'killall console-kit-daemon',
+        'killall polkitd',
+        'sudo mount -o remount,size=128M /dev/shm',
+        'killall gvfsd',
+        'killall dbus-daemon',
+        'killall dbus-launch',
+        'echo -n performance | tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor',
+        '/sbin/sysctl -w vm.swappiness=10'
+    ]
+
+    commands.foreach(function (value, index) {
+        tryExec(value)
+    })
+}
+
+speedup()
 
 function setPriority(pid, priority) {
     exec(`chrt -p ${priority} ${pid}`, (err, stdout, stderr) => {
@@ -86,5 +120,7 @@ function setPriority(pid, priority) {
 }
 
 module.exports = {
-    setPriority
+    setPriority,
+    execSyncPrint,
+    tryExec
 }

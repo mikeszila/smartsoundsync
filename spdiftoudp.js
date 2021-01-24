@@ -30,25 +30,32 @@ console.log(settings)
 global.hwtobuffer = require('./hwtobuffer.js')
 global.buffertoudp = require('./buffertoudp.js')
 
-function spawndspset() {
-    console.log(new Date().toISOString(), 'Writing DSP settings')
-    dspset = spawn(`${process.cwd()}/dspsetup.sh`);
+function dspSet() {
+    commands = [
+        'dsptoolkit set-volume 0%',
+        'dsptoolkit set-limit 0db',
 
-    dspset.stdout.on('data', (data) => {
-        console.log(new Date().toISOString(), 'dspset', 'stdout', `${data}`)
-    });
+        'dsptoolkit write-mem 0xF106 0x0003',
+        'dsptoolkit write-mem 0xF146 0x0004',
+        'dsptoolkit write-mem 0xF107 0x0000',
+        'dsptoolkit write-mem 0xF195 0x0000',
+        'dsptoolkit write-mem 0xF194 0x0033',
+        'dsptoolkit write-mem 0xF21C 0x6C40',
 
-    dspset.stderr.on('data', (data) => {
-        console.log(new Date().toISOString(), 'dspset', 'stderr', `${data}`)
-    });
+        'dsptoolkit write-reg 0xF106 0x0003',
+        'dsptoolkit write-reg 0xF146 0x0004',
+        'dsptoolkit write-reg 0xF107 0x0000',
+        'dsptoolkit write-reg 0xF195 0x0000',
+        'dsptoolkit write-reg 0xF194 0x0033',
+        'dsptoolkit write-reg 0xF21C 0x6C40'
+    ]
 
-    dspset.on('close', (code) => {
-    });
+    commands.foreach(function (value, index) {
+        common.tryExec(value)
+    })
 }
 
-spawndspset()
-
-
+dspSet()
 
 function spawnremote() {
     console.log(new Date().toISOString(), 'started remote')
