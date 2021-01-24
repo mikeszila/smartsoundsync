@@ -44,8 +44,10 @@ global.captureState = 'idle'
 global.ntpCorrection = 1
 
 function execSyncPrint(command) {
+    let returnData
     console.log(command)
-    let returnData = execSync(command, { stdio: 'inherit' })
+    try {returnData = execSync(command, { stdio: 'inherit' })}
+    catch(error) {console.log('could not execute', command)}
     //console.log(String(returnData))
     return returnData
 }
