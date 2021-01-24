@@ -68,10 +68,11 @@ function readNTP() {
 setInterval(readNTP, 1000)
 
 function tryExec(commands) {
-    try { execSyncPrint(commands) }
-    catch (error) {
-        console.log('could not execute', commands)
-    }
+    //try { execSyncPrint(commands) }
+    //catch (error) {
+    //    console.log('could not execute', commands)
+    //}
+    execSyncPrint(commands)
 }
 
 function speedup() {
