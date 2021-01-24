@@ -41,7 +41,7 @@ function spawnpcmRecord() {
     //console.log(settings)
 
     //console.log(settings.cardName)
-    pcmRecord = spawn('stdbuf', ['-i0', '-o0', '-e0', './pcmrecord', `${settings.cardName}`, `${settings.source_rate}`, `${settings.source_channels}`, `${settings.source_period_size}`, `${calc_buffer_size}`]);
+    pcmRecord = spawn('stdbuf', ['-i0', '-o0', '-e0', '/usr/loca/bin/pcmrecord', `${settings.cardName}`, `${settings.source_rate}`, `${settings.source_channels}`, `${settings.source_period_size}`, `${calc_buffer_size}`]);
     console.log(new Date().toISOString(), 'pcmRecord started')
     pcmRecord.stdout.on('data', (chunk2) => {
         testStr = 'END\n'

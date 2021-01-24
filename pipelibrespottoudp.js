@@ -3,8 +3,6 @@ common = require('./common.js')
 buffertoudp = require('./buffertoudp.js')
 
 
-
-
 let os = require('os')
 
 var localSettings = {
@@ -51,16 +49,7 @@ if (source_buffer_time > playback_buffer_time) {
 
 let highVolumeLimit = true
 
-console.log(process.cwd())
-
-console.log('hello')
-
-
-let testPath = process.cwd()
-
-console.log('workingdir', testPath)
-
-let cachefolder = testPath.concat('/librespotcache')
+let cachefolder = `/tmp/librespotcache`
 
 if (fs.existsSync(cachefolder)) {
     console.log('dir exists', cachefolder)
@@ -69,16 +58,7 @@ if (fs.existsSync(cachefolder)) {
     execSync(`mkdir ${cachefolder}`)
 }
 
-let tmpfolder = testPath.concat('/tmp')
-
-if (fs.existsSync(tmpfolder)) {
-    console.log('dir exists', tmpfolder)
-} else {
-    console.log('dir does not exist', tmpfolder)
-    execSync(`mkdir ${tmpfolder}`)
-}
-
-let audiofifopath = testPath.concat('/tmp/audiofifo_librespot_', settings.audioSourceDisplayName)
+let audiofifopath = `/tmp/audiofifo_librespot_${settings.audioSourceDisplayName}`
 
 if (fs.existsSync(audiofifopath)) {
     console.log('audiofifo exists', audiofifopath)
@@ -90,7 +70,7 @@ if (fs.existsSync(audiofifopath)) {
 function spawnlibrespot() {
 
     console.log('starting librespot')
-    librespot = spawn(`${process.cwd()}/librespot`, ['-v', '-n', settings.audioSourceDisplayName, '-b', '320', '-c', `${cachefolder}`, '--enable-volume-normalisation', '--backend', 'pipe', '--device', `${audiofifopath}`]);
+    librespot = spawn(`/usr/local/bin/librespot`, ['-v', '-n', settings.audioSourceDisplayName, '-b', '320', '-c', `${cachefolder}`, '--enable-volume-normalisation', '--backend', 'pipe', '--device', `${audiofifopath}`]);
     librespot.stdout.on('data', (data) => {
         console.log('librespot', String(data))
     });

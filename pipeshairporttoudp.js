@@ -23,11 +23,6 @@ if (cmdSettingsJSON != 0) {
     settings = { ...settings, ...cmdSettingsObj }
 }
 
-
-
-
-
-
 global.buffertoudp = require('./buffertoudp.js')
 
 global.reported_exact_rate = settings.source_rate
@@ -38,9 +33,7 @@ global.reported_period_time = (1 / settings.source_rate) * 1000 * settings.sourc
 global.source_buffer_time = settings.source_buffer_periods * reported_period_time
 global.playback_period_time = (1 / settings.source_rate) * 1000 * settings.playback_period_size
 global.playback_buffer_size = settings.playback_period_size * settings.playback_buffer_periods
-global.playback_buffer_time = playback_period_time * settings.playback_buffer_periods 
-
-
+global.playback_buffer_time = playback_period_time * settings.playback_buffer_periods
 
 if (source_buffer_time > playback_buffer_time) {
     global.desired_playback_delay = source_buffer_time + 50
@@ -50,29 +43,12 @@ if (source_buffer_time > playback_buffer_time) {
     console.log('playback buffer time', desired_playback_delay)
 }
 
-
 function generateRandomPort() {
     return Math.floor((Math.random() * 28231) + 32768)
 }
 
-let testPath = process.cwd()
-
-let audiofifo = '/audiofifo_shairport_'
-audiofifo = audiofifo.concat(settings.audioSourceDisplayName)
-
-let audiofifopath = testPath.concat('/tmp', audiofifo)
-let configpath = testPath.concat('/tmp/shairport-sync-', settings.audioSourceDisplayName, '.conf')
-
-let tmpfolder = testPath.concat('/tmp')
-
-if (fs.existsSync(tmpfolder)) {
-    console.log('dir exists', tmpfolder)
-} else {
-    console.log('dir does not exist', tmpfolder)
-    execSync(`mkdir ${tmpfolder}`)
-}
-
-
+let audiofifopath = `/tmp/audiofifo_shairport_${settings.audioSourceDisplayName}`
+let configpath = `/tmp/shairport-sync-${settings.audioSourceDisplayName}.conf`
 
 if (fs.existsSync(audiofifopath)) {
     console.log('audiofifo exists', audiofifopath)
@@ -81,10 +57,9 @@ if (fs.existsSync(audiofifopath)) {
     execSync(`mkfifo ${audiofifopath}`)
 }
 
-
 function spawnshairport() {
 
-    fs.readFile('./shairport-sync-template.conf', 'utf8', function (err, data) {
+    fs.readFile('./templates/shairport-sync-template.conf', 'utf8', function (err, data) {
         if (err) {
             return console.log(err);
         }
@@ -101,7 +76,7 @@ function spawnshairport() {
         fs.writeFile(configpath, result, 'utf8', function (err) {
             if (err) return console.log(err);
 
-            shairport = spawn(`./shairport-sync`, ['-a', settings.audioSourceDisplayName, '-u', '-c', `${configpath}`]);
+            shairport = spawn(`/usr/local/bin/shairport-sync`, ['-a', settings.audioSourceDisplayName, '-u', '-c', `${configpath}`]);
             shairport.stdout.on('data', (data) => {
                 console.log('shairport', String(data))
             });

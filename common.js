@@ -17,7 +17,7 @@ global.messageTypeJSON = Buffer.from(pad('JSON', 10, ' '))
 global.messageHostname = Buffer.from(pad(hostname, 20, ' '))
 
 
-global.settings = {
+global.settings = {  //basic settings for running outside systemd and other common settings. 
     audioSourceDisplayName: hostname,
     audioSourceClients: [hostname],
     ControllerHostname: hostname,
@@ -33,7 +33,6 @@ global.settings = {
     cardName: 'hw:0',
     bytesPerSample: 2,
     verbose: false,
-    username: 'michael',
     sourceSampleAdjust: 0
 }
 
@@ -85,8 +84,6 @@ function setPriority(pid, priority) {
         });
     });
 }
-
-
 
 module.exports = {
     setPriority

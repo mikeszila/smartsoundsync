@@ -67,15 +67,6 @@ var localSettings = {
 
 settings = { ...settings, ...localSettings }
 
-const loadData = (path) => {
-    try {
-        return fs.readFileSync(path, 'utf8')
-    } catch (err) {
-        console.error(err)
-        return false
-    }
-}
-
 var cmdlineSTR = String(process.argv)
 var cmdSettingsJSON = cmdlineSTR.slice(cmdlineSTR.lastIndexOf('{'), cmdlineSTR.lastIndexOf('}') + 1)
 
@@ -84,18 +75,6 @@ if (cmdSettingsJSON != 0) {
     settings = { ...settings, ...cmdSettingsObj }
 }
 const volume = require(`./volume.js`);
-
-//let audiosettingsfile = `/home/${settings.username}` //os.homedir()  
-
-//audiosettingsfile = audiosettingsfile.concat('/audiosettings.json')
-
-//console.log(audiosettingsfile)
-
-//var usersettings = JSON.parse(loadData(audiosettingsfile))
-
-//if (usersettings) {
-//    settings = { ...settings, ...usersettings }
-//}
 
 if (!settings.ecasound) {
     if (settings.mono) {
@@ -489,7 +468,7 @@ async function spawnaplay() {
 console.log(process.cwd(), '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11111111')
 
 
-    let teststr = `stdbuf -i0 -o0 -e0 ./pcm ${settings.cardName} ${sourceObj.reported_exact_rate} ${settings.outputChannels} ${sourceObj.playback_period_size} ${sourceObj.playback_buffer_size}`
+    let teststr = `stdbuf -i0 -o0 -e0 /usr/local/bin/pcm ${settings.cardName} ${sourceObj.reported_exact_rate} ${settings.outputChannels} ${sourceObj.playback_period_size} ${sourceObj.playback_buffer_size}`
 
     aplay = spawn("/bin/sh", ["-c", teststr])
 
