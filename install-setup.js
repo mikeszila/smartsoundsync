@@ -32,7 +32,15 @@ function execSyncPrint(command) {
 
 let installLocation = process.cwd()
 
+
+
 let installLocationUser = String(execSync('stat -c "%U" $PWD'))
+installLocationUser = installLocationUser.replace(/(\r\n|\n|\r)/gm, "");
+
+console.log(installLocationUser)
+console.log(installLocationUser.length)
+
+
 let configFilePath = '/usr/local/etc/smartsoundsync.conf'
 let binLocation = '/usr/local/bin/' 
 
