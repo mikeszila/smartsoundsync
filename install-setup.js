@@ -86,6 +86,7 @@ if (!stopOnly) {
         console.log('config exists', configFilePath)
     } else {
         execSync(`cp ${installLocation}/config_examples/standard.conf ${configFilePath}`)
+        execSyncPrint(`chown -R ${installLocationUser} ${configFilePath}`)
         console.log(`No config file found.  Created standard config file at ${configFilePath}.  Please ensure config is correct for your setup and re-run this script.`)
         process.exit()
     }
@@ -434,6 +435,4 @@ WantedBy=multi-user.target
     servicesToStart.forEach(function (value, index) {
         serviceStart(value)
     })
-
-    //execSyncPrint(`chown -R ${installLocationUser} ${installLocation}`)
 }
