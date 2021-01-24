@@ -107,7 +107,7 @@ function spawnpcmRecord() {
 
             let sendTime = htstamp - (delay * sampleTimeMS) + source_buffer_time
 
-            console.log(audioData.length / 4, 'read', read, 'sampleIndex', sampleIndex, 'triggerhtstamp', triggerhtstamp, 'sendTime', sendTime, 'diff', sendTime - sendTimeLast, 'avail', avail, 'delay', delay, 'state', state)
+            //console.log(audioData.length / 4, 'read', read, 'sampleIndex', sampleIndex, 'triggerhtstamp', triggerhtstamp, 'sendTime', sendTime, 'diff', sendTime - sendTimeLast, 'avail', avail, 'delay', delay, 'state', state)
 
             let volumeLeft = audioData.readInt16LE(0)
             let volumeRight = audioData.readInt16LE(2)
