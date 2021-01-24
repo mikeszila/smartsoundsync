@@ -70,6 +70,8 @@ if (fs.existsSync(audiofifopath)) {
 function spawnlibrespot() {
 
     console.log('starting librespot')
+    execSync(` rm ${cachefolder}/credentials.json`)
+
     librespot = spawn(`/usr/local/bin/librespot`, ['-v', '-n', settings.audioSourceDisplayName, '-b', '320', '-c', `${cachefolder}`, '--enable-volume-normalisation', '--backend', 'pipe', '--device', `${audiofifopath}`]);
     librespot.stdout.on('data', (data) => {
         console.log('librespot', String(data))
