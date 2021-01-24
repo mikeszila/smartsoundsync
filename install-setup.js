@@ -33,7 +33,7 @@ let installLocation = process.cwd()
 let installLocationUser = String(execSync('stat -c "%U" $PWD'))
 installLocationUser = installLocationUser.replace(/(\r\n|\n|\r)/gm, "");
 
-let configFilePath = '/usr/local/etc/smartsoundsync.conf'
+let configFilePath = '/usr/local/etc/smartsoundsyncconf.js'
 let binLocation = '/usr/local/bin/' 
 
 let search = '/lib/systemd/system/'
