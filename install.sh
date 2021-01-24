@@ -41,6 +41,6 @@ cp -v -a /usr/local/src/smartsoundsync-new/smartsoundsync-main/. /usr/local/src/
 rm /usr/local/src/main.zip
 rm -r /usr/local/src/smartsoundsync-new
 rm /usr/local/src/smartsoundsync/install.sh  #remove this script from the local project directory so someone doesn't get confused, run it, and install the application again inside itself.  
-node /usr/local/src/smartsoundsync/install-setup.js
+cd /usr/local/src/smartsoundsync/ && node install-setup.js
 
 
