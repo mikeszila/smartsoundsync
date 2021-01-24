@@ -211,7 +211,7 @@ if (!stopOnly) {
     }
 
     if (hasAirplay) {
-        if (fs.existsSync(`${installLocation}/shairport-sync`)) {
+        if (fs.existsSync(`/usr/local/bin/shairport-sync`)) {
             console.log('shairport exists, skipping')
         } else {
             console.log('compiling shairport')
