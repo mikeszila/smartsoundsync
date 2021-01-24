@@ -13,17 +13,14 @@ const { exec, spawn, execSync } = require('child_process');
 //remove existing services
 
 let stopOnly = false
-let fullInstall = false
 
 process.argv.forEach(function (value, index) {
     console.log(value)
 
     if (value == '--stop') { stopOnly = true }
-    if (value == '--install') { fullInstall = true }
 
 })
 
-let configFilePath = '/usr/local/etc/smartsoundsync.conf'
 
 
 function execSyncPrint(command) {
@@ -36,6 +33,8 @@ function execSyncPrint(command) {
 let installLocation = process.cwd()
 
 let installLocationUser = String(execSync('stat -c "%U" $PWD'))
+let configFilePath = '/usr/local/etc/smartsoundsync.conf'
+let binLocation = '/usr/local/bin/' 
 
 let search = '/lib/systemd/system/'
 let replacer = new RegExp(search, 'g')
@@ -167,54 +166,47 @@ if (!stopOnly) {
 
     execSyncPrint(`systemctl start ntp`)
 
-    if (fs.existsSync(`${installLocation}/tmp`)) {
-        console.log('dir exists', `${installLocation}/tmp`)
-    } else {
-        console.log('dir does not exist', `${installLocation}/tmp`)
-        execSync(`mkdir ${installLocation}/tmp`)
-    }
-
     if (settings.sink) {
         if (fs.existsSync(`${installLocation}/pcm`)) {
             console.log('pcm exists, skipping')
         } else {
-            execSyncPrint(`gcc pcmblock.c -o pcm -lasound`)
+            execSyncPrint(`gcc pcmblock.c -o /usr/local/bin/pcm -lasound`)
         }
 
         if (fs.existsSync(`${installLocation}/pcmrecord`)) {
             console.log('pcmrecord exists, skipping')
         } else {
-            execSyncPrint(`gcc pcmrecord.c -o pcmrecord -lasound`)
+            execSyncPrint(`gcc pcmrecord.c -o /usr/local/bin/pcmrecord -lasound`)
         }
 
         if (fs.existsSync(`/usr/local/lib/ladspa/RTlowshelf.so`)) {
             console.log('rtaylor filters exist, skipping')
         } else {
-            execSyncPrint(`wget -q https://faculty.tru.ca/rtaylor/rt-plugins/rt-plugins-0.0.6.tar.gz -O ${installLocation}/tmp/rt-plugins-0.0.6.tar.gz `)
-            execSyncPrint(`cd ${installLocation}/tmp/ && tar xfz rt-plugins-0.0.6.tar.gz`)
-            execSyncPrint(`cd ${installLocation}/tmp/rt-plugins-0.0.6/build && cmake ..`)
-            execSyncPrint(`cd ${installLocation}/tmp/rt-plugins-0.0.6/build && make `)
-            execSyncPrint(`cd ${installLocation}/tmp/rt-plugins-0.0.6/build && make install `)
+            execSyncPrint(`wget -q https://faculty.tru.ca/rtaylor/rt-plugins/rt-plugins-0.0.6.tar.gz -O /tmp/rt-plugins-0.0.6.tar.gz `)
+            execSyncPrint(`cd /tmp/ && tar xfz rt-plugins-0.0.6.tar.gz`)
+            execSyncPrint(`cd /tmp/rt-plugins-0.0.6/build && cmake ..`)
+            execSyncPrint(`cd /tmp/rt-plugins-0.0.6/build && make `)
+            execSyncPrint(`cd /tmp/rt-plugins-0.0.6/build && make install `)
         }
     }
 
     if (hasSpotify) {
-        if (fs.existsSync(`${installLocation}/librespot`)) {
+        if (fs.existsSync(`${binLocation}/librespot`)) {
             console.log('librespot exists, skipping')
         } else {
             console.log('compiling librespot')
-            try { execSyncPrint(`rm -r ${installLocation}/tmp/librespot`) }
+            try { execSyncPrint(`rm -r /tmp/librespot`) }
             catch (error) { }
 
-            execSyncPrint(`cd ${installLocation}/tmp/ && wget -q https://github.com/mikeszila/librespot/archive/dev.zip -O ./librespot.zip`)
-            execSyncPrint(`cd ${installLocation}/tmp/ && unzip -o librespot.zip -d librespot-new` )
-            execSyncPrint(`cd ${installLocation}/tmp/ && cp -v -a librespot-new/librespot-dev/. librespot`)
+            execSyncPrint(`cd /tmp/ && wget -q https://github.com/mikeszila/librespot/archive/dev.zip -O ./librespot.zip`)
+            execSyncPrint(`cd /tmp/ && unzip -o librespot.zip -d librespot-new` )
+            execSyncPrint(`cd /tmp/ && cp -v -a librespot-new/librespot-dev/. librespot`)
 
-            execSyncPrint(`cd ${installLocation}/tmp/ && rm librespot.zip`)
-            execSyncPrint(`cd ${installLocation}/tmp/ && rm -r librespot-new`)
+            execSyncPrint(`cd /tmp/ && rm librespot.zip`)
+            execSyncPrint(`cd /tmp/ && rm -r librespot-new`)
             //execSyncPrint(`curl https://sh.rustup.rs -sSf | sh -s -- -y`)
-            execSyncPrint(`cd ${installLocation}/tmp/librespot && cargo build --no-default-features --release`)
-            execSyncPrint(`cp ${installLocation}/tmp/librespot/target/release/librespot ${installLocation}/librespot`)
+            execSyncPrint(`cd /tmp/librespot && cargo build --no-default-features --release`)
+            execSyncPrint(`cp /tmp/librespot/target/release/librespot ${binLocation}/librespot`)
         }
     }
 
@@ -223,18 +215,18 @@ if (!stopOnly) {
             console.log('shairport exists, skipping')
         } else {
             console.log('compiling shairport')
-            try { execSyncPrint(`rm -r ${installLocation}/tmp/shairport-sync`) }
+            try { execSyncPrint(`rm -r /tmp/shairport-sync`) }
             catch (error) { }
 
-            execSyncPrint(`cd ${installLocation}/tmp/ && wget -q https://github.com/mikeszila/shairport-sync/archive/master.zip -O ./shairport-sync.zip`)
-            execSyncPrint(`cd ${installLocation}/tmp/ && unzip -o shairport-sync.zip -d shairport-sync-new`)
-            execSyncPrint(`cd ${installLocation}/tmp/ && cp -v -a shairport-sync-new/shairport-sync-master/. shairport-sync`)
-            execSyncPrint(`cd ${installLocation}/tmp/ && rm -r shairport-sync-new`)
-            execSyncPrint(`cd ${installLocation}/tmp/ && rm shairport-sync.zip`)
-            execSyncPrint(`cd ${installLocation}/tmp/shairport-sync && autoreconf -i -f`)
-            execSyncPrint(`cd ${installLocation}/tmp/shairport-sync && ./configure --with-avahi --with-ssl=openssl --with-pipe`)
-            execSyncPrint(`cd ${installLocation}/tmp/shairport-sync && make`)
-            execSyncPrint(`cp ${installLocation}/tmp/shairport-sync/shairport-sync ${installLocation}/shairport-sync`)
+            execSyncPrint(`cd /tmp/ && wget -q https://github.com/mikeszila/shairport-sync/archive/master.zip -O ./shairport-sync.zip`)
+            execSyncPrint(`cd /tmp/ && unzip -o shairport-sync.zip -d shairport-sync-new`)
+            execSyncPrint(`cd /tmp/ && cp -v -a shairport-sync-new/shairport-sync-master/. shairport-sync`)
+            execSyncPrint(`cd /tmp/ && rm -r shairport-sync-new`)
+            execSyncPrint(`cd /tmp/ && rm shairport-sync.zip`)
+            execSyncPrint(`cd /tmp/shairport-sync && autoreconf -i -f`)
+            execSyncPrint(`cd /tmp/shairport-sync && ./configure --with-avahi --with-ssl=openssl --with-pipe`)
+            execSyncPrint(`cd /tmp/shairport-sync && make`)
+            execSyncPrint(`cp /tmp/shairport-sync/shairport-sync ${binLocation}/shairport-sync`)
         }
     }
 
@@ -243,14 +235,7 @@ if (!stopOnly) {
         try {execSync('which dsptoolkit')}
         catch(error) {
             execSyncPrint(`wget https://raw.githubusercontent.com/hifiberry/hifiberry-dsp/master/install-dsptoolkit -O - | sh`)
-            //execSyncPrint(`curl https://raw.githubusercontent.com/hifiberry/hifiberry-dsp/master/install-dsptoolkit`)
-        
-            //execSyncPrint(`pip3 install --upgrade hifiberrydsp`)
-        
-        
         }
-
-
         
         let dspchecksum = String(execSync('dsptoolkit get-checksum'))
         if (dspchecksum.includes('7B03B17AD5B6B1A0E0DACB29BF31F024')) {
