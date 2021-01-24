@@ -88,7 +88,7 @@ function speedup() {
         '/sbin/sysctl -w vm.swappiness=10'
     ]
 
-    commands.foreach(function (value, index) {
+    commands.forEach(function (value, index) {
         tryExec(value)
     })
 }

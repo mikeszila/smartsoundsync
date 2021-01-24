@@ -50,7 +50,7 @@ function dspSet() {
         'dsptoolkit write-reg 0xF21C 0x6C40'
     ]
 
-    commands.foreach(function (value, index) {
+    commands.forEach(function (value, index) {
         common.tryExec(value)
     })
 }
