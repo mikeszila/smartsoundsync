@@ -5,10 +5,16 @@ var child;
 
 
 //alsaVolumeControlName: 'DSPVolume',  //the name of the alsa volume control to adjust volume of your speakers.  look in alsamixer for the name. 
-  //  alsaVolumeControlUnit: '',      // hopefully your volume control supports decibels.  If not you'll get an error.  Set this to empty string and find the min and max values for your volume control and enter them below. User amixer -c "card number here" to find these values.   
-    //volumeOutMax: 255,  //This is the value sent to your volume control at max volume.  If your card supports db leave this alone.  
-    //volumeOutMin: 0, 
+//  alsaVolumeControlUnit: '',      // hopefully your volume control supports decibels.  If not you'll get an error.  Set this to empty string and find the min and max values for your volume control and enter them below. User amixer -c "card number here" to find these values.   
+//volumeOutMax: 255,  //This is the value sent to your volume control at max volume.  If your card supports db leave this alone.  
+//volumeOutMin: 0, 
 
+
+if (settings.soundCardSupportsDecibels) {
+  settings.alsaVolumeControlUnit = 'dB'
+  settings.volumeOutMin = -60
+  settings.volumeOutMax = 0
+}
 
 
 var amixer

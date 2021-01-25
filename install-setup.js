@@ -196,7 +196,7 @@ if (!stopOnly) {
             console.log('librespot exists, skipping')
         } else {
             console.log('compiling librespot')
-            try { execSyncPrint(`rm -r /tmp/librespot`) }
+            try { execSync(`rm -r /tmp/librespot`) }
             catch (error) { }
 
             execSyncPrint(`cd /tmp/ && wget -q https://github.com/mikeszila/librespot/archive/dev.zip -O ./librespot.zip`)
@@ -216,7 +216,7 @@ if (!stopOnly) {
             console.log('shairport exists, skipping')
         } else {
             console.log('compiling shairport')
-            try { execSyncPrint(`rm -r /tmp/shairport-sync`) }
+            try { execSync(`rm -r /tmp/shairport-sync`) }
             catch (error) { }
 
             execSyncPrint(`cd /tmp/ && wget -q https://github.com/mikeszila/shairport-sync/archive/master.zip -O ./shairport-sync.zip`)

@@ -20,10 +20,10 @@ settings.sink = {
     //volumeOutMax: 0  //The value to send the mixer for minimum volume.  Not necessary if your card supports decibels.  Use 'amixer' then look for something like 'Limits: 0 - 255' to find the minimum value your mixer is expecting.
 }
 
-if (settings.soundCardSupportsDecibels) {
-    settings.alsaVolumeControlUnit = 'dB'
-    settings.volumeOutMin = -60
-    settings.volumeOutMax = 0
+if (settings.sink.soundCardSupportsDecibels) {
+    settings.sink.alsaVolumeControlUnit = 'dB'
+    settings.sink.volumeOutMin = -60
+    settings.sink.volumeOutMax = 0
 }
 
 
