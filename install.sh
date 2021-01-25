@@ -38,6 +38,7 @@ rm -r /tmp/smartsoundsync
 mkdir /tmp/smartsoundsync
 wget -q https://github.com/mikeszila/smartsoundsync/archive/main.zip -O /tmp/smartsoundsync/main.zip
 unzip -o /tmp/smartsoundsync/main.zip -d /tmp/smartsoundsync/smartsoundsync-new
+rm -r /usr/local/lib/smartsoundsync/
 cp -v -a /tmp/smartsoundsync/smartsoundsync-new/smartsoundsync-main/. /usr/local/lib/smartsoundsync/
 sudo chown -R  $(stat -c "%U" $PWD) /usr/local/lib/smartsoundsync/  
 cd /usr/local/lib/smartsoundsync/ && node install-setup.js
