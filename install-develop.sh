@@ -34,7 +34,7 @@ function installStuff() {
 initialCheck
 installStuff
 
-rm -r /tmp/smartsoundsync/
+rm -r /tmp/smartsoundsync
 wget -q https://github.com/mikeszila/smartsoundsync/archive/develop.zip -O /tmp/smartsoundsync/develop.zip
 unzip -o /tmp/smartsoundsync/develop.zip -d /tmp/smartsoundsync/smartsoundsync-new
 cp -v -a /tmp/smartsoundsync/smartsoundsync-new/smartsoundsync-develop/. /usr/local/lib/smartsoundsync/
