@@ -26,7 +26,7 @@ The components which make up Smartsoundsync are modular for greater flexibility 
 Installation:
 
   To install only:
-    cd && wget https://raw.githubusercontent.com/mikeszila/smartsoundsync/main/install.sh -O - | /bin/bash
+    cd && wget https://raw.githubusercontent.com/mikeszila/smartsoundsync/main/install.sh -O - | sudo /bin/bash
 
   To install as a git repository:
     Go to https://github.com/mikeszila/smartsoundsync and fork the repository
