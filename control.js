@@ -1,7 +1,8 @@
 "use strict";
 
 const { exec, spawn, execSync } = require('child_process');
-let common = require('./common.js')
+let common = require('./common.js');
+const { settings } = require('cluster');
 
 var socketControlLocal = dgram.createSocket({ type: "udp4", reuseAddr: true });
 var socketControlGroupClient = dgram.createSocket({ type: "udp4", reuseAddr: true });
@@ -254,7 +255,7 @@ function sendSubscribe() {
 }
 
 socketControlLocal.bind(settings.ControllerPort);
-if (hostname != 'Audioserv') {
+if (settings.remoteControllerHostname && hostname != settings.remoteControllerHostname) {
     socketControlGroupClient.bind(0);
     setInterval(sendSubscribe, 5000)
 }
