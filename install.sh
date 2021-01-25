@@ -34,16 +34,6 @@ function installStuff() {
 initialCheck
 installStuff
 
-wget -q https://github.com/mikeszila/smartsoundsync/archive/main.zip -O /usr/local/lib/main.zip
-unzip -o /usr/local/lib/main.zip -d /usr/local/lib/smartsoundsync-new
-cp -v -a /usr/local/lib/smartsoundsync-new/smartsoundsync-main/. /usr/local/lib/smartsoundsync/
-rm /usr/local/lib/main.zip
-rm -r /usr/local/lib/smartsoundsync-new
-rm /usr/local/lib/smartsoundsync/install.sh  #remove this script from the local project directory so someone doesn't get confused, run it, and install the application again inside itself.
-sudo chown -R  $(stat -c "%U" $PWD) /usr/local/lib/smartsoundsync/  
-cd /usr/local/lib/smartsoundsync/ && node install-setup.js
-
-
 rm -r /tmp/smartsoundsync
 mkdir /tmp/smartsoundsync
 wget -q https://github.com/mikeszila/smartsoundsync/archive/main.zip -O /tmp/smartsoundsync/main.zip
