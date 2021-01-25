@@ -74,6 +74,15 @@ if (cmdSettingsJSON != 0) {
     var cmdSettingsObj = JSON.parse(String(cmdSettingsJSON))
     settings = { ...settings, ...cmdSettingsObj }
 }
+
+if (settings.volumeControlScript) {
+    const volume = require(settings.volumeControlScript);
+} else {
+    const volume = require(`./volume.js`);
+}
+
+
+
 const volume = require(`./volume.js`);
 
 if (!settings.ecasound) {
