@@ -174,12 +174,6 @@ if (!stopOnly) {
             execSyncPrint(`gcc pcmblock.c -o /usr/local/bin/pcm -lasound`)
         }
 
-        if (fs.existsSync(`${installLocation}/pcmrecord`)) {
-            console.log('pcmrecord exists, skipping')
-        } else {
-            execSyncPrint(`gcc pcmrecord.c -o /usr/local/bin/pcmrecord -lasound`)
-        }
-
         if (fs.existsSync(`/usr/local/lib/ladspa/RTlowshelf.so`)) {
             console.log('rtaylor filters exist, skipping')
         } else {
@@ -232,6 +226,12 @@ if (!stopOnly) {
     }
 
     if (hasSPDIF) {
+
+        if (fs.existsSync(`${installLocation}/pcmrecord`)) {
+            console.log('pcmrecord exists, skipping')
+        } else {
+            execSyncPrint(`gcc pcmrecord.c -o /usr/local/bin/pcmrecord -lasound`)
+        }
 
         try {execSync('which dsptoolkit')}
         catch(error) {
