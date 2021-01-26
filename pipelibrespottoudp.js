@@ -122,7 +122,7 @@ function spawnlibrespot() {
         console.log('librespot', 'close', String(code))
         console.log('hello exit start')
         console.log('process.pid', process.pid)
-        execSync(`sudo systemctl restart pipelibrespottoudp.service`)
+        execSync(`sudo systemctl restart smartsoundsyncspotify${settings.audioSourceDisplayName}.service`)
         //process.exit()
         console.log('hello after exit start')
         //setTimeout(spawnlibrespot, 2000)

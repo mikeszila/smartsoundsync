@@ -101,7 +101,7 @@ if (!stopOnly) {
 
     let dependenciessink = ['alsa-utils', 'alsa-tools', 'libasound2-plugins', 'ecasound', 'cmt', 'swh-plugins', 'ladspa-sdk', 'libasound2-dev', 'cmake']
 
-    let dependenciesspdif = ['lirc', 'python3-pip', 'libxslt1-dev', 'libxml2-dev', 'zlib1g-dev', 'python3-lxml', 'python-lxml', 'libxml2-dev', 'libxslt-dev', 'python-dev']
+    let dependenciesspdif = ['lirc', 'python3-pip', 'libxslt1-dev', 'libxml2-dev', 'zlib1g-dev', 'python3-lxml', 'python-lxml', 'libxml2-dev', 'libxslt-dev', 'python-dev', 'libasound2-dev']
 
     if (settings.sink) {
         dependencies = dependencies.concat(dependenciessink)
@@ -174,12 +174,6 @@ if (!stopOnly) {
             execSyncPrint(`gcc pcmblock.c -o /usr/local/bin/pcm -lasound`)
         }
 
-        if (fs.existsSync(`${installLocation}/pcmrecord`)) {
-            console.log('pcmrecord exists, skipping')
-        } else {
-            execSyncPrint(`gcc pcmrecord.c -o /usr/local/bin/pcmrecord -lasound`)
-        }
-
         if (fs.existsSync(`/usr/local/lib/ladspa/RTlowshelf.so`)) {
             console.log('rtaylor filters exist, skipping')
         } else {
@@ -232,6 +226,12 @@ if (!stopOnly) {
     }
 
     if (hasSPDIF) {
+
+        if (fs.existsSync(`${installLocation}/pcmrecord`)) {
+            console.log('pcmrecord exists, skipping')
+        } else {
+            execSyncPrint(`gcc pcmrecord.c -o /usr/local/bin/pcmrecord -lasound`)
+        }
 
         try {execSync('which dsptoolkit')}
         catch(error) {
