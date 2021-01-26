@@ -82,9 +82,6 @@ if (settings.volumeControlScript) {
 }
 
 
-
-const volume = require(`./volume.js`);
-
 if (!settings.ecasound) {
     if (settings.mono) {
         settings.ecasound = settings.monoFlat
