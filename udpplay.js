@@ -75,15 +75,14 @@ if (cmdSettingsJSON != 0) {
     settings = { ...settings, ...cmdSettingsObj }
 }
 
+let volume
+
 if (settings.volumeControlScript) {
-    const volume = require(settings.volumeControlScript);
+    volume = require(settings.volumeControlScript);
 } else {
-    const volume = require(`./volume.js`);
+    volume = require(`./volume.js`);
 }
 
-
-
-const volume = require(`./volume.js`);
 
 if (!settings.ecasound) {
     if (settings.mono) {

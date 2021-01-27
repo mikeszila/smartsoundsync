@@ -1,7 +1,11 @@
 //This is an example configuration only.  The actual configuration file resides at /usr/local/etc/smartsoundsyncconf.js
-//basic config  Spotify, Airplay, and Sink
+//Spotify, Airplay, and Sink using Hifiberry Dac plus DSP soundcard available here: https://www.hifiberry.com/shop/boards/hifiberry-dacplus-rca-version/
 
-//you must ensure your soundcard is working correctly, set the correct cardName and alsaVolumeControlName below.  
+//Make these changes in /boot/config.txt
+
+//For the soundcard
+    //Change dtparam=audio=on to #dtparam=audio=on to disable onboard audio
+    //add dtoverlay=hifiberry-dacplus  to add the HIFIberry overlay for the Hifiberry Dacplusdsp card
 
 const os = require('os')
 
@@ -16,10 +20,10 @@ settings.controller = {
 settings.sink = {
     controllerHostname: os.hostname(),  //used to find the controller on the network
     cardName: 'hw:0', // the name of your soundcard.  Use aplay -l to find.  smartsoundsync must have direct access to the hardware of the card for syncronization to function correctly.  plughw or any ALSA specification other than hw:? will not work.  
-    alsaVolumeControlName: 'Master',  //the name of the alsa volume control that adjusts the volume of your speakers.  look in alsamixer or run amixer to find the name.     
-    soundCardSupportsDecibels: true,  //  If your soundcard supports decibels set to true, if not false and determine the correct values for volumeOutMin and volumeOutMax below. 
-    //volumeOutMin: 0,  //The value to send the mixer for minimum volume.  Not necessary if your card supports decibels.  Use 'amixer' then look for something like 'Limits: 0 - 255' to find the minimum value your mixer is expecting.
-    //volumeOutMax: 255  //The value to send the mixer for minimum volume.  Not necessary if your card supports decibels.  Use 'amixer' then look for something like 'Limits: 0 - 255' to find the minimum value your mixer is expecting.
+    alsaVolumeControlName: 'Digital',  //the name of the alsa volume control that adjusts the volume of your speakers.  look in alsamixer or run amixer to find the name.     
+    soundCardSupportsDecibels: true,  //  If your soundcard supports decibels set to true, if not false. 
+    //volumeOutMin: -60,  //The value to send the mixer for minimum volume.  Not necessary if your card supports decibels.  Use 'amixer' then look for something like 'Limits: 0 - 255' to find the minimum value your mixer is expecting.
+    //volumeOutMax: 0  //The value to send the mixer for minimum volume.  Not necessary if your card supports decibels.  Use 'amixer' then look for something like 'Limits: 0 - 255' to find the minimum value your mixer is expecting.
 }
 
 settings.sources = [
