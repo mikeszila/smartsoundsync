@@ -1,5 +1,11 @@
 //This is an example configuration only.  The actual configuration file resides at /usr/local/etc/smartsoundsyncconf.js
-//basic config  Spotify, Airplay, and Sink
+//Spotify, Airplay, and Sink using Hifiberry Dac plus DSP soundcard available here: https://www.hifiberry.com/shop/boards/hifiberry-dacplus-rca-version/
+
+//Make these changes in /boot/config.txt
+
+//For the soundcard
+    //Change dtparam=audio=on to #dtparam=audio=on to disable onboard audio
+    //add dtoverlay=hifiberry-dacplus  to add the HIFIberry overlay for the Hifiberry Dacplusdsp card
 
 const os = require('os')
 
@@ -19,13 +25,6 @@ settings.sink = {
     //volumeOutMin: -60,  //The value to send the mixer for minimum volume.  Not necessary if your card supports decibels.  Use 'amixer' then look for something like 'Limits: 0 - 255' to find the minimum value your mixer is expecting.
     //volumeOutMax: 0  //The value to send the mixer for minimum volume.  Not necessary if your card supports decibels.  Use 'amixer' then look for something like 'Limits: 0 - 255' to find the minimum value your mixer is expecting.
 }
-
-if (settings.soundCardSupportsDecibels) {
-    settings.alsaVolumeControlUnit = 'dB'
-    settings.volumeOutMin = -60
-    settings.volumeOutMax = 0
-}
-
 
 settings.sources = [
 
