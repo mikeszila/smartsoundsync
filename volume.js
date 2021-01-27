@@ -16,6 +16,10 @@ if (settings.soundCardSupportsDecibels) {
   settings.volumeOutMax = 0
 }
 
+if (!settings.alsaVolumeControlUnit) {
+  settings.alsaVolumeControlUnit = ""
+}
+
 
 var amixer
 
