@@ -1,4 +1,5 @@
 const { exec, spawn, execSync } = require('child_process');
+//const { settings } = require('cluster');
 
 const calc_buffer_size = settings.source_period_size * settings.source_buffer_periods
 
@@ -227,10 +228,10 @@ function processAplayStderr(stderr) {
             source_buffer_time = settings.source_buffer_periods * reported_period_time
 
             if (source_buffer_time > playback_buffer_time) {
-                desired_playback_delay = source_buffer_time + 50
+                desired_playback_delay = source_buffer_time + settings.additional_requested_latency
                 console.log('source buffer time', desired_playback_delay)
             } else {
-                desired_playback_delay = playback_buffer_time + 50
+                desired_playback_delay = playback_buffer_time + settings.additional_requested_latency
                 console.log('playback buffer time', desired_playback_delay)
             }
 

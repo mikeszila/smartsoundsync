@@ -33,7 +33,8 @@ global.settings = {  //basic settings for running outside systemd and other comm
     cardName: 'hw:0',
     bytesPerSample: 2,
     verbose: false,
-    sourceSampleAdjust: 0
+    sourceSampleAdjust: 0,
+    additional_requested_latency: 0
 }
 
 global.volumeOut = settings.initialVolume

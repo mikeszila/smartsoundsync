@@ -61,8 +61,8 @@ var localSettings = {
     outputChannels: 2,
     playback_buffer_periods: 4,
     mono: false,
-    stereoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -z:mixmode,sum -x -z:nodb -b:ecasound_buffer_size      -a:pre1 -f:16,2,44100 -i \ stdin                        -pf:pre1.ecp -o:loop,1  -a:testout -i:loop,1   -chorder:1,2  -f:s16_le,2,44100 -o:stdout `,
-    monoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -z:mixmode,sum -x -z:nodb -b:ecasound_buffer_size      -a:pre1 -f:16,2,44100 -i \ stdin -chmix:1 -f:16,1,44100 -pf:pre1.ecp -o:loop,1  -a:testout -i:loop,1   -chorder:1,2  -f:s16_le,2,44100 -o:stdout `
+    stereoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -ddd -z:nodb -b:ecasound_buffer_size -f:16,2,44100 -i stdin -pf:pre1.ecp -f:s16_le,2,44100 -o:stdout `,
+    monoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -ddd -z:nodb -b:ecasound_buffer_size -f:16,2,44100 -i stdin -chmix:1 -chorder:1 -pf:pre1.ecp -chorder:1,1 -f:s16_le,2,44100 -o:stdout `
 }
 
 settings = { ...settings, ...localSettings }
@@ -171,7 +171,7 @@ var socketAudio = null
 socketAudio = dgram.createSocket({ type: "udp4", reuseAddr: true });
 
 socketAudio.on('listening', () => {
-    
+
     socketAudio.setRecvBufferSize(180224 * 10)
 
     console.log(`server listening ${socketAudio.address().address}:${socketAudio.address().port}`, 'recvbuffer', String(socketAudio.getRecvBufferSize()));
@@ -473,7 +473,7 @@ async function spawnaplay() {
     console.log(sourceObj)
 
     console.log('Playback Setup Data', settings.cardName, sourceObj.reported_exact_rate, settings.outputChannels, sourceObj.playback_period_size, sourceObj.playback_buffer_size)
-console.log(process.cwd(), '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11111111')
+    console.log(process.cwd(), '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11111111')
 
 
     let teststr = `stdbuf -i0 -o0 -e0 /usr/local/bin/pcm ${settings.cardName} ${sourceObj.reported_exact_rate} ${settings.outputChannels} ${sourceObj.playback_period_size} ${sourceObj.playback_buffer_size}`
@@ -613,6 +613,10 @@ function getData() {
 
 let samples_since_correct = 0
 
+function numberFormat(x) {
+    return Number.parseFloat(x).toFixed(3);
+}
+
 function sendData() {
 
     transmitSize = avail
@@ -628,21 +632,21 @@ function sendData() {
 
         //syncErrorA
 
-        sinkErrorSamples = Math.floor(Math.abs(syncErrorMS / (sampleTimeMS )))
+        sinkErrorSamples = Math.floor(Math.abs(syncErrorMS / (sampleTimeMS)))
         if (syncErrorMS < 0) { sinkErrorSamples = sinkErrorSamples * -1 }
 
         if (sinkErrorSamplesArray.push(sinkErrorSamples) > sinkErrorSamplesArrayLengthSetpoint) {
             sinkErrorSamplesArray.shift()
         }
-        sinkErrorSamplesAverage = average(sinkErrorSamplesArray) 
+        sinkErrorSamplesAverage = average(sinkErrorSamplesArray)
 
         sampleAdjustSink = 0
         if (sampleTotal / 128 >= sampleAdjustSinkStartSecondsSetpoint) {
             sampleAdjustSink = Math.floor(Math.abs(sinkErrorSamplesAverage))
 
             //console.log(sourceObj.sourceSampleAdjust)
-            if (sampleAdjustSink < sourceObj.sourceSampleAdjust) {sampleAdjustSink = 0 }
-            if (sampleAdjustSink >= sourceObj.sourceSampleAdjust && sourceObj.sourceSampleAdjust != 0) {sampleAdjustSink = sampleAdjustSink - 1}
+            if (sampleAdjustSink < sourceObj.sourceSampleAdjust) { sampleAdjustSink = 0 }
+            if (sampleAdjustSink >= sourceObj.sourceSampleAdjust && sourceObj.sourceSampleAdjust != 0) { sampleAdjustSink = sampleAdjustSink - 1 }
 
             if (sinkErrorSamplesAverage > 0) { sampleAdjustSink = sampleAdjustSink * -1 }
         }
@@ -668,7 +672,7 @@ function sendData() {
             sampleAdjustSource = 0
             if (sampleTotal / 128 >= sampleAdjustSourceStartSecondsSetpoint) {
                 sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage))
-                if (sampleAdjustSource > 1) {sampleAdjustSource = 1}
+                if (sampleAdjustSource > 1) { sampleAdjustSource = 1 }
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
@@ -752,9 +756,9 @@ function sendData() {
             //'receiveIndex', pad(10, String(receiveIndex), ' '),
             //'ecasoundIndex', pad(10, String(ecasoundIndexLast), ' '),
             //'writeIndex', pad(10, String(syncIndex), ' '),
-            'last read', pad(4, String(read), ' '),
-            'last written', pad(4, String(written), ' '),
-            'sent', pad(4, String(sentlength), ' '),
+            //'last read', pad(4, String(read), ' '),
+            //'last written', pad(4, String(written), ' '),
+            //'sent', pad(4, String(sentlength), ' '),
             'avail', pad(4, String(avail), ' '),
             'delay', pad(4, String(delay), ' '),
 
@@ -764,28 +768,19 @@ function sendData() {
 
             //  'cardTimePeriod', pad(String((cardTimeht - cardTimehtLast) / written), 22, ' '),
 
-            'AdjustSink', pad(String(sampleAdjustSink), 5, ' '),
-            'AdjustSource', pad(String(sampleAdjustSource), 5, ' '),
+            //'SinkErr', pad(String(numberFormat(sinkErrorSamplesAverage)), 6, ' '),
+            //'SourceErr', pad(String(numberFormat(sourceErrorSamplesAverage)), 6, ' '),
+            'Err', pad(String(numberFormat(syncErrorMSamplesAverage)), 6, ' '),
 
-            'sinkError', pad(String(sinkErrorSamplesAverage), 25, ' '),
-            'sourceError', pad(String(sourceErrorSamplesAverage), 25, ' '),            
-            'MonitorError', pad(String(syncErrorMSamplesAverage), 25, ' '),
+            'AdjustSink', pad(String(sampleAdjustSink), 4, ' '),
+            'AdjustSource', pad(String(sampleAdjustSource), 4, ' '),
+
             
 
-
-
-            'sampleAdjustSink', pad(5, String(sampleAdjustSink), ' '),
-            'sampleAdjustSinkTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
-            'sampleAdjustSinkTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
-            'SampleTotal', pad(String(sampleTotal), 10, ' '),
-            'sampleSinceCorrect', pad(10, String(samples_since_correct), ' ')
-
-
-
-
-
-
-
+            'AdjTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
+            'AdjTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
+            //'SampleTotal', pad(String(sampleTotal), 10, ' '),
+            'SinceAdj', pad(10, String(samples_since_correct), ' ')
         )
 
         ecasoundIndexLast = 0
@@ -823,7 +818,7 @@ async function spawnecasound() {
 
     let ecasoundBufferSize = sourceObj.reported_period_size
 
-    let maxEcasoundBuffer = 128
+    let maxEcasoundBuffer = 99999999999999999
 
     if (ecasoundBufferSize > maxEcasoundBuffer) {
         ecasoundBufferSize = maxEcasoundBuffer
