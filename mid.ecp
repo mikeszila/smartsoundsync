@@ -1,2 +1,2 @@
 # mid.ecp
--el:RTlr4lowpass,5000 -eadb:-3
+mid = -el:RTlr4lowpass,5000 -eadb:-3
