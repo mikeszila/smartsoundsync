@@ -1,2 +1,3 @@
 # woofer.ecp
-woofer = -el:RTlr4lowpass,1000 
+-el:RTlr4lowpass,1000 -el:RTlowshelf,9,150,0.71
+
