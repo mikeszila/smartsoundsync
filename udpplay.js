@@ -61,8 +61,8 @@ var localSettings = {
     outputChannels: 2,
     playback_buffer_periods: 4,
     mono: false,
-    stereoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -z:mixmode,sum -x -z:nodb -b:ecasound_buffer_size      -a:pre1 -f:16,2,44100 -i \ stdin                        -pf:pre1.ecp -o:loop,1  -a:testout -i:loop,1   -chorder:1,2  -f:s16_le,2,44100 -o:stdout `,
-    monoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -z:mixmode,sum -x -z:nodb -b:ecasound_buffer_size      -a:pre1 -f:16,2,44100 -i \ stdin -chmix:1 -f:16,1,44100 -pf:pre1.ecp -o:loop,1  -a:testout -i:loop,1   -chorder:1,2  -f:s16_le,2,44100 -o:stdout `
+    stereoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -ddd -z:nodb -b:ecasound_buffer_size -f:16,2,44100 -i stdin -pf:pre1.ecp -f:s16_le,2,44100 -o:stdout `,
+    monoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -ddd -z:nodb -b:ecasound_buffer_size -f:16,2,44100 -i stdin -chmix:1 -chorder:1 -pf:pre1.ecp -chorder:1,1 -f:s16_le,2,44100 -o:stdout `
 }
 
 settings = { ...settings, ...localSettings }
@@ -768,24 +768,19 @@ function sendData() {
 
             //  'cardTimePeriod', pad(String((cardTimeht - cardTimehtLast) / written), 22, ' '),
 
+            'SinkErr', pad(String(numberFormat(sinkErrorSamplesAverage)), 6, ' '),
+            'SourceErr', pad(String(numberFormat(sourceErrorSamplesAverage)), 6, ' '),
+            'Err', pad(String(numberFormat(syncErrorMSamplesAverage)), 6, ' '),
+
             'AdjustSink', pad(String(sampleAdjustSink), 4, ' '),
             'AdjustSource', pad(String(sampleAdjustSource), 4, ' '),
 
-            'sinkError', pad(String(numberFormat(sinkErrorSamplesAverage)), 25, ' '),
-            'sourceError', pad(String(sourceErrorSamplesAverage), 25, ' '),
-            'MonitorError', pad(String(syncErrorMSamplesAverage), 25, ' '),
+            
 
-            'sampleAdjustSinkTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
-            'sampleAdjustSinkTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
-            'SampleTotal', pad(String(sampleTotal), 10, ' '),
-            'sampleSinceCorrect', pad(10, String(samples_since_correct), ' ')
-
-
-
-
-
-
-
+            'AdjTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
+            'AdjTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
+            //'SampleTotal', pad(String(sampleTotal), 10, ' '),
+            'SinceAdj', pad(10, String(samples_since_correct), ' ')
         )
 
         ecasoundIndexLast = 0
@@ -823,7 +818,7 @@ async function spawnecasound() {
 
     let ecasoundBufferSize = sourceObj.reported_period_size
 
-    let maxEcasoundBuffer = 128
+    let maxEcasoundBuffer = 99999999999999999
 
     if (ecasoundBufferSize > maxEcasoundBuffer) {
         ecasoundBufferSize = maxEcasoundBuffer
