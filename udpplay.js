@@ -768,8 +768,8 @@ function sendData() {
 
             //  'cardTimePeriod', pad(String((cardTimeht - cardTimehtLast) / written), 22, ' '),
 
-            'SinkErr', pad(String(numberFormat(sinkErrorSamplesAverage)), 6, ' '),
-            'SourceErr', pad(String(numberFormat(sourceErrorSamplesAverage)), 6, ' '),
+            //'SinkErr', pad(String(numberFormat(sinkErrorSamplesAverage)), 6, ' '),
+            //'SourceErr', pad(String(numberFormat(sourceErrorSamplesAverage)), 6, ' '),
             'Err', pad(String(numberFormat(syncErrorMSamplesAverage)), 6, ' '),
 
             'AdjustSink', pad(String(sampleAdjustSink), 4, ' '),
