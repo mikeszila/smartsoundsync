@@ -55,14 +55,16 @@ function killPCM() {
     }
 }
 
+//export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa;
+
 var localSettings = {
     processPriority: 85,
     verbose: false,
     outputChannels: 2,
     playback_buffer_periods: 4,
     mono: false,
-    stereoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -ddd -z:nodb -b:ecasound_buffer_size -f:16,2,44100 -i stdin -pf:pre1.ecp -f:s16_le,2,44100 -o:stdout `,
-    monoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -ddd -z:nodb -b:ecasound_buffer_size -f:16,2,44100 -i stdin -chmix:1 -chorder:1 -pf:pre1.ecp -chorder:1,1 -f:s16_le,2,44100 -o:stdout `
+    stereoFlat: `stdbuf -i0 -o0 -e0 ecasound -B:rt -ddd -z:nodb -b:ecasound_buffer_size -f:16,2,44100 -i stdin -pf:pre1.ecp -f:s16_le,2,44100 -o:stdout `,
+    monoFlat: `stdbuf -i0 -o0 -e0 ecasound -B:rt -ddd -z:nodb -b:ecasound_buffer_size -f:16,2,44100 -i stdin -chmix:1 -chorder:1 -pf:pre1.ecp -chorder:1,1 -f:s16_le,2,44100 -o:stdout `
 }
 
 settings = { ...settings, ...localSettings }
@@ -547,6 +549,7 @@ function syncErrorresetAverage() {
 }
 
 let cardTimehtLast = 0
+let syncIndexWritten = 0
 
 var audiobuffer = Buffer.alloc(0)
 
@@ -597,6 +600,7 @@ function getData() {
                     }
 
                     delete framesList[syncIndex.toString()]
+                    syncIndexWritten = syncIndex
                     syncIndex = syncIndex + 1
                 } else {
                     console.log("ecasound data for ", syncIndex, "not found", 'ecasoundIndex', ecasoundIndex, 'lowestEccasound', lowestEccasoundlast)
@@ -755,7 +759,7 @@ function sendData() {
             'frames', pad(2, String(Object.keys(framesList).length), ' '),
             //'receiveIndex', pad(10, String(receiveIndex), ' '),
             //'ecasoundIndex', pad(10, String(ecasoundIndexLast), ' '),
-            //'writeIndex', pad(10, String(syncIndex), ' '),
+            'writeIndex', pad(10, String(syncIndexWritten), ' '),
             //'last read', pad(4, String(read), ' '),
             //'last written', pad(4, String(written), ' '),
             //'sent', pad(4, String(sentlength), ' '),
