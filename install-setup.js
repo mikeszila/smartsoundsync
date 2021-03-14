@@ -273,7 +273,7 @@ Wants=avahi-daemon.service
 Type=simple
 WorkingDirectory=${installLocation}
 ExecStart=/usr/bin/node ${installLocation}/control.js ${execArguments} 
-TimeoutStopSpec=5
+TimeoutStopSec=5
 
 Restart=always
 
@@ -314,7 +314,7 @@ Type=simple
 WorkingDirectory=${installLocation}
 
 ExecStart=/usr/bin/node ${installLocation}/udpplay.js ${execArguments}
-TimeoutStopSpec=5
+TimeoutStopSec=5
 
 Restart=always
 
@@ -360,7 +360,7 @@ Wants=avahi-daemon.service
 Type=simple
 WorkingDirectory=${installLocation}
 ExecStart=/usr/bin/node ${installLocation}/spdiftoudp.js "${execArgumentsParse(sourceSettings)}" 
-TimeoutStopSpec=5
+TimeoutStopSec=5
 
 Restart=always
 
@@ -388,7 +388,7 @@ Wants=avahi-daemon.service
 Type=simple
 WorkingDirectory=${installLocation}
 ExecStart=/usr/bin/node ${installLocation}/pipelibrespottoudp.js "${execArgumentsParse(sourceSettings)}" 
-TimeoutStopSpec=5
+TimeoutStopSec=5
 
 Restart=always
 
@@ -419,7 +419,7 @@ Wants=avahi-daemon.service
 Type=simple
 WorkingDirectory=${installLocation}
 ExecStart=/usr/bin/node ${installLocation}/pipeshairporttoudp.js "${execArgumentsParse(sourceSettings)}"  
-TimeoutStopSpec=5
+TimeoutStopSec=5
 
 Restart=always
 
