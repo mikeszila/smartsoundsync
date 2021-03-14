@@ -63,8 +63,8 @@ var localSettings = {
     outputChannels: 2,
     playback_buffer_periods: 4,
     mono: false,
-    stereoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -ddd -z:nodb -b:ecasound_buffer_size -f:16,2,44100 -i stdin -pf:pre1.ecp -f:s16_le,2,44100 -o:stdout `,
-    monoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -ddd -z:nodb -b:ecasound_buffer_size -f:16,2,44100 -i stdin -chmix:1 -chorder:1 -pf:pre1.ecp -chorder:1,1 -f:s16_le,2,44100 -o:stdout `
+    stereoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -z:nodb -b:ecasound_buffer_size -f:16,2,44100 -i stdin -pf:pre1.ecp -f:s16_le,2,44100 -o:stdout `,
+    monoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -z:nodb -b:ecasound_buffer_size -f:16,2,44100 -i stdin -chmix:1 -chorder:1 -pf:pre1.ecp -chorder:1,1 -f:s16_le,2,44100 -o:stdout `
 }
 
 settings = { ...settings, ...localSettings }

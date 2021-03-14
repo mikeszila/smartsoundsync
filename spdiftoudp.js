@@ -32,7 +32,7 @@ global.buffertoudp = require('./buffertoudp.js')
 
 function dspSet() {
     let commands = [
-        'dsptoolkit set-volume 0%',
+        //'dsptoolkit set-volume 0%',
         'dsptoolkit set-limit 0db',
 
         'dsptoolkit write-mem 0xF106 0x0003',

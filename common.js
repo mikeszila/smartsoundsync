@@ -34,7 +34,8 @@ global.settings = {  //basic settings for running outside systemd and other comm
     bytesPerSample: 2,
     verbose: false,
     sourceSampleAdjust: 0,
-    additional_requested_latency: 0
+    additional_requested_latency: 0,
+    noSpeedup: false
 }
 
 global.volumeOut = settings.initialVolume
@@ -97,7 +98,7 @@ function speedup() {
     })
 }
 
-speedup()
+if (!settings.noSpeedup) {speedup()}
 
 function setPriority(pid, priority) {
     exec(`chrt -p ${priority} ${pid}`, (err, stdout, stderr) => {

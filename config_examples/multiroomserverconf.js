@@ -6,6 +6,8 @@ const os = require('os')
 
 var settings = {}
 
+//settings.noSpeedup = true // Set to true if you're running a desktop environment as these tweeks will break it.  
+
 settings.ntpServerHostname = os.hostname()  // the NTP server name.  Should be the same as the multiroom server unless there's good reason not to.
 
 settings.controller = {

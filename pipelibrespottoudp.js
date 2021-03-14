@@ -67,11 +67,19 @@ if (fs.existsSync(audiofifopath)) {
     execSync(`mkfifo ${audiofifopath}`)
 }
 
+let stateInactiveCheckPointer = false
+
+function stateInactiveCheck() {
+    captureState = 'idle'
+    common.setPriority(process.pid, -19)
+    common.setPriority(librespot.pid, -19)
+}
+
 function spawnlibrespot() {
 
     console.log('starting librespot')
-    try{execSync(` rm ${cachefolder}/credentials.json`)}
-    catch (error) {}
+    try { execSync(` rm ${cachefolder}/credentials.json`) }
+    catch (error) { }
 
     librespot = spawn(`/usr/local/bin/librespot`, ['-v', '-n', settings.audioSourceDisplayName, '-b', '320', '-c', `${cachefolder}`, '--enable-volume-normalisation', '--backend', 'pipe', '--device', `${audiofifopath}`]);
     librespot.stdout.on('data', (data) => {
@@ -82,15 +90,19 @@ function spawnlibrespot() {
         message = String(data)
 
         if (message.includes('== Starting sink ==')) {
+            console.log('== Starting sink ==')
+            if (stateInactiveCheckPointer) {
+                clearTimeout(stateInactiveCheckPointer)
+                stateInactiveCheckPointer = false
+            }
             captureState = 'active'
             common.setPriority(process.pid, 80)
             common.setPriority(librespot.pid, 80)
         }
 
         if (message.includes('== Stopping sink ==')) {
-            captureState = 'idle'
-            common.setPriority(process.pid, -19)
-            common.setPriority(librespot.pid, -19)
+            console.log('== Stopping sink ==')
+            stateInactiveCheckPointer = setTimeout(stateInactiveCheck, 5000)
         }
 
         if (message.includes('spotify volume:')) {
@@ -127,7 +139,7 @@ function spawnlibrespot() {
         console.log('hello after exit start')
         //setTimeout(spawnlibrespot, 2000)
     });
-    
+
 }
 
 
@@ -198,6 +210,8 @@ console.log('read time interval', Math.floor(reported_period_time * 0.75))
 
 let sampleAdjustSum = 0
 let sampleAdjustCount = 0
+
+
 
 buffertoudp.syncErrorData.on("syncErrorData", function (data) {
 
