@@ -29,20 +29,18 @@ let commonSourceSettings = {  //common settings for Spotify and Airplay
 settings.sources = [  
     { audioSourceClients: ['Kitchen', 'Sunroom'] },
     { audioSourceClients: ['Kitchen', 'Livingroom'] },
-//  { audioSourceClients: ['Kitchen', 'Familyroom'] },
+    { audioSourceClients: ['Kitchen', 'Familyroom'] },
+    { audioSourceClients: ['Kitchen', 'Garage'] },
+    { audioSourceClients: ['Familyroom', 'Garage'] },
+    { audioSourceClients: ['Familyroom', 'Sunroom'] },
+    { audioSourceClients: ['Familyroom', 'Garage', 'Sunroom'] },
+    { audioSourceClients: ['Kitchen', 'Familyroom', 'Garage'] },
+    { audioSourceClients: ['Kitchen', 'Familyroom', 'Sunroom'] },
+    { audioSourceClients: ['Kitchen', 'Familyroom', 'Garage', 'Sunroom' ] },
     { audioSourceClients: ['Familyroom', 'Livingroom'] },
     { audioSourceClients: ['Bedroom', 'Kitchen'] },
-    { audioSourceClients: ['Bedroom', 'Sebastian'] },
     { audioSourceClients: ['Familyroom', 'Laundry'], audioSourceDisplayName: 'Downstairs' },
-    { audioSourceClients: ['Bedroom', 'Kitchen', 'Sebastian'] },
-    { audioSourceClients: ['Kitchen', 'Livingroom', 'Sunroom'] },
-    { audioSourceClients: ['Bedroom', 'Kitchen', 'Livingroom'] },
-    { audioSourceClients: ['Bedroom', 'Kitchen', 'Livingroom', 'Sebastian'] },
-//  { audioSourceClients: ['Kitchen', 'Familyroom', 'Livingroom'] },
-//  { audioSourceClients: ['Kitchen', 'Familyroom', 'Livingroom', 'Sunroom'] },
     { audioSourceClients: ['Bedroom', 'Kitchen', 'Livingroom', 'Sebastian', 'Sunroom'], audioSourceDisplayName: 'Upstairs' },
-//  { audioSourceClients: ['Bedroom', 'Kitchen', 'Familyroom', 'Livingroom'] },
-//  { audioSourceClients: ['Kitchen', 'Familyroom', 'Laundry', 'Livingroom', 'Sunroom'] },
     { audioSourceClients: ['All'] },  //  All clients which have their "remoteControllerHostname" set to the hostname of this server will play when this source is selcted.
 ]
 

@@ -253,6 +253,10 @@ if (!stopOnly) {
     let priority = 1
 
     if (settings.controller) {
+        if(settings.noSpeedup) {
+            settings.controller.noSpeedup = true
+        }
+
         execArguments = ''
         if (settings.controller.length) {
             console.log('control array no code for this yet')
@@ -292,6 +296,10 @@ WantedBy=multi-user.target
         if (settings.sink.length) {
             console.log('sink array no code for this yet')
         } else {
+            if(settings.noSpeedup) {
+                settings.sink.noSpeedup = true
+            }
+
             execArguments = `"${execArgumentsParse(settings.sink)}"`
         }
 
@@ -334,6 +342,10 @@ WantedBy=multi-user.target
             //librespot
 
             let sourceSettings = value
+
+            if(settings.noSpeedup) {
+                sourceSettings.noSpeedup = true
+            }
 
 
             if (!sourceSettings.audioSourceDisplayName && sourceSettings.audioSourceClients) {
