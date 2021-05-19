@@ -20,8 +20,8 @@ global.messageHostname = Buffer.from(pad(hostname, 20, ' '))
 global.settings = {  //basic settings for running outside systemd and other common settings. 
     audioSourceDisplayName: hostname,
     audioSourceClients: [hostname],
-    ControllerHostname: hostname,
-    ControllerPort: 5656,
+    controllerHostname: hostname,
+    controllerPort: 5656,
     remoteControllerHostname: 'Audioserv',
     remoteControllerPort: 5656,
     source_rate: 44100,

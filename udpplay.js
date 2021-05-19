@@ -150,12 +150,12 @@ function sendSubscribe() {
     var statusObject = {
         type: 'Sink Subscribe',
         hostname: hostname,
-        hostnameForMatch: settings.ControllerHostname,
+        hostnameForMatch: settings.controllerHostname,
         port: socketControl.address().port
     }
 
     let statusBuffer = Buffer.from(JSON.stringify(statusObject))
-    socketControl.send(statusBuffer, 0, statusBuffer.length, settings.ControllerPort, settings.ControllerHostname, function (err, bytes) {
+    socketControl.send(statusBuffer, 0, statusBuffer.length, settings.controllerPort, settings.controllerHostname, function (err, bytes) {
         if (err) throw err;
     });
 }
