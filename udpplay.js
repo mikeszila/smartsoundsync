@@ -2,6 +2,7 @@
 
 global.common = require('./common.js')
 const { exec, spawn, execSync } = require('child_process');
+const fs = require('fs');
 
 //const { settings } = require('cluster');
 
@@ -57,14 +58,14 @@ function killPCM() {
 
 //export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa;
 
+
+
 var localSettings = {
     processPriority: 85,
     verbose: false,
     outputChannels: 2,
     playback_buffer_periods: 4,
     mono: false,
-    stereoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -z:nodb -b:ecasound_buffer_size -f:16,2,44100 -i stdin -pf:pre1.ecp -f:s16_le,2,44100 -o:stdout `,
-    monoFlat: `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -z:nodb -b:ecasound_buffer_size -f:16,2,44100 -i stdin -chmix:1 -chorder:1 -pf:pre1.ecp -chorder:1,1 -f:s16_le,2,44100 -o:stdout `
 }
 
 settings = { ...settings, ...localSettings }
@@ -83,15 +84,6 @@ if (settings.volumeControlScript) {
     volume = require(settings.volumeControlScript);
 } else {
     volume = require(`./volume.js`);
-}
-
-
-if (!settings.ecasound) {
-    if (settings.mono) {
-        settings.ecasound = settings.monoFlat
-    } else {
-        settings.ecasound = settings.stereoFlat
-    }
 }
 
 global.volumeOut = settings.volume_db_min
@@ -588,16 +580,12 @@ function getData() {
             if (frame) {
 
                 //console.log(frame)
-                if (frame.ecasoundChunk || !settings.ecasound) {
+                if (frame.ecasoundChunk) {
 
                     //console.log('Index frame.ecasoundChunk.length', syncIndex, frame.ecasoundChunk.length / outputbytesPerSample)
 
                     audiobuffferTime = frame.dataTime - (audiobuffer.length / outputbytesPerSample * sampleTimeMS)
-                    if (settings.ecasound) {
-                        audiobuffer = Buffer.concat([audiobuffer, frame.ecasoundChunk])
-                    } else {
-                        audiobuffer = Buffer.concat([audiobuffer, frame.audioChunk])
-                    }
+                    audiobuffer = Buffer.concat([audiobuffer, frame.ecasoundChunk])
 
                     delete framesList[syncIndex.toString()]
                     syncIndexWritten = syncIndex
@@ -816,6 +804,9 @@ var ecasoundReady = false
 
 async function spawnecasound() {
 
+
+
+
     console.log('here goes ecasound')
 
     //execSync(`export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa`)
@@ -828,17 +819,17 @@ async function spawnecasound() {
         ecasoundBufferSize = maxEcasoundBuffer
     }
 
-    settings.ecasound = settings.ecasound.replace(/ecasound_buffer_size/g, ecasoundBufferSize)
+    let ecasoundCommand = `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -z:nodb -b:${ecasoundBufferSize} -f:16,2,44100 -i stdin`
 
-    //console.log(settings.ecasound)
+    let ecasoundChainSetup = fs.readFileSync('/usr/local/etc/smartsoundsync/ecasound/chainsetup-file.ecs', 'utf8')
 
-    ecasound = spawn("/bin/sh", ["-c", settings.ecasound])
+    let ecasoundOutputSetup = `-f:s16_le,${settings.outputChannels},44100 -o:stdout`
 
-    //ecasound = spawn("ecasound", ['-s:ecasound_stereo_flat.ecs'])
+    ecasoundCommand = ecasoundCommand.concat(" ", ecasoundChainSetup, " ", ecasoundOutputSetup)
 
-    //`; stdbuf -i0 -o0 -e0 ecasound -z:mixmode,sum -x -z:nodb -b:reported_period_size      -a:pre1 -f:16,2,44100 -i \ stdin -chmix:1 -f:16,1,44100 -pf:pre1.ecp -o:loop,1     -a:testout -i:loop,1   -a:testout -pf:testout.ecp -chorder:1,2 -a:testout -f:s16_le,2,44100 -o:stdout `
+    console.log("ecasound Command: ", ecasoundCommand)
 
-
+    ecasound = spawn("/bin/sh", ["-c", ecasoundCommand])
 
     ecasound.stdout.on('data', (data) => {
         //console.log('Index ecasoundoutlength', ecasoundIndex, data.length / outputbytesPerSample)
