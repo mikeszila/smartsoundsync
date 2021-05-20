@@ -175,8 +175,14 @@ socketAudio.on('listening', () => {
 function audioConnectRequest() {
     if (selectedSource) {
 
-        if (sampleAdjustSourceSum > 1) {sampleAdjustSourceSum = 1}
-        if (sampleAdjustSourceSum < -1) {sampleAdjustSourceSum = -1}
+        if (sampleAdjustSourceSum > 2) {
+            console.log('clamp high', sampleAdjustSourceSum)
+            sampleAdjustSourceSum = 2            
+        }
+        if (sampleAdjustSourceSum < -2) {
+            console.log('clamp low', sampleAdjustSourceSum)
+            sampleAdjustSourceSum = -2            
+        }
 
         sampleAdjustSourceSumLast = sampleAdjustSourceSum
 
@@ -671,7 +677,7 @@ function sendData() {
             sampleAdjustSource = 0
             if (sampleTotal / 128 >= sampleAdjustSourceStartSecondsSetpoint) {
                 sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage))
-                if (sampleAdjustSource > 1) { sampleAdjustSource = 1 }
+                //if (sampleAdjustSource > 1) { sampleAdjustSource = 1 }
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
