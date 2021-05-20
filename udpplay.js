@@ -174,6 +174,12 @@ socketAudio.on('listening', () => {
 
 function audioConnectRequest() {
     if (selectedSource) {
+
+        if (sampleAdjustSourceSum > 1) {sampleAdjustSourceSum = 1}
+        if (sampleAdjustSourceSum < -1) {sampleAdjustSourceSum = -1}
+
+        sampleAdjustSourceSumLast = sampleAdjustSourceSum
+
         let connectObj = {
             type: 'connectRequest',
             hostname: os.hostname(),
@@ -521,6 +527,7 @@ var sampleAdjustSinkStartSecondsSetpoint = Math.round(44100 / 128 * sampleAdjust
 
 let sampleAdjustSource = 0
 let sampleAdjustSourceSum = 0
+let sampleAdjustSourceSumLast = 0
 let sourceErrorSamples = 0
 var sourceErrorSamplesAverage = 0
 var sourceErrorSamplesArray = []
@@ -741,7 +748,7 @@ function sendData() {
         console.log('SHORTDATAERROR!!!')
     }
 
-    if (settings.verbose || sampleAdjustSink != 0 || sampleAdjustSource != 0 || avail > delay) {
+    if (settings.verbose || sampleAdjustSink != 0 || sampleAdjustSourceSumLast != 0 || avail > delay) {
 
         console.log(
             'frames', pad(2, String(Object.keys(framesList).length), ' '),
@@ -765,7 +772,7 @@ function sendData() {
             'Err', pad(String(numberFormat(syncErrorMSamplesAverage)), 6, ' '),
 
             'AdjustSink', pad(String(sampleAdjustSink), 4, ' '),
-            'AdjustSource', pad(String(sampleAdjustSource), 4, ' '),
+            'AdjustSource', pad(String(sampleAdjustSourceSumLast), 4, ' '),
 
             
 
@@ -774,7 +781,7 @@ function sendData() {
             //'SampleTotal', pad(String(sampleTotal), 10, ' '),
             'SinceAdj', pad(10, String(samples_since_correct), ' ')
         )
-
+        sampleAdjustSourceSumLast = 0
         ecasoundIndexLast = 0
         receiveIndex = 0
     }
