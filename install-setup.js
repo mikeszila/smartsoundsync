@@ -82,6 +82,12 @@ let hasAirplay = false
 let hasSPDIF = false
 
 if (!stopOnly) {
+    if (fs.existsSync('/usr/local/etc/smartsoundsyncconf.js')) {  //move old style config to new style
+        console.log('found old style config.  Converting to new style at', configFilePath)
+        execSync(`mkdir -p /usr/local/etc/smartsoundsync/`)
+        execSync(`mv /usr/local/etc/smartsoundsyncconf.js ${configFilePath}`)
+    }
+
     if (fs.existsSync(configFilePath)) {
         console.log('config exists', configFilePath)
     } else {
