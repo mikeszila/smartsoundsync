@@ -253,9 +253,9 @@ function sendSubscribe() {
     });
 }
 
-console.log('hello!!', settings.ControllerPort)
+console.log('hello!!', settings.controllerPort)
 
-socketControlLocal.bind(settings.ControllerPort);
+socketControlLocal.bind(settings.controllerPort);
 
 if (settings.remoteControllerHostname && hostname != settings.remoteControllerHostname) {
     socketControlGroupClient.bind(0);
