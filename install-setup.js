@@ -33,7 +33,9 @@ let installLocation = process.cwd()
 let installLocationUser = String(execSync('stat -c "%U" $PWD'))
 installLocationUser = installLocationUser.replace(/(\r\n|\n|\r)/gm, "");
 
-let configFilePath = '/usr/local/etc/smartsoundsync/config.js'
+let configFileDir = '/usr/local/etc/smartsoundsync/'
+let configFileName = 'config.js'
+let configFilePath = configFileDir.concat(configFileName)
 let binLocation = '/usr/local/bin/' 
 
 let search = '/lib/systemd/system/'
@@ -91,8 +93,9 @@ if (!stopOnly) {
     if (fs.existsSync(configFilePath)) {
         console.log('config exists', configFilePath)
     } else {
+        execSync(`mkdir -p ${configFileDir}`)
         execSync(`cp ${installLocation}/config_examples/standardconf.js ${configFilePath}`)
-        execSyncPrint(`chown -R ${installLocationUser} ${configFilePath}`)
+        execSyncPrint(`chown -R ${installLocationUser} ${configFileDir}`)
         console.log(`No config file found.  Created standard config file at ${configFilePath}.  Please ensure config is correct for your setup and re-run this script.`)
         process.exit()
     }
@@ -312,8 +315,7 @@ WantedBy=multi-user.target
             
             execSync(`cp ${installLocation}/config_examples/chainsetup-file.ecs ${ecasoundChainSetupFilePath}`)
             execSync(`cp ${installLocation}/config_examples/Ecasound_Chain_Stereo_Flat.ecp ${ecasoundFilterFilePath}`)
-            execSyncPrint(`chown -R ${installLocationUser} ${ecasoundChainSetupFilePath}`)
-            execSyncPrint(`chown -R ${installLocationUser} ${ecasoundFilterFilePath}`)
+            execSyncPrint(`chown -R ${installLocationUser} ${ecasoundChainSetupFileDir}`)
             console.log(`No config file found.  Created standard config file at ${ecasoundChainSetupFilePath}.  Please ensure config is correct for your setup and re-run this script.`)
             //process.exit()
         }

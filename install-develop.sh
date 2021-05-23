@@ -41,6 +41,6 @@ unzip -o /tmp/smartsoundsync/develop.zip -d /tmp/smartsoundsync/smartsoundsync-n
 rm -r /usr/local/lib/smartsoundsync/
 cp -v -a /tmp/smartsoundsync/smartsoundsync-new/smartsoundsync-develop/. /usr/local/lib/smartsoundsync/
 sudo chown -R  $(stat -c "%U" $PWD) /usr/local/lib/smartsoundsync/  
-cd /usr/local/lib/smartsoundsync/ && node install-setup.js
+cd /usr/local/lib/smartsoundsync/ && nodejs install-setup.js
 
 
