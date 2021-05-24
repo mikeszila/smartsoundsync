@@ -3,7 +3,7 @@
 global.common = require('./common.js')
 const { exec, spawn, execSync } = require('child_process');
 const fs = require('fs');
-const { settings } = require('cluster');
+//const { settings } = require('cluster');
 
 //const { settings } = require('cluster');
 
