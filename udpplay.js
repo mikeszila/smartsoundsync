@@ -3,6 +3,7 @@
 global.common = require('./common.js')
 const { exec, spawn, execSync } = require('child_process');
 const fs = require('fs');
+const { settings } = require('cluster');
 
 //const { settings } = require('cluster');
 
@@ -78,6 +79,10 @@ if (cmdSettingsJSON != 0) {
     settings = { ...settings, ...cmdSettingsObj }
 }
 
+if (!settings.hostnameForMatch) {
+    settings.hostnameForMatch = settings.controllerHostname
+}
+
 let volume
 
 if (settings.volumeControlScript) {
@@ -146,11 +151,13 @@ socketControl.on('message', function (messageControl, remote) {
     }
 })
 
+
+
 function sendSubscribe() {
     var statusObject = {
         type: 'Sink Subscribe',
         hostname: hostname,
-        hostnameForMatch: settings.controllerHostname,
+        hostnameForMatch: settings.hostnameForMatch,
         port: socketControl.address().port
     }
 
