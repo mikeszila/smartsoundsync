@@ -27,6 +27,11 @@ if (cmdSettingsJSON != 0) {
     settings = { ...settings, ...cmdSettingsObj }
 }
 
+if (!settings.noSpeedup) {
+    console.log('SPEEDUPRUNNING!!!!!!!!!!!!!!!!!!')    
+    common.speedup()
+}
+
 global.reported_exact_rate = settings.source_rate
 global.reported_buffer_size = settings.source_buffer_periods * settings.source_period_size
 global.reported_period_size = settings.source_period_size
@@ -162,7 +167,7 @@ let syncErrorDiff = 0
 
 
 function readFunc() {
-    if (sendTime < (Date.now() + desired_playback_delay) || sendTime == 0) {
+    if (captureState == 'active' && (sendTime < (Date.now() + desired_playback_delay) || sendTime == 0)) {
         audioData = readStream.read(reported_period_size * 4)
 
 
@@ -174,7 +179,7 @@ function readFunc() {
             }
 
             if (sendTime == 0 || sendTime < (Date.now() - desired_playback_delay)) {
-                console.log('SEND TIME RESET!!!!!')
+                console.log('SEND TIME RESET!!!!!', sendTime , (Date.now() - desired_playback_delay), sendTime - (Date.now() - desired_playback_delay))
                 sendTime = Date.now() // reset sendTime if it get's too far behind, typically due to pause or first scan.  
             }
             buffertoudp.sendAudioUDP(audioData, sendTime, sampleIndex)
@@ -184,7 +189,7 @@ function readFunc() {
             sampleIndex = sampleIndex + 1
             lastData = Date.now()
         } else {
-            //console.log('is null')
+            console.log('is null')
         }
     }
 
@@ -231,8 +236,8 @@ function timeadjust() {
     if (captureState == 'active' && sampleAdjustCount > 0) {
 
         let sampleAdjust = (sampleAdjustSum / sampleAdjustCount)
-        if (sampleAdjust > 1) { sampleAdjust = 1 }
-        if (sampleAdjust < -1) { sampleAdjust = -1 }
+        //if (sampleAdjust > 1) { sampleAdjust = 1 }
+        //if (sampleAdjust < -1) { sampleAdjust = -1 }
 
 
         sendTime = sendTime - sampleAdjust * sampleTimeMS

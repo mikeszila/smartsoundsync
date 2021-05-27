@@ -23,6 +23,11 @@ if (cmdSettingsJSON != 0) {
     settings = { ...settings, ...cmdSettingsObj }
 }
 
+if (!settings.noSpeedup) {
+    console.log('SPEEDUPRUNNING!!!!!!!!!!!!!!!!!!')    
+    common.speedup()
+}
+
 global.buffertoudp = require('./buffertoudp.js')
 
 global.reported_exact_rate = settings.source_rate

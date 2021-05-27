@@ -79,6 +79,11 @@ if (cmdSettingsJSON != 0) {
     settings = { ...settings, ...cmdSettingsObj }
 }
 
+if (!settings.noSpeedup) {
+    console.log('SPEEDUPRUNNING!!!!!!!!!!!!!!!!!!')    
+    common.speedup()
+}
+
 if (!settings.hostnameForMatch) {
     settings.hostnameForMatch = settings.controllerHostname
 }
