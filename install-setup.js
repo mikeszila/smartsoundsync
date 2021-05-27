@@ -377,7 +377,7 @@ WantedBy=multi-user.target
             let sourceSettings = value
 
             if(settings.noSpeedup) {
-                sourceSettings.noSpeedup = true
+                settings.sources[index].noSpeedup = true
             }
 
 
