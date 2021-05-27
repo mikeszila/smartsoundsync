@@ -98,7 +98,11 @@ function speedup() {
     })
 }
 
-if (!settings.noSpeedup) {speedup()}
+if (!settings.noSpeedup) {
+    console.log('SPEEDUPRUNNING!!!!!!!!!!!!!!!!!!')    
+    speedup()
+
+}
 
 function setPriority(pid, priority) {
     exec(`chrt -p ${priority} ${pid}`, (err, stdout, stderr) => {
