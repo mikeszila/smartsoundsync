@@ -261,6 +261,43 @@ if (!stopOnly) {
     let execArguments = ''
     let priority = 1
 
+
+
+
+
+        execArguments = ''
+
+
+        //control
+
+        serviceTemplate = `[Unit]
+Description=Audio local smartsoundsync
+After=network-online.target sound.target
+Requires=network-online.target
+Wants=avahi-daemon.service
+
+[Service]
+Type=simple
+WorkingDirectory=${installLocation}
+ExecStart=/usr/bin/node ${installLocation}/smartsoundsync.js ${execArguments} 
+TimeoutStopSec=5
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+`
+        serviceName = `smartsoundsynccommon.service`
+
+        writeServiceFile(serviceName, serviceTemplate)
+        servicesToStart.push(serviceName)
+
+    
+
+
+
+
+
     if (settings.controller) {
         if(settings.noSpeedup) {
             settings.controller.noSpeedup = true
