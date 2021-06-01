@@ -24,12 +24,6 @@ if (cmdSettingsJSON != 0) {
     settings = { ...settings, ...cmdSettingsObj }
 }
 
-if (!settings.noSpeedup) {
-    console.log('SPEEDUPRUNNING!!!!!!!!!!!!!!!!!!')    
-    common.speedup()
-}
-
-
 console.log(settings)
 
 global.hwtobuffer = require('./hwtobuffer.js')

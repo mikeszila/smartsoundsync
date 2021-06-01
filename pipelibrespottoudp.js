@@ -27,11 +27,6 @@ if (cmdSettingsJSON != 0) {
     settings = { ...settings, ...cmdSettingsObj }
 }
 
-if (!settings.noSpeedup) {
-    console.log('SPEEDUPRUNNING!!!!!!!!!!!!!!!!!!')    
-    common.speedup()
-}
-
 global.reported_exact_rate = settings.source_rate
 global.reported_buffer_size = settings.source_buffer_periods * settings.source_period_size
 global.reported_period_size = settings.source_period_size

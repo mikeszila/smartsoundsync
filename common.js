@@ -34,8 +34,7 @@ global.settings = {  //basic settings for running outside systemd and other comm
     bytesPerSample: 2,
     verbose: false,
     sourceSampleAdjust: 0,
-    additional_requested_latency: 0,
-    noSpeedup: false
+    additional_requested_latency: 0
 }
 
 global.volumeOut = settings.initialVolume
@@ -79,25 +78,6 @@ function tryExec(commands) {
     execSyncPrint(commands)
 }
 
-function speedup() {
-    let commands = [
-        'systemctl stop triggerhappy',
-        'systemctl stop dbus',
-        'killall console-kit-daemon',
-        'killall polkitd',
-        'sudo mount -o remount,size=128M /dev/shm',
-        'killall gvfsd',
-        'killall dbus-daemon',
-        'killall dbus-launch',
-        'echo -n performance | tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor',
-        '/sbin/sysctl -w vm.swappiness=10'
-    ]
-
-    commands.forEach(function (value, index) {
-        tryExec(value)
-    })
-}
-
 function setPriority(pid, priority) {
     exec(`chrt -p ${priority} ${pid}`, (err, stdout, stderr) => {
         if (err) {
@@ -125,6 +105,5 @@ function setPriority(pid, priority) {
 module.exports = {
     setPriority,
     execSyncPrint,
-    tryExec,
-    speedup
+    tryExec
 }
