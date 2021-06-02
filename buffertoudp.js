@@ -134,7 +134,7 @@ function heartbeatsCheck() {
 
         //console.log("sink", value.hostname, value.port, value.lastHeartbeat, audioSinkList.length)
 
-        if (value.lastHeartbeat + 5000 < Date.now()) {
+        if (value.lastHeartbeat + 10000 < Date.now()) {
             audioSinkList.splice(index, 1)
             console.log('heartbeat not found for audioSink', value.hostname, 'port', value.port, 'removing', 'sink count now', audioSinkList.length)
         }

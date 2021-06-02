@@ -68,9 +68,14 @@ if (fs.existsSync(audiofifopath)) {
 }
 
 let stateInactiveCheckPointer = false
+let readFuncIntervalPointer = false
 
 function stateInactiveCheck() {
     captureState = 'idle'
+    if (readFuncIntervalPointer) {
+        clearInterval(readFuncIntervalPointer)
+        readFuncIntervalPointer = false
+    }
     common.setPriority(process.pid, -19)
     common.setPriority(librespot.pid, -19)
 }
@@ -98,6 +103,7 @@ function spawnlibrespot() {
             captureState = 'active'
             common.setPriority(process.pid, 80)
             common.setPriority(librespot.pid, 80)
+            readFuncIntervalPointer = setInterval(readFunc, Math.floor(reported_period_time * 0.75))
         }
 
         if (message.includes('== Stopping sink ==')) {
@@ -162,30 +168,33 @@ let syncErrorDiff = 0
 
 
 function readFunc() {
+
+    //console.log('hello')
     if (captureState == 'active' && (sendTime < (Date.now() + desired_playback_delay) || sendTime == 0)) {
         audioData = readStream.read(reported_period_size * 4)
 
 
-        if (audioData != null) {
-
-
-            if (audioData.length != reported_period_size * 4) {
-                console.log('size different!!!!!!!!!!!!!!!!!!!!', audioData.length / 4)
-            }
-
-            if (sendTime == 0 || sendTime < (Date.now() - desired_playback_delay)) {
-                console.log('SEND TIME RESET!!!!!', sendTime , (Date.now() - desired_playback_delay), sendTime - (Date.now() - desired_playback_delay))
-                sendTime = Date.now() // reset sendTime if it get's too far behind, typically due to pause or first scan.  
-            }
-            buffertoudp.sendAudioUDP(audioData, sendTime, sampleIndex)
-
-            //console.log(ntpCorrection, reported_period_time,  reported_period_time - (reported_period_time / ntpCorrection))
-            sendTime = sendTime + (reported_period_time * ntpCorrection)
-            sampleIndex = sampleIndex + 1
-            lastData = Date.now()
-        } else {
+        if (audioData == null) {
             console.log('is null')
+            audioData = Buffer.alloc(reported_period_size * 4);
         }
+
+
+        if (audioData.length != reported_period_size * 4) {
+            console.log('size different!!!!!!!!!!!!!!!!!!!!', audioData.length / 4)
+        }
+
+        if (sendTime == 0 || sendTime < (Date.now() - desired_playback_delay)) {
+            console.log('SEND TIME RESET!!!!!', sendTime, (Date.now() - desired_playback_delay), sendTime - (Date.now() - desired_playback_delay))
+            sendTime = Date.now() // reset sendTime if it get's too far behind, typically due to pause or first scan.  
+        }
+        buffertoudp.sendAudioUDP(audioData, sendTime, sampleIndex)
+
+        //console.log(ntpCorrection, reported_period_time,  reported_period_time - (reported_period_time / ntpCorrection))
+        sendTime = sendTime + (reported_period_time * ntpCorrection)
+        sampleIndex = sampleIndex + 1
+        lastData = Date.now()
+
     }
 
     //   if (sendTime == 0 || sendTime < (Date.now() - source_buffer_time * 20)) {
@@ -202,45 +211,12 @@ function readFunc() {
 }
 
 spawnlibrespot()
-setInterval(readFunc, Math.floor(reported_period_time * 0.75))
 
 console.log('read time interval', Math.floor(reported_period_time * 0.75))
 
-//setInterval(timeAdjust, 1000)
-
-let sampleAdjustSum = 0
-let sampleAdjustCount = 0
-
-
-
 buffertoudp.syncErrorData.on("syncErrorData", function (data) {
-
-    if (captureState == 'active') {
-        if (data.syncError != 0) {
-            sampleAdjustSum = sampleAdjustSum + data.syncError
-            sampleAdjustCount = sampleAdjustCount + 1
-        }
-    } else {
-        sampleAdjustSum = 0
-        sampleAdjustCount = 0
-    }
-    //console.log(data, timeAdjust)
-});
-
-function timeadjust() {
-    if (captureState == 'active' && sampleAdjustCount > 0) {
-
-        let sampleAdjust = (sampleAdjustSum / sampleAdjustCount)
-        //if (sampleAdjust > 1) { sampleAdjust = 1 }
-        //if (sampleAdjust < -1) { sampleAdjust = -1 }
-
-
+    if (buffertoudp.audioSinkList.length > 0) {
+        sampleAdjust = data.syncError / buffertoudp.audioSinkList.length
         sendTime = sendTime - sampleAdjust * sampleTimeMS
-        console.log('timeadjust', sampleAdjustSum, sampleAdjustCount, sampleAdjust)
-        sampleAdjustSum = 0
-        sampleAdjustCount = 0
     }
-
-}
-
-setInterval(timeadjust, 1000)
+});

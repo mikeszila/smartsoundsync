@@ -97,7 +97,7 @@ volume.set_volume(volumeOut)
 const outputbytesPerSample = settings.bytesPerSample * settings.outputChannels
 const sourcebytesPerSample = settings.bytesPerSample * settings.source_channels
 
-common.setPriority(process.pid, 98)
+common.setPriority(process.pid, 99)
 
 var socketControl = dgram.createSocket({ type: "udp4", reuseAddr: true });
 
@@ -145,7 +145,7 @@ socketControl.on('message', function (messageControl, remote) {
         selectedSource = JSON.parse(JSON.stringify(newSource));
 
         if (selectedSource) {
-            //audioConnectRequest()
+            audioConnectRequest()
         }
 
     }
@@ -176,13 +176,14 @@ socketAudio.on('listening', () => {
     socketAudio.setRecvBufferSize(180224 * 10)
 
     console.log(`server listening ${socketAudio.address().address}:${socketAudio.address().port}`, 'recvbuffer', String(socketAudio.getRecvBufferSize()));
-    setInterval(audioConnectRequest, 1000)
+    //setInterval(audioConnectRequest, 1000)
 });
 
-function audioConnectRequest() {
-    if (selectedSource) {
+let audioConnectRequestTimoutPointer = false
 
-        sampleAdjustSourceSumLast = sampleAdjustSourceSumLast + sampleAdjustSourceSum
+function audioConnectRequest() {
+
+    if (selectedSource) {
 
         let connectObj = {
             type: 'connectRequest',
@@ -190,12 +191,19 @@ function audioConnectRequest() {
             port: socketAudio.address().port,
             syncError: sampleAdjustSourceSum
         }
-        sampleAdjustSourceSum = 0
         let connectRequestBuffer = Buffer.from(JSON.stringify(connectObj))
         connectRequestBuffer = Buffer.concat([messageTypeJSON, connectRequestBuffer])
         socketAudio.send(connectRequestBuffer, 0, connectRequestBuffer.length, selectedSource.audioPort, selectedSource.hostname, function (err, bytes) {
             if (err) throw err;
         });
+        sampleAdjustSourceSumLast = sampleAdjustSourceSum
+        sampleAdjustSourceSum = 0
+
+        if (audioConnectRequestTimoutPointer) {
+            clearTimeout(audioConnectRequestTimoutPointer)
+            audioConnectRequestTimoutPointer = false
+        }
+        audioConnectRequestTimoutPointer = setTimeout(audioConnectRequest, 5000)        
     }
 }
 
@@ -675,7 +683,6 @@ function sendData() {
             sampleAdjustSource = 0
             if (sampleTotal / 128 >= sampleAdjustSourceStartSecondsSetpoint) {
                 sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage))
-                if (sampleAdjustSource > 1) { sampleAdjustSource = 1 }
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
@@ -685,7 +692,10 @@ function sendData() {
                 })
             }
 
+            if (sampleAdjustSource > 1 || sampleAdjustSource < -1) { sampleAdjustSource = 0 }
+            if (sampleAdjustSource != 0) {sampleAdjustSource = sampleAdjustSource - sampleAdjustSink}
             sampleAdjustSourceSum = sampleAdjustSourceSum + sampleAdjustSource
+            if (sampleAdjustSourceSum != 0) {audioConnectRequest()}
         }
 
         //syncErrorM

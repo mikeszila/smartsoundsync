@@ -160,21 +160,26 @@ if (!stopOnly) {
         }
     })
 
-    execSyncPrint(`systemctl stop ntp`)
     let ntpConfigTemplate
 
     if (settings.ntpServerHostname && settings.ntpServerHostname != os.hostname()) {
-        console.log('writing ntp client config')
+        console.log('getting ntp client config')
         ntpConfigTemplate = fs.readFileSync('./templates/ntp-client-template.conf', 'utf8')
         ntpConfigTemplate = ntpConfigTemplate.replaceAll('settings.ntpServerHostname', settings.ntpServerHostname)
     } else {
-        console.log('writing ntp server config')
-        ntpConfigTemplate = fs.readFileSync('./templates/ntp-server-template.conf', 'utf8')
+        console.log('getting ntp server config')
+        ntpConfigTemplate = fs.readFileSync('./templates/ntp-server-template.conf', 'utf8')        
     }
 
-    fs.writeFileSync(`/etc/ntp.conf`, ntpConfigTemplate, 'utf8')
+    let currentNTPconig = fs.readFileSync(`/etc/ntp.conf`, 'utf8')
 
-    execSyncPrint(`systemctl start ntp`)
+    if (currentNTPconig != ntpConfigTemplate) {
+        console.log('ntp config different. Writing new config and restarting NTP')
+        fs.writeFileSync(`/etc/ntp.conf`, ntpConfigTemplate, 'utf8')
+        execSyncPrint(`systemctl restart ntp`)        
+    } else {
+        console.log('no changes to ntp config.  Not restarting NTP.')
+    }
 
     if (settings.sink) {
         if (fs.existsSync(`${installLocation}/pcm`)) {
