@@ -656,7 +656,7 @@ function sendData() {
             sampleAdjustSink = Math.floor(Math.abs(sinkErrorSamplesAverage))
 
             //console.log(sourceObj.sourceSampleAdjust)
-            if (sampleAdjustSink < sourceObj.sourceSampleAdjust) { sampleAdjustSink = 0 }
+            //if (sampleAdjustSink < sourceObj.sourceSampleAdjust) { sampleAdjustSink = 0 }
             //if (sampleAdjustSink >= sourceObj.sourceSampleAdjust && sourceObj.sourceSampleAdjust != 0) { sampleAdjustSink = sampleAdjustSink - 1 }
 
             if (sinkErrorSamplesAverage > 0) { sampleAdjustSink = sampleAdjustSink * -1 }
