@@ -112,7 +112,7 @@ function spawnlibrespot() {
             readFuncIntervalPointer = setInterval(readFunc, Math.floor(reported_period_time * 0.75))
 
 
-            sinkErrorReportPointer = setInterval(sinkErrorReport, 2000)
+            sinkErrorReportPointer = setInterval(sinkErrorReport, 1000)
         }
 
         if (message.includes('== Stopping sink ==')) {
@@ -224,11 +224,6 @@ spawnlibrespot()
 console.log('read time interval', Math.floor(reported_period_time * 0.75))
 
 buffertoudp.syncErrorData.on("syncErrorData", function (data) {
-    if (buffertoudp.audioSinkList.length > 0) {
-        sampleAdjust = data.sampleAdjustSource / buffertoudp.audioSinkList.length
-        sendTime = sendTime - sampleAdjust * sampleTimeMS
-    }
-
     buffertoudp.audioSinkList.forEach(function (value, index) {
         if (
             data.hostname == value.hostname
@@ -246,13 +241,15 @@ let avgErr = 0
 function sinkErrorReport() {
     console.log('-')
     buffertoudp.audioSinkList.forEach(function (value, index) {
-        
         console.log(value.hostname, value.sampleAdjustSource)
         avgErr = avgErr + value.sampleAdjustSource
         value.sampleAdjustSource = 0
     })
     if (buffertoudp.audioSinkList.length > 0) {
-        console.log('average', avgErr / buffertoudp.audioSinkList.length)
+        avgErr = avgErr / buffertoudp.audioSinkList.length
+        console.log('average', avgErr)
+        sendTime = sendTime - (avgErr * sampleTimeMS)
+        avgErr = 0
     }
-    avgErr = 0
+
 }
