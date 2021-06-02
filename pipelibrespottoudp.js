@@ -234,18 +234,24 @@ buffertoudp.syncErrorData.on("syncErrorData", function (data) {
             data.hostname == value.hostname
             &&
             data.port == value.port
-            ) {
-                if (!value.sampleAdjustSource) {value.sampleAdjustSource = 0}
-                value.sampleAdjustSource = value.sampleAdjustSource + data.sampleAdjustSource
-            }
+        ) {
+            if (!value.sampleAdjustSource) { value.sampleAdjustSource = 0 }
+            value.sampleAdjustSource = value.sampleAdjustSource + data.sampleAdjustSource
+        }
     })
 });
 
+let avgErr = 0
 
 function sinkErrorReport() {
     buffertoudp.audioSinkList.forEach(function (value, index) {
         console.log('')
-        console.log (value.hostname, value.sampleAdjustSource)
+        console.log(value.hostname, value.sampleAdjustSource)
+        avgErr = avgErr + value.sampleAdjustSource
         value.sampleAdjustSource = 0
     })
+    if (buffertoudp.audioSinkList.length > 0) {
+        console.log('average', avgErr / buffertoudp.audioSinkList.length)
+    }
+    avgErr = 0
 }
