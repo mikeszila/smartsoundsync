@@ -657,7 +657,7 @@ function sendData() {
 
             //console.log(sourceObj.sourceSampleAdjust)
             if (sampleAdjustSink < sourceObj.sourceSampleAdjust) { sampleAdjustSink = 0 }
-            if (sampleAdjustSink >= sourceObj.sourceSampleAdjust && sourceObj.sourceSampleAdjust != 0) { sampleAdjustSink = sampleAdjustSink - 1 }
+            //if (sampleAdjustSink >= sourceObj.sourceSampleAdjust && sourceObj.sourceSampleAdjust != 0) { sampleAdjustSink = sampleAdjustSink - 1 }
 
             if (sinkErrorSamplesAverage > 0) { sampleAdjustSink = sampleAdjustSink * -1 }
         }
@@ -666,7 +666,7 @@ function sendData() {
             sinkErrorSamplesArray.forEach(function (value, index) {
                 sinkErrorSamplesArray[index] = sinkErrorSamplesArray[index] + sampleAdjustSink
             })
-            if (samples_since_correct > sourceObj.reported_exact_rate  && syncErrorMSamplesAverage < 5 && syncErrorMSamplesAverage > -5 ) {
+            if (syncErrorMSamplesAverage < 5 && syncErrorMSamplesAverage > -5 ) {
                 if (sampleAdjustSink == 1) {
                     sampleAdjustSink = sampleAdjustSink - 1
                     sampleAdjustSourceSum = sampleAdjustSourceSum + 1
