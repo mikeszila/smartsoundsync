@@ -666,7 +666,7 @@ function sendData() {
             sinkErrorSamplesArray.forEach(function (value, index) {
                 sinkErrorSamplesArray[index] = sinkErrorSamplesArray[index] + sampleAdjustSink
             })
-            if (samples_since_correct > sourceObj.reported_period_size * 4 && sinkErrorSamplesAverage < 5 && sinkErrorSamplesAverage > -5 ) {
+            if (samples_since_correct > sourceObj.rate  && syncErrorMSamplesAverage < 5 && syncErrorMSamplesAverage > -5 ) {
                 if (sampleAdjustSink == 1) {
                     sampleAdjustSink = sampleAdjustSink - 1
                     sampleAdjustSourceSum = sampleAdjustSourceSum + 1
