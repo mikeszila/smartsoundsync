@@ -69,6 +69,7 @@ if (fs.existsSync(audiofifopath)) {
 
 let stateInactiveCheckPointer = false
 let readFuncIntervalPointer = false
+let sinkErrorReportPointer = false
 
 function stateInactiveCheck() {
     captureState = 'idle'
@@ -76,6 +77,11 @@ function stateInactiveCheck() {
         clearInterval(readFuncIntervalPointer)
         readFuncIntervalPointer = false
     }
+    if (sinkErrorReportPointer) {
+        clearInterval(sinkErrorReportPointer)
+        sinkErrorReportPointer = false
+    }
+
     common.setPriority(process.pid, -19)
     common.setPriority(librespot.pid, -19)
 }
@@ -104,6 +110,9 @@ function spawnlibrespot() {
             common.setPriority(process.pid, 80)
             common.setPriority(librespot.pid, 80)
             readFuncIntervalPointer = setInterval(readFunc, Math.floor(reported_period_time * 0.75))
+
+
+            sinkErrorReportPointer = setInterval(sinkErrorReport, 2000)
         }
 
         if (message.includes('== Stopping sink ==')) {
@@ -216,7 +225,26 @@ console.log('read time interval', Math.floor(reported_period_time * 0.75))
 
 buffertoudp.syncErrorData.on("syncErrorData", function (data) {
     if (buffertoudp.audioSinkList.length > 0) {
-        sampleAdjust = data.syncError / buffertoudp.audioSinkList.length
+        sampleAdjust = data.sampleAdjustSource / buffertoudp.audioSinkList.length
         sendTime = sendTime - sampleAdjust * sampleTimeMS
     }
+
+    buffertoudp.audioSinkList.forEach(function (value, index) {
+        if (
+            data.hostname == value.hostname
+            &&
+            data.port == value.port
+            ) {
+                if (!value.sampleAdjustSource) {value.sampleAdjustSource = 0}
+                value.sampleAdjustSource = value.sampleAdjustSource + data.sampleAdjustSource
+            }
+    })
 });
+
+
+function sinkErrorReport() {
+    buffertoudp.audioSinkList.forEach(function (value, index) {
+        console.log (value.hostname, value.sampleAdjustSource)
+        value.sampleAdjustSource = 0
+    })
+}

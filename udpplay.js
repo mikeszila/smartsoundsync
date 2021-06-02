@@ -189,7 +189,7 @@ function audioConnectRequest() {
             type: 'connectRequest',
             hostname: os.hostname(),
             port: socketAudio.address().port,
-            syncError: sampleAdjustSourceSum
+            sampleAdjustSource: sampleAdjustSourceSum
         }
         let connectRequestBuffer = Buffer.from(JSON.stringify(connectObj))
         connectRequestBuffer = Buffer.concat([messageTypeJSON, connectRequestBuffer])
