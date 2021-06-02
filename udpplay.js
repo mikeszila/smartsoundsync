@@ -203,7 +203,7 @@ function audioConnectRequest() {
             clearTimeout(audioConnectRequestTimoutPointer)
             audioConnectRequestTimoutPointer = false
         }
-        audioConnectRequestTimoutPointer = setTimeout(audioConnectRequest, 5000)        
+        audioConnectRequestTimoutPointer = setTimeout(audioConnectRequest, 5000)
     }
 }
 
@@ -666,15 +666,16 @@ function sendData() {
             sinkErrorSamplesArray.forEach(function (value, index) {
                 sinkErrorSamplesArray[index] = sinkErrorSamplesArray[index] + sampleAdjustSink
             })
-
-            if (sampleAdjustSink > 0) {
-                sampleAdjustSink = sampleAdjustSink - 1
-                sampleAdjustSourceSum = sampleAdjustSourceSum + 1
-                audioConnectRequest()
-            } else {
-                sampleAdjustSink = sampleAdjustSink + 1
-                sampleAdjustSourceSum = sampleAdjustSourceSum - 1
-                audioConnectRequest()
+            if (samples_since_correct > reported_period_size * 4) {
+                if (sampleAdjustSink > 0) {
+                    sampleAdjustSink = sampleAdjustSink - 1
+                    sampleAdjustSourceSum = sampleAdjustSourceSum + 1
+                    audioConnectRequest()
+                } else {
+                    sampleAdjustSink = sampleAdjustSink + 1
+                    sampleAdjustSourceSum = sampleAdjustSourceSum - 1
+                    audioConnectRequest()
+                }
             }
         }
 
@@ -703,7 +704,7 @@ function sendData() {
             }
 
             if (sampleAdjustSource > 1 || sampleAdjustSource < -1) { sampleAdjustSource = 0 }
-            if (sampleAdjustSource != 0) {sampleAdjustSource = sampleAdjustSource - sampleAdjustSink}
+            if (sampleAdjustSource != 0) { sampleAdjustSource = sampleAdjustSource - sampleAdjustSink }
             //sampleAdjustSourceSum = sampleAdjustSourceSum + sampleAdjustSource
             //if (sampleAdjustSourceSum != 0) {audioConnectRequest()}
         }
@@ -798,7 +799,7 @@ function sendData() {
             'AdjustSink', pad(String(sampleAdjustSink), 4, ' '),
             'AdjustSource', pad(String(sampleAdjustSourceSumLast), 4, ' '),
 
-            
+
 
             'AdjTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
             'AdjTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
