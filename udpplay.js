@@ -189,15 +189,13 @@ function audioConnectRequest() {
             type: 'connectRequest',
             hostname: os.hostname(),
             port: socketAudio.address().port,
-            sampleAdjustSource: sampleAdjustSourceSum
+            sampleAdjustSource: sampleAdjustSource
         }
         let connectRequestBuffer = Buffer.from(JSON.stringify(connectObj))
         connectRequestBuffer = Buffer.concat([messageTypeJSON, connectRequestBuffer])
         socketAudio.send(connectRequestBuffer, 0, connectRequestBuffer.length, selectedSource.audioPort, selectedSource.hostname, function (err, bytes) {
             if (err) throw err;
         });
-        sampleAdjustSourceSumLast = sampleAdjustSourceSum
-        sampleAdjustSourceSum = 0
 
         if (audioConnectRequestTimoutPointer) {
             clearTimeout(audioConnectRequestTimoutPointer)
@@ -538,8 +536,6 @@ var sampleAdjustSinkStartSeconds = 2
 var sampleAdjustSinkStartSecondsSetpoint = Math.round(44100 / 128 * sampleAdjustSinkStartSeconds)
 
 let sampleAdjustSource = 0
-let sampleAdjustSourceSum = 0
-let sampleAdjustSourceSumLast = 0
 let sourceErrorSamples = 0
 var sourceErrorSamplesAverage = 0
 var sourceErrorSamplesArray = []
@@ -683,6 +679,8 @@ function sendData() {
             sampleAdjustSource = 0
             if (sampleTotal / 128 >= sampleAdjustSourceStartSecondsSetpoint) {
                 sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage))
+                if (sampleAdjustSource > 1) {sampleAdjustSource = 1}
+                if (samples_since_correct < sourceObj.reported_exact_rate) {sampleAdjustSource = 0}
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
@@ -690,12 +688,8 @@ function sendData() {
                 sourceErrorSamplesArray.forEach(function (value, index) {
                     sourceErrorSamplesArray[index] = sourceErrorSamplesArray[index] + sampleAdjustSource
                 })
+                audioConnectRequest()
             }
-
-            if (sampleAdjustSource > 1 || sampleAdjustSource < -1) { sampleAdjustSource = 0 }
-            if (sampleAdjustSource != 0) { sampleAdjustSource = sampleAdjustSource - sampleAdjustSink }
-            //sampleAdjustSourceSum = sampleAdjustSourceSum + sampleAdjustSource
-            //if (sampleAdjustSourceSum != 0) {audioConnectRequest()}
         }
 
         //syncErrorM
@@ -762,7 +756,7 @@ function sendData() {
         console.log('SHORTDATAERROR!!!')
     }
 
-    if (settings.verbose || sampleAdjustSink != 0 || sampleAdjustSourceSumLast != 0 || avail > delay) {
+    if (settings.verbose || sampleAdjustSink != 0 || sampleAdjustSource != 0 || avail > delay) {
 
         console.log(
             'frames', pad(2, String(Object.keys(framesList).length), ' '),
@@ -786,7 +780,7 @@ function sendData() {
             'Err', pad(String(numberFormat(syncErrorMSamplesAverage)), 6, ' '),
 
             'AdjustSink', pad(String(sampleAdjustSink), 4, ' '),
-            'AdjustSource', pad(String(sampleAdjustSourceSumLast), 4, ' '),
+            'AdjustSource', pad(String(sampleAdjustSource), 4, ' '),
 
 
 
@@ -795,7 +789,6 @@ function sendData() {
             //'SampleTotal', pad(String(sampleTotal), 10, ' '),
             'SinceAdj', pad(10, String(samples_since_correct), ' ')
         )
-        sampleAdjustSourceSumLast = 0
         ecasoundIndexLast = 0
         receiveIndex = 0
     }
