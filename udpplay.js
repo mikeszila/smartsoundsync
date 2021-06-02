@@ -617,7 +617,8 @@ function getData() {
     }
 }
 
-let samples_since_correct = 0
+let samples_since_correct_sink = 0
+let samples_since_correct_source = 0
 
 function numberFormat(x) {
     return Number.parseFloat(x).toFixed(3);
@@ -627,7 +628,8 @@ function sendData() {
 
     transmitSize = avail
 
-    samples_since_correct = samples_since_correct + written
+    samples_since_correct_sink = samples_since_correct_sink + written
+    samples_since_correct_source = samples_since_correct_source + written
 
     getData()
     syncErrorMS = cardTimeht - audiobuffferTime
@@ -679,7 +681,7 @@ function sendData() {
             if (sampleTotal / 128 >= sampleAdjustSourceStartSecondsSetpoint) {
                 sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage))
                 if (sampleAdjustSource > 1) {sampleAdjustSource = 1}
-                if (samples_since_correct < (sourceObj.reported_exact_rate / 2)) {sampleAdjustSource = 0}
+                if (samples_since_correct_source < (sourceObj.reported_exact_rate / 2)) {sampleAdjustSource = 0}
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
@@ -786,14 +788,18 @@ function sendData() {
             'AdjTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
             'AdjTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
             //'SampleTotal', pad(String(sampleTotal), 10, ' '),
-            'SinceAdj', pad(10, String(samples_since_correct), ' ')
+            'SAsink', pad(10, String(samples_since_correct_sink), ' '),
+            'SAsrc', pad(10, String(samples_since_correct_source), ' ')
         )
         ecasoundIndexLast = 0
         receiveIndex = 0
     }
 
     if (sampleAdjustSink != 0) {
-        samples_since_correct = 0
+        samples_since_correct_sink = 0
+    }
+    if (sampleAdjustSource != 0) {
+        samples_since_correct_source = 0
     }
 
     cardTimehtLast = cardTimeht
