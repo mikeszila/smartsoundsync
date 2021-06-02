@@ -666,12 +666,13 @@ function sendData() {
             sinkErrorSamplesArray.forEach(function (value, index) {
                 sinkErrorSamplesArray[index] = sinkErrorSamplesArray[index] + sampleAdjustSink
             })
-            if (samples_since_correct > reported_period_size * 4) {
-                if (sampleAdjustSink > 0) {
+            if (samples_since_correct > sourceObj.reported_period_size * 4 && sinkErrorSamplesAverage < 5 && sinkErrorSamplesAverage > -5 ) {
+                if (sampleAdjustSink == 1) {
                     sampleAdjustSink = sampleAdjustSink - 1
                     sampleAdjustSourceSum = sampleAdjustSourceSum + 1
                     audioConnectRequest()
-                } else {
+                } 
+                if (sampleAdjustSink == -1) {
                     sampleAdjustSink = sampleAdjustSink + 1
                     sampleAdjustSourceSum = sampleAdjustSourceSum - 1
                     audioConnectRequest()
