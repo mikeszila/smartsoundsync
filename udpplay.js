@@ -145,7 +145,7 @@ socketControl.on('message', function (messageControl, remote) {
         selectedSource = JSON.parse(JSON.stringify(newSource));
 
         if (selectedSource) {
-            audioConnectRequest()
+            if (!audioConnectRequestTimoutPointer) {audioConnectRequest()}
         }
 
     }
@@ -176,7 +176,6 @@ socketAudio.on('listening', () => {
     socketAudio.setRecvBufferSize(180224 * 10)
 
     console.log(`server listening ${socketAudio.address().address}:${socketAudio.address().port}`, 'recvbuffer', String(socketAudio.getRecvBufferSize()));
-    //setInterval(audioConnectRequest, 1000)
 });
 
 let audioConnectRequestTimoutPointer = false
@@ -680,7 +679,7 @@ function sendData() {
             if (sampleTotal / 128 >= sampleAdjustSourceStartSecondsSetpoint) {
                 sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage))
                 if (sampleAdjustSource > 1) {sampleAdjustSource = 1}
-                if (samples_since_correct < sourceObj.reported_exact_rate) {sampleAdjustSource = 0}
+                //if (samples_since_correct < (sourceObj.reported_exact_rate / 2)) {sampleAdjustSource = 0}
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
