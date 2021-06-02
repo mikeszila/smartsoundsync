@@ -666,6 +666,16 @@ function sendData() {
             sinkErrorSamplesArray.forEach(function (value, index) {
                 sinkErrorSamplesArray[index] = sinkErrorSamplesArray[index] + sampleAdjustSink
             })
+
+            if (sampleAdjustSink > 0) {
+                sampleAdjustSink = sampleAdjustSink - 1
+                sampleAdjustSourceSum = sampleAdjustSourceSum + 1
+                audioConnectRequest()
+            } else {
+                sampleAdjustSink = sampleAdjustSink + 1
+                sampleAdjustSourceSum = sampleAdjustSourceSum - 1
+                audioConnectRequest()
+            }
         }
 
         //syncErrorB
@@ -694,8 +704,8 @@ function sendData() {
 
             if (sampleAdjustSource > 1 || sampleAdjustSource < -1) { sampleAdjustSource = 0 }
             if (sampleAdjustSource != 0) {sampleAdjustSource = sampleAdjustSource - sampleAdjustSink}
-            sampleAdjustSourceSum = sampleAdjustSourceSum + sampleAdjustSource
-            if (sampleAdjustSourceSum != 0) {audioConnectRequest()}
+            //sampleAdjustSourceSum = sampleAdjustSourceSum + sampleAdjustSource
+            //if (sampleAdjustSourceSum != 0) {audioConnectRequest()}
         }
 
         //syncErrorM

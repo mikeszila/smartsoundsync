@@ -244,6 +244,7 @@ buffertoudp.syncErrorData.on("syncErrorData", function (data) {
 
 function sinkErrorReport() {
     buffertoudp.audioSinkList.forEach(function (value, index) {
+        console.log('')
         console.log (value.hostname, value.sampleAdjustSource)
         value.sampleAdjustSource = 0
     })
