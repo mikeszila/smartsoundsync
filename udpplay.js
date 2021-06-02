@@ -662,6 +662,12 @@ function sendData() {
             if (sinkErrorSamplesAverage > 0) { sampleAdjustSink = sampleAdjustSink * -1 }
         }
 
+        if (sampleAdjustSink != 0) {            
+            sinkErrorSamplesArray.forEach(function (value, index) {
+                sinkErrorSamplesArray[index] = sinkErrorSamplesArray[index] + sampleAdjustSink
+            })
+        }
+
         //syncErrorB
 
         if (sourceObj.sourceSampleAdjust != 0) {
