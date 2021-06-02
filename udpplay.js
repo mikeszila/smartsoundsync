@@ -838,13 +838,9 @@ async function spawnecasound() {
         ecasoundBufferSize = maxEcasoundBuffer
     }
 
-    let ecasoundCommand = `export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -z:nodb -b:${ecasoundBufferSize} -f:16,2,44100 -i stdin`
+    let ecasoundCommand = fs.readFileSync('/usr/local/etc/smartsoundsync/ecasound/chainsetup-file.ecs', 'utf8')
 
-    let ecasoundChainSetup = fs.readFileSync('/usr/local/etc/smartsoundsync/ecasound/chainsetup-file.ecs', 'utf8')
-
-    let ecasoundOutputSetup = `-f:s16_le,${settings.outputChannels},44100 -o:stdout`
-
-    ecasoundCommand = ecasoundCommand.concat(" ", ecasoundChainSetup, " ", ecasoundOutputSetup)
+    ecasoundCommand = ecasoundCommand.replace('ecasoundBufferSize', String(ecasoundBufferSize))
 
     console.log("ecasound Command: ", ecasoundCommand)
 
