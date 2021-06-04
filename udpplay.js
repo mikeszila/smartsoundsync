@@ -653,8 +653,8 @@ function sendData() {
             sampleAdjustSink = Math.floor(Math.abs(sinkErrorSamplesAverage))
 
             //console.log(sourceObj.sourceSampleAdjust)
-            if (sampleAdjustSink < sourceObj.sourceSampleAdjust) { sampleAdjustSink = 0 }
-            if (sampleAdjustSink >= sourceObj.sourceSampleAdjust && sourceObj.sourceSampleAdjust != 0) { sampleAdjustSink = sampleAdjustSink - 1 }
+            //if (sampleAdjustSink < sourceObj.sourceSampleAdjust) { sampleAdjustSink = 0 }
+            //if (sampleAdjustSink >= sourceObj.sourceSampleAdjust && sourceObj.sourceSampleAdjust != 0) { sampleAdjustSink = sampleAdjustSink - 1 }
 
             if (sinkErrorSamplesAverage > 0) { sampleAdjustSink = sampleAdjustSink * -1 }
         }
@@ -669,7 +669,7 @@ function sendData() {
 
         if (sourceObj.sourceSampleAdjust != 0) {
 
-            sourceErrorSamples = Math.floor(Math.abs(syncErrorMS / sampleTimeMS))
+            sourceErrorSamples = Math.floor(Math.abs(syncErrorMS / (sampleTimeMS / 2))) / 2
             if (syncErrorMS < 0) { sourceErrorSamples = sourceErrorSamples * -1 }
 
             if (sourceErrorSamplesArray.push(sourceErrorSamples) > sourceErrorSamplesArrayLengthSetpoint) {
@@ -680,7 +680,7 @@ function sendData() {
             sampleAdjustSource = 0
             if (sampleTotal / 128 >= sampleAdjustSourceStartSecondsSetpoint) {
                 sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage))
-                if (sampleAdjustSource > 1) {sampleAdjustSource = 1}
+                if (sampleAdjustSource > 0.5) {sampleAdjustSource = 0.5}
                 if (samples_since_correct_source <= (sourceObj.reported_exact_rate)) {sampleAdjustSource = 0}
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }

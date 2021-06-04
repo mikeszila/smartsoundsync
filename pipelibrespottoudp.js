@@ -111,8 +111,9 @@ function spawnlibrespot() {
             common.setPriority(librespot.pid, 80)
             readFuncIntervalPointer = setInterval(readFunc, Math.floor(reported_period_time * 0.75))
 
-
-            sinkErrorReportPointer = setInterval(sinkErrorReport, 1000)
+            if (!sinkErrorReportPointer) {
+                sinkErrorReportPointer = setInterval(sinkErrorReport, 1000)
+            }
         }
 
         if (message.includes('== Stopping sink ==')) {
