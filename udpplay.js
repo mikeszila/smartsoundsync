@@ -624,6 +624,9 @@ function numberFormat(x) {
     return Number.parseFloat(x).toFixed(3);
 }
 
+let SASink
+let SASource
+
 function sendData() {
 
     transmitSize = avail
@@ -756,8 +759,14 @@ function sendData() {
     } else {
         console.log('SHORTDATAERROR!!!')
     }
+    
 
+
+    
     if (settings.verbose || sampleAdjustSink != 0 || sampleAdjustSource != 0 || avail > delay) {
+
+        if (sampleAdjustSink != 0) {SASink = samples_since_correct_sink} else {SASink = ''}
+        if (sampleAdjustSource != 0) {SASource = samples_since_correct_source} else {SASource = ''}
 
         console.log(
             'frames', pad(2, String(Object.keys(framesList).length), ' '),
@@ -788,8 +797,8 @@ function sendData() {
             'AdjTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
             'AdjTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
             //'SampleTotal', pad(String(sampleTotal), 10, ' '),
-            'SAsink', pad(10, String(samples_since_correct_sink), ' '),
-            'SAsrc', pad(10, String(samples_since_correct_source), ' ')
+            'SAsink', pad(10, String(SASink), ' '),
+            'SAsrc', pad(10, String(SASource), ' ')
         )
         ecasoundIndexLast = 0
         receiveIndex = 0
