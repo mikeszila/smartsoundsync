@@ -681,7 +681,7 @@ function sendData() {
             if (sampleTotal / 128 >= sampleAdjustSourceStartSecondsSetpoint) {
                 sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage))
                 if (sampleAdjustSource > 1) {sampleAdjustSource = 1}
-                if (samples_since_correct_source < (sourceObj.reported_exact_rate / 2)) {sampleAdjustSource = 0}
+                if (samples_since_correct_source <= (sourceObj.reported_exact_rate)) {sampleAdjustSource = 0}
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
