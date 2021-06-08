@@ -626,7 +626,7 @@ function numberFormat(x) {
 
 let SASink
 let SASource
-let sampleAdjustSourceScaler = 0.5
+let sampleAdjustSourceScaler = 0.4
 
 function sendData() {
 
@@ -685,10 +685,14 @@ function sendData() {
 
             sampleAdjustSource = 0
             if (sampleTotal / 128 >= sampleAdjustSourceStartSecondsSetpoint) {
-                sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage ) / sampleAdjustSourceScaler) * sampleAdjustSourceScaler
-                if (sampleAdjustSource > sampleAdjustSourceScaler) {sampleAdjustSource = sampleAdjustSourceScaler}
+                //sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage ) / sampleAdjustSourceScaler) * sampleAdjustSourceScaler
+                //if (sampleAdjustSource > sampleAdjustSourceScaler) {sampleAdjustSource = sampleAdjustSourceScaler}
+
+                if (sourceErrorSamplesAverage > (0.4 + sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler * -1}
+                if (sourceErrorSamplesAverage < (0.4 - sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler }
+
                 if (samples_since_correct_source < (sourceObj.reported_exact_rate * sampleAdjustSourceScaler)) {sampleAdjustSource = 0}
-                if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
+                //if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
             if (sampleAdjustSource != 0) {
@@ -773,16 +777,19 @@ function sendData() {
 
         console.log(
             'frames', pad(2, String(Object.keys(framesList).length), ' '),
+            'bffr', pad(5, String(audiobuffer.length / outputbytesPerSample), ' '),
+            'avail', pad(4, String(avail), ' '),
+            'delay', pad(4, String(delay), ' '),
+            'idx', pad(10, String(syncIndexWritten), ' '),
             //'receiveIndex', pad(10, String(receiveIndex), ' '),
             //'ecasoundIndex', pad(10, String(ecasoundIndexLast), ' '),
-            'writeIndex', pad(10, String(syncIndexWritten), ' '),
+            
             //'last read', pad(4, String(read), ' '),
             //'last written', pad(4, String(written), ' '),
             //'sent', pad(4, String(sentlength), ' '),
-            'avail', pad(4, String(avail), ' '),
-            'delay', pad(4, String(delay), ' '),
+            
 
-            'audiobuffer', pad(5, String(audiobuffer.length / outputbytesPerSample), ' '),
+            
             //'abtime', audiobuffferTime,
 
 
@@ -790,12 +797,10 @@ function sendData() {
 
             //'SinkErr', pad(String(numberFormat(sinkErrorSamplesAverage)), 6, ' '),
             //'SourceErr', pad(String(numberFormat(sourceErrorSamplesAverage)), 6, ' '),
-            'Err', pad(String(numberFormat(syncErrorMSamplesAverage)), 6, ' '),
+            'ErrSamples', pad(String(numberFormat(syncErrorMSamplesAverage)), 6, ' '),
 
-            'AdjustSink', pad(String(sampleAdjustSink), 4, ' '),
-            'AdjustSource', pad(String(sampleAdjustSource), 4, ' '),
-
-
+            'AdjSink', pad(String(sampleAdjustSink), 4, ' '),
+            'AdjSource', pad(String(sampleAdjustSource), 4, ' '),
 
             'AdjTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
             'AdjTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
