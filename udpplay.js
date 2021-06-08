@@ -626,6 +626,7 @@ function numberFormat(x) {
 
 let SASink
 let SASource
+let sampleAdjustSourceScaler = 0.5
 
 function sendData() {
 
@@ -672,7 +673,7 @@ function sendData() {
 
         if (sourceObj.sourceSampleAdjust != 0) {
 
-            sourceErrorSamples = Math.floor(Math.abs(syncErrorMS / (sampleTimeMS / 2))) / 2
+            sourceErrorSamples = Math.floor(Math.abs(syncErrorMS / sampleTimeMS ) / sampleAdjustSourceScaler ) * sampleAdjustSourceScaler
             if (syncErrorMS < 0) { sourceErrorSamples = sourceErrorSamples * -1 }
 
             if (sourceErrorSamplesArray.push(sourceErrorSamples) > sourceErrorSamplesArrayLengthSetpoint) {
@@ -682,9 +683,9 @@ function sendData() {
 
             sampleAdjustSource = 0
             if (sampleTotal / 128 >= sampleAdjustSourceStartSecondsSetpoint) {
-                sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage))
-                if (sampleAdjustSource > 0.5) {sampleAdjustSource = 0.5}
-                if (samples_since_correct_source <= (sourceObj.reported_exact_rate)) {sampleAdjustSource = 0}
+                sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage ) / sampleAdjustSourceScaler) * sampleAdjustSourceScaler
+                if (sampleAdjustSource > sampleAdjustSourceScaler) {sampleAdjustSource = sampleAdjustSourceScaler}
+                if (samples_since_correct_source < (sourceObj.reported_exact_rate * sampleAdjustSourceScaler)) {sampleAdjustSource = 0}
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
