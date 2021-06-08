@@ -528,7 +528,7 @@ let syncErrorMS = 0
 let sinkErrorSamples = 0
 var sinkErrorSamplesAverage = 0
 var sinkErrorSamplesArray = []
-var sinkErrorSamplesAverageSeconds = 1
+var sinkErrorSamplesAverageSeconds = 0.5
 var sinkErrorSamplesArrayLengthSetpoint = Math.round(44100 / 128 * sinkErrorSamplesAverageSeconds)
 
 var sampleAdjustSinkStartSeconds = 2
