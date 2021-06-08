@@ -626,7 +626,7 @@ function numberFormat(x) {
 
 let SASink
 let SASource
-let sampleAdjustSourceScaler = 0.4
+let sampleAdjustSourceScaler = 0.5
 
 function sendData() {
 
@@ -656,7 +656,7 @@ function sendData() {
         if (sampleTotal / 128 >= sampleAdjustSinkStartSecondsSetpoint) {
             sampleAdjustSink = Math.floor(Math.abs(sinkErrorSamplesAverage))
 
-            if (sinkErrorSamplesAverage < -0.2 && sinkErrorSamplesAverage > -1) {sampleAdjustSink = 1}
+            //if (sinkErrorSamplesAverage < -0.2 && sinkErrorSamplesAverage > -1) {sampleAdjustSink = 1}
 
             //console.log(sourceObj.sourceSampleAdjust)
             //if (sampleAdjustSink < sourceObj.sourceSampleAdjust) { sampleAdjustSink = 0 }
@@ -685,14 +685,14 @@ function sendData() {
 
             sampleAdjustSource = 0
             if (sampleTotal / 128 >= sampleAdjustSourceStartSecondsSetpoint) {
-                //sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage ) / sampleAdjustSourceScaler) * sampleAdjustSourceScaler
-                //if (sampleAdjustSource > sampleAdjustSourceScaler) {sampleAdjustSource = sampleAdjustSourceScaler}
+                sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage ) / sampleAdjustSourceScaler) * sampleAdjustSourceScaler
+                if (sampleAdjustSource > sampleAdjustSourceScaler) {sampleAdjustSource = sampleAdjustSourceScaler}
 
-                if (sourceErrorSamplesAverage > (0.4 + sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler * -1}
-                if (sourceErrorSamplesAverage < (0.4 - sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler }
+                //if (sourceErrorSamplesAverage > (0.4 + sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler * -1}
+                //if (sourceErrorSamplesAverage < (0.4 - sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler }
 
                 if (samples_since_correct_source < (sourceObj.reported_exact_rate * sampleAdjustSourceScaler)) {sampleAdjustSource = 0}
-                //if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
+                if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
             if (sampleAdjustSource != 0) {
