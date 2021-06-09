@@ -25,7 +25,7 @@ var sampleIndex = 0
 
 
 let volumeCount = 0
-let volumeCountOn = 1 / (global.playback_period_time / 1000)
+let volumeCountOn = 0.1 / (global.playback_period_time / 1000)
 let volumeCountOff = -15 / (global.playback_period_time / 1000)
 
 let restartCount = 0
