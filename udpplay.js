@@ -659,7 +659,7 @@ function sendData() {
             sampleAdjustSink = Math.floor(Math.abs(sinkErrorSamplesAverage))
 
             //if (sinkErrorSamplesAverage < -0.2 && sinkErrorSamplesAverage > -1) {sampleAdjustSink = 1}
-            if (samples_since_correct_sink < (sourceObj.reported_exact_rate / 10)) {sampleAdjustSink = 0}
+            if (samples_since_correct_sink < (sourceObj.reported_exact_rate / 5)) {sampleAdjustSink = 0}
             if (sampleAdjustSink > 2) {sampleAdjustSink = 2}
             if (sinkErrorSamplesAverage > 0) { sampleAdjustSink = sampleAdjustSink * -1 }
         }
