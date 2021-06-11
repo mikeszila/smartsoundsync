@@ -69,7 +69,7 @@ socketAudio.on('message', function (message, remote) {
             }
 
             let setuppbuffer = retrunsetuppbuffer()
-            socketAudio.send(setuppbuffer, 0, setuppbuffer.length, sinkObj.port, sinkObj.IPAddress, function (err, bytes) {
+            socketAudio.send(setuppbuffer, 0, setuppbuffer.length, sinkObj.port, sinkObj.hostname, function (err, bytes) {
                 if (err) throw err;
             });
         }
@@ -117,7 +117,7 @@ function sendStatusUpdatetoSink() {
 
     let setuppbuffer = retrunsetuppbuffer()
     audioSinkList.forEach(function (value, index) {
-        socketAudio.send(setuppbuffer, 0, setuppbuffer.length, value.port, value.IPAddress, function (err, bytes) {
+        socketAudio.send(setuppbuffer, 0, setuppbuffer.length, value.port, value.hostname, function (err, bytes) {
             if (err) throw err;
         });
     })
@@ -156,7 +156,7 @@ function sendAudioUDP(audioData, sendTime, sampleIndex) {
             }
 
             audioSinkList.forEach(function (value, index) {
-                socketAudio.send(sendbuffer, 0, sendbuffer.length, value.port, value.IPAddress, function (err, bytes) {
+                socketAudio.send(sendbuffer, 0, sendbuffer.length, value.port, value.hostname, function (err, bytes) {
                     if (err) throw err;
                 });
             });

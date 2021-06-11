@@ -196,7 +196,7 @@ function sendStatusUpdate() {
             playback: sink.playback
         }
         let statusBuffer = Buffer.from(JSON.stringify(statusObject))
-        socketControlLocal.send(statusBuffer, 0, statusBuffer.length, sink.port, sink.IPAddress, function (err, bytes) {
+        socketControlLocal.send(statusBuffer, 0, statusBuffer.length, sink.port, sink.hostname, function (err, bytes) {
             if (err) throw err;
         });
     })
@@ -207,7 +207,7 @@ function sendStatusUpdate() {
             type: 'hello from control'
         }
         let statusBuffer = Buffer.from(JSON.stringify(statusObject))
-        socketControlLocal.send(statusBuffer, 0, statusBuffer.length, source.controlPort, source.IPAddress, function (err, bytes) {
+        socketControlLocal.send(statusBuffer, 0, statusBuffer.length, source.controlPort, source.hostname, function (err, bytes) {
             if (err) throw err;
         });
     })
