@@ -3,6 +3,14 @@
 const { exec, spawn, execSync } = require('child_process');
 let common = require('./common.js');
 
+var cmdlineSTR = String(process.argv)
+var cmdSettingsJSON = cmdlineSTR.slice(cmdlineSTR.lastIndexOf('{'), cmdlineSTR.lastIndexOf('}') + 1)
+
+if (cmdSettingsJSON != 0) {
+    var cmdSettingsObj = JSON.parse(String(cmdSettingsJSON))
+    settings = { ...settings, ...cmdSettingsObj }
+}
+
 var socketControlLocal = dgram.createSocket({ type: "udp4", reuseAddr: true });
 var socketControlGroupClient = dgram.createSocket({ type: "udp4", reuseAddr: true });
 
@@ -248,9 +256,18 @@ function sendSubscribe() {
     }
 
     let statusBuffer = Buffer.from(JSON.stringify(statusObject))
-    socketControlGroupClient.send(statusBuffer, 0, statusBuffer.length, settings.remoteControllerPort, settings.remoteControllerHostname, function (err, bytes) {
-        if (err) throw err;
-    });
+
+    console.log('hello')
+
+    try {
+        socketControlGroupClient.send(statusBuffer, 0, statusBuffer.length, settings.remoteControllerPort, settings.remoteControllerHostname, function (err, bytes) {
+            if (err) throw err;
+        });
+    } catch (e) {
+
+        console.log('could not connect to', settings.remoteControllerHostname)
+
+    }
 }
 
 console.log('hello!!', settings.controllerPort)
