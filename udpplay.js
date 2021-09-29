@@ -667,7 +667,9 @@ function sendData() {
         if (sampleAdjustSink != 0) {            
             sinkErrorSamplesArray.forEach(function (value, index) {
                 sinkErrorSamplesArray[index] = sinkErrorSamplesArray[index] + sampleAdjustSink
+                
             })
+            sinkErrorSamplesAverage = average(sinkErrorSamplesArray)
         }
 
         //syncErrorB
@@ -796,7 +798,7 @@ function sendData() {
 
             //'SinkErr', pad(String(numberFormat(sinkErrorSamplesAverage)), 6, ' '),
             //'SourceErr', pad(String(numberFormat(sourceErrorSamplesAverage)), 6, ' '),
-            'ErrSamples', pad(String(numberFormat(syncErrorMSamplesAverage)), 6, ' '),
+            'ErrSamples', pad(String(numberFormat(sinkErrorSamplesAverage)), 6, ' '),
 
             'AdjSink', pad(String(sampleAdjustSink), 4, ' '),
             'AdjSource', pad(String(sampleAdjustSource), 4, ' '),
