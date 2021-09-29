@@ -27,10 +27,9 @@ function set_volume(volume_db) {
 
   let volumeOut = (settings.volumeOutMin - settings.volumeOutMax) / (settings.volume_db_min - settings.volume_db_max) * (volume_db - settings.volume_db_min) + settings.volumeOutMin
 
-
   console.log('VOLUMESET', volumeOut, settings.alsaVolumeControlName, settings.alsaVolumeControlUnit)
 
-  amixer = spawn('amixer', ['sset', settings.alsaVolumeControlName, '--', `${volumeOut}${settings.alsaVolumeControlUnit}`]);
+  amixer = spawn('amixer', ['-D', settings.cardName, 'sset', settings.alsaVolumeControlName, '--', `${volumeOut}${settings.alsaVolumeControlUnit}`]);
 
   amixer.stdout.on('data', (data) => {
     //console.log('amixer stdout', String(data))
