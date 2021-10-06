@@ -73,6 +73,7 @@ settings.sources = [
         playback_buffer_periods: 4,
         additional_requested_latency: 10,
         audioSourceClients: [os.hostname()],
+        hasHifiberryDacDSP: true,
         //audioSourceDisplayName: 'Bob'  //Is automatically set to audioSourceClients if one client/sink or the first three letters of each client/sink if multiple, or you can specify a name. 
     }
 ]

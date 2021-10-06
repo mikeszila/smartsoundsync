@@ -86,6 +86,7 @@ function execArgumentsParse(execArguments) {
 let hasSpotify = false
 let hasAirplay = false
 let hasSPDIF = false
+let hasHifiberryDacDSP = false
 
 if (!stopOnly) {
     if (fs.existsSync('/usr/local/etc/smartsoundsyncconf.js')) {  //move old style config to new style
@@ -131,6 +132,9 @@ if (!stopOnly) {
             }
             if (value.audioSourceType == 'SPDIF') {
                 hasSPDIF = true
+            }
+            if (value.hasOwnProperty('HifiberryDacDSP'), value.HifiberryDacDSP == 'SPDIF') {
+                hasHifiberryDacDSP = true
             }
         })
     }
@@ -243,7 +247,7 @@ if (!stopOnly) {
         }
     }
 
-    if (hasSPDIF) {
+    if (hasHifiberryDacDSP) {
 
         if (fs.existsSync(`${installLocation}/pcmrecord`)) {
             console.log('pcmrecord exists, skipping')
