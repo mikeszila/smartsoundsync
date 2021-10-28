@@ -152,8 +152,8 @@ if (!stopOnly) {
     }
 
     dependencies.forEach(function (value, index) {
-        let installed = execSync(`apt-cache policy ${value}`)
-        if (installed.includes('Installed: (none)')) {
+        let installed = execSync(`dpkg -s ${value}`)
+        if (installed.includes('is not installed')) {
             execSyncPrint(`apt-get install ${value} -y`)
         }
     })
