@@ -247,13 +247,19 @@ if (!stopOnly) {
         }
     }
 
-    if (hasHifiberryDacDSP) {
+    if (hasSPDIF) {
+
+   
 
         if (fs.existsSync(`${installLocation}/pcmrecord`)) {
             console.log('pcmrecord exists, skipping')
         } else {
             execSyncPrint(`gcc pcmrecord.c -o /usr/local/bin/pcmrecord -lasound`)
         }
+
+    }
+
+    if (hasHifiberryDacDSP) {
 
         try {execSync('which dsptoolkit')}
         catch(error) {
