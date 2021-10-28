@@ -152,9 +152,11 @@ if (!stopOnly) {
     }
 
     dependencies.forEach(function (value, index) {
-        let installed = execSync(`dpkg -s ${value}`)
-        if (installed.includes('is not installed')) {
+        try { let installed = execSync(`dpkg -s ${value}`)}
+
+        catch (error) {
             execSyncPrint(`apt-get install ${value} -y`)
+
         }
     })
 
