@@ -67,6 +67,7 @@ settings.sources = [
         audioSourceType: 'SPDIF',
         cardName: 'hw:0',
         setupPriority: 1,
+        source_rate: 48000,
         source_period_size: 512,
         source_buffer_periods: 4,
         playback_period_size: 512,

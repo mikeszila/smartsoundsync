@@ -133,7 +133,7 @@ if (!stopOnly) {
             if (value.audioSourceType == 'SPDIF') {
                 hasSPDIF = true
             }
-            if (value.hasOwnProperty('HifiberryDacDSP'), value.HifiberryDacDSP == 'SPDIF') {
+            if (value.hasOwnProperty('HifiberryDacDSP'), value.HifiberryDacDSP == true) {
                 hasHifiberryDacDSP = true
             }
         })
@@ -155,7 +155,7 @@ if (!stopOnly) {
         try { let installed = execSync(`dpkg -s ${value}`)}
 
         catch (error) {
-            execSyncPrint(`apt-get install ${value} -y`)
+            execSyncPrint(`apt install ${value} -y`)
 
         }
     })

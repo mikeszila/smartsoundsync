@@ -257,7 +257,7 @@ function sendSubscribe() {
 
     let statusBuffer = Buffer.from(JSON.stringify(statusObject))
 
-    console.log('hello')
+    //console.log('hello')
 
     try {
         socketControlGroupClient.send(statusBuffer, 0, statusBuffer.length, settings.remoteControllerPort, settings.remoteControllerHostname, function (err, bytes) {
