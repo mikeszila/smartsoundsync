@@ -38,10 +38,12 @@ socketControlGroupClient.on('listening', () => {
 socketControlLocal.on('message', function (controlMessage, remote) {
 
     let controlMessageObj = JSON.parse(String(controlMessage))
+    controlMessageObj.IPAddress = remote.address
+    controlMessageObj.controlPort = remote.port
 
     if (controlMessageObj.type == 'Source Subscribe') {
 
-        processSourceSubscribe(controlMessageObj, remote)
+        processSourceSubscribe(controlMessageObj
     }
 
     if (controlMessageObj.type == 'Sink Subscribe' || controlMessageObj.type == 'Control Sink Subscribe') {
@@ -73,11 +75,11 @@ socketControlLocal.on('message', function (controlMessage, remote) {
 socketControlGroupClient.on('message', function (controlMessage, remote) {
     let controlMessageObj = JSON.parse(String(controlMessage))
     if (controlMessageObj.type == 'playback selection' && controlMessageObj.playback) {
-        processSourceSubscribe(controlMessageObj.playback, remote)
+        processSourceSubscribe(controlMessageObj.playback)
     }
 })
 
-function processSourceSubscribe(controlMessageObj, remote) {
+function processSourceSubscribe(controlMessageObj) {
     let stateChanged = false
     let foundSource = false
 
@@ -103,7 +105,6 @@ function processSourceSubscribe(controlMessageObj, remote) {
 
     if (!foundSource) {
 
-        console.log(remote)
         console.log(
             'Source Subscribe',
             'Hostname:', controlMessageObj.hostname,

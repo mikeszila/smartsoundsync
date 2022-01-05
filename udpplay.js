@@ -159,7 +159,6 @@ function sendSubscribe() {
         hostname: hostname,
         hostnameForMatch: settings.hostnameForMatch,
         port: socketControl.address().port,
-        IPAddress: socketControl.address().address
     }
 
     let statusBuffer = Buffer.from(JSON.stringify(statusObject))
@@ -189,7 +188,6 @@ function audioConnectRequest() {
             type: 'connectRequest',
             hostname: os.hostname(),
             port: socketAudio.address().port,
-            IPAddress: socketAudio.address().address,
             sampleAdjustSource: sampleAdjustSource
         }
         let connectRequestBuffer = Buffer.from(JSON.stringify(connectObj))
