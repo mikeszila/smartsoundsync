@@ -38,7 +38,6 @@ socketControlGroupClient.on('listening', () => {
 socketControlLocal.on('message', function (controlMessage, remote) {
 
     let controlMessageObj = JSON.parse(String(controlMessage))
-    controlMessageObj.IPAddress = remote.address
     controlMessageObj.controlPort = remote.port
 
     if (controlMessageObj.type == 'Source Subscribe') {
@@ -61,7 +60,7 @@ socketControlLocal.on('message', function (controlMessage, remote) {
 
         if (!foundSink) {
             console.log(remote)
-            console.log(controlMessageObj.type, 'Hostname:', controlMessageObj.hostname,  'IP:', controlMessageObj.IPAddress, 'controlPort:', controlMessageObj.port)
+            console.log(controlMessageObj.type, 'Hostname:', controlMessageObj.hostname,  'controlPort:', controlMessageObj.port)
             let sink = JSON.parse(JSON.stringify(controlMessageObj))
             sink.lastHeartbeat = Date.now()
             sink.playback = false
@@ -108,7 +107,6 @@ function processSourceSubscribe(controlMessageObj) {
         console.log(
             'Source Subscribe',
             'Hostname:', controlMessageObj.hostname,
-            'IP:', controlMessageObj.IPAddress,
             'DisplayName:', controlMessageObj.audioSourceDisplayName,
             'controlPort:', controlMessageObj.controlPort,
             'audioPort:', controlMessageObj.audioPort,
@@ -161,7 +159,6 @@ function playbackCheck() {
             sink.playback && (
                 !sink.playbackLast ||
                 sink.playback.hostname != sink.playbackLast.hostname ||
-                sink.playback.IPAddress != sink.playbackLast.IPAddress ||
                 sink.playback.audioPort != sink.playbackLast.audioPort ||
                 sink.playback.controlPort != sink.playbackLast.controlPort ||
                 sink.playback.captureState != sink.playbackLast.captureState
@@ -170,11 +167,9 @@ function playbackCheck() {
             console.log(
                 'Setting playback for sink',
                 sink.hostname,
-                sink.IPAddress,
                 sink.port,
                 'to source',
                 sink.playback.hostname,
-                sink.playback.IPAddress,
                 sink.playback.audioSourceDisplayName,
                 sink.playback.controlPort,
                 sink.playback.audioPort,
@@ -189,7 +184,6 @@ function playbackCheck() {
             console.log(
                 'Setting playback for sink',
                 sink.hostname,
-                sink.IPAddress,
                 sink.port,
                 'to Idle'
             )
@@ -213,7 +207,7 @@ function sendStatusUpdate() {
             playback: sink.playback
         }
         let statusBuffer = Buffer.from(JSON.stringify(statusObject))
-        socketControlLocal.send(statusBuffer, 0, statusBuffer.length, sink.port, sink.IPAddress, function (err, bytes) {
+        socketControlLocal.send(statusBuffer, 0, statusBuffer.length, sink.port, sink.hostname, function (err, bytes) {
             if (err) throw err;
         });
     })
@@ -224,7 +218,7 @@ function sendStatusUpdate() {
             type: 'hello from control'
         }
         let statusBuffer = Buffer.from(JSON.stringify(statusObject))
-        socketControlLocal.send(statusBuffer, 0, statusBuffer.length, source.controlPort, source.IPAddress, function (err, bytes) {
+        socketControlLocal.send(statusBuffer, 0, statusBuffer.length, source.controlPort, source.hostname, function (err, bytes) {
             if (err) throw err;
         });
     })
