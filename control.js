@@ -58,6 +58,7 @@ socketControlLocal.on('message', function (controlMessage, remote) {
         })
 
         if (!foundSink) {
+            console.log(remote)
             console.log(controlMessageObj.type, 'Hostname:', controlMessageObj.hostname,  'IP:', controlMessageObj.IPAddress, 'controlPort:', controlMessageObj.port)
             let sink = JSON.parse(JSON.stringify(controlMessageObj))
             sink.lastHeartbeat = Date.now()
