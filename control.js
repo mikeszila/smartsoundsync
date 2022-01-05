@@ -58,7 +58,7 @@ socketControlLocal.on('message', function (controlMessage, remote) {
         })
 
         if (!foundSink) {
-            console.log(controlMessageObj.type, 'Hostname:', controlMessageObj.hostname, 'controlPort:', controlMessageObj.port)
+            console.log(controlMessageObj.type, 'Hostname:', controlMessageObj.hostname,  'IP:', controlMessageObj.IPAddress, 'controlPort:', controlMessageObj.port)
             let sink = JSON.parse(JSON.stringify(controlMessageObj))
             sink.lastHeartbeat = Date.now()
             sink.playback = false
@@ -104,6 +104,7 @@ function processSourceSubscribe(controlMessageObj, remote) {
         console.log(
             'Source Subscribe',
             'Hostname:', controlMessageObj.hostname,
+            'IP:', controlMessageObj.IPAddress,
             'DisplayName:', controlMessageObj.audioSourceDisplayName,
             'controlPort:', controlMessageObj.controlPort,
             'audioPort:', controlMessageObj.audioPort,
