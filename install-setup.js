@@ -80,6 +80,11 @@ function serviceStart(serviceName) {
 function execArgumentsParse(execArguments) {
     execArguments = JSON.stringify(execArguments)
     execArguments = execArguments.replace(/\\/g, "\\\\").replace(/\$/g, "\\$").replace(/'/g, "\\'").replace(/"/g, "\\\"");
+    execArguments = execArguments.replaceAll(os.hostname(), '%H')
+
+
+
+    
     return execArguments
 }
 
@@ -464,7 +469,11 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 `
-                serviceName = `smartsoundsyncspdif${sourceSettings.audioSourceDisplayName}.service`
+                if (os.hostname() == sourceSettings.audioSourceDisplayName) {
+                    serviceName = `smartsoundsyncspdif.service`
+                } else {
+                    serviceName = `smartsoundsyncspdif${sourceSettings.audioSourceDisplayName}.service`                
+                }
 
                 writeServiceFile(serviceName, serviceTemplate)
                 servicesToStart.push(serviceName)
@@ -492,7 +501,13 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 `
-                serviceName = `smartsoundsyncspotify${sourceSettings.audioSourceDisplayName}.service`
+                if (os.hostname() == sourceSettings.audioSourceDisplayName) {
+                    serviceName = `smartsoundsyncspotify.service`
+                } else {
+                    serviceName = `smartsoundsyncspotify${sourceSettings.audioSourceDisplayName}.service`                
+                }
+
+
 
                 writeServiceFile(serviceName, serviceTemplate)
                 servicesToStart.push(serviceName)
@@ -523,7 +538,11 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 `
-                serviceName = `smartsoundsyncairplay${sourceSettings.audioSourceDisplayName}.service`
+                if (os.hostname() == sourceSettings.audioSourceDisplayName) {
+                    serviceName = `smartsoundsyncairplay.service`
+                } else {
+                    serviceName = `smartsoundsyncairplay${sourceSettings.audioSourceDisplayName}.service`                
+                }
 
                 writeServiceFile(serviceName, serviceTemplate)
                 servicesToStart.push(serviceName)

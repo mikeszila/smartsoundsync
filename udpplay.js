@@ -194,7 +194,7 @@ function audioConnectRequest() {
         }
         let connectRequestBuffer = Buffer.from(JSON.stringify(connectObj))
         connectRequestBuffer = Buffer.concat([messageTypeJSON, connectRequestBuffer])
-        socketAudio.send(connectRequestBuffer, 0, connectRequestBuffer.length, selectedSource.audioPort, selectedSource.hostname, function (err, bytes) {
+        socketAudio.send(connectRequestBuffer, 0, connectRequestBuffer.length, selectedSource.audioPort, selectedSource.IPAddress, function (err, bytes) {
             if (err) throw err;
         });
 
