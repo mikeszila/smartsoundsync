@@ -165,6 +165,7 @@ function playbackCheck() {
             console.log(
                 'Setting playback for sink',
                 sink.hostname,
+                sink.IPAddress,
                 sink.port,
                 'to source',
                 sink.playback.hostname,

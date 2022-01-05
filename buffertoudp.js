@@ -200,6 +200,7 @@ function sendStatusUpdatetoControl() {
         var statusObject = {
             type: 'Source Subscribe',
             hostname: hostname,
+            IPAddress: socketAudio.address().address,
             controlPort: socketControl.address().port,
             audioPort: socketAudio.address().port,
             audioSourceType: settings.audioSourceType,
