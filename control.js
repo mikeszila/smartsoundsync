@@ -101,6 +101,8 @@ function processSourceSubscribe(controlMessageObj, remote) {
     })
 
     if (!foundSource) {
+
+        console.log(remote)
         console.log(
             'Source Subscribe',
             'Hostname:', controlMessageObj.hostname,
