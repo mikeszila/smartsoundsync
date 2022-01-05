@@ -43,7 +43,7 @@ socketControlLocal.on('message', function (controlMessage, remote) {
 
     if (controlMessageObj.type == 'Source Subscribe') {
 
-        processSourceSubscribe(controlMessageObj
+        processSourceSubscribe(controlMessageObj)
     }
 
     if (controlMessageObj.type == 'Sink Subscribe' || controlMessageObj.type == 'Control Sink Subscribe') {
