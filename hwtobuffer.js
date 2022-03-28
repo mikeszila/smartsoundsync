@@ -250,6 +250,16 @@ function processAplayStderr(stderr) {
     }
 }
 
+
+function checkState() {
+    if (hwCaptureState != 'idle' && ((Date.now() - 10000) > htstamp)) {
+        console.log('idle timeout')
+        hwCaptureState = 'idle'
+    }
+}
+
+setInterval(checkState, 10000)
+
 spawnpcmRecord()
 
 

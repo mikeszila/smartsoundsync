@@ -183,12 +183,10 @@ function readFunc() {
     if (captureState == 'active' && (sendTime < (Date.now() + desired_playback_delay) || sendTime == 0)) {
         audioData = readStream.read(reported_period_size * 4)
 
-
         if (audioData == null) {
             console.log('is null')
             audioData = Buffer.alloc(reported_period_size * 4);
         }
-
 
         if (audioData.length != reported_period_size * 4) {
             console.log('size different!!!!!!!!!!!!!!!!!!!!', audioData.length / 4)
@@ -204,7 +202,6 @@ function readFunc() {
         sendTime = sendTime + (reported_period_time * ntpCorrection)
         sampleIndex = sampleIndex + 1
         lastData = Date.now()
-
     }
 
     //   if (sendTime == 0 || sendTime < (Date.now() - source_buffer_time * 20)) {
@@ -252,5 +249,4 @@ function sinkErrorReport() {
         sendTime = sendTime - (avgErr * sampleTimeMS)
         avgErr = 0
     }
-
 }

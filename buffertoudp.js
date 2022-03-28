@@ -12,8 +12,6 @@ socketAudio.bind(0);
 
 socketAudio.on('listening', () => {
     let address = socketAudio.address();
-    
-
     socketAudio.setSendBufferSize(180224 * 10)
     console.log(new Date().toISOString(), `socketAudio listening ${address.address}:${address.port}`, 'buffer', String(socketAudio.getSendBufferSize()));
     setInterval(heartbeatsCheck, 1000)
@@ -34,8 +32,6 @@ socketAudio.on('message', function (message, remote) {
         let sinkObj = JSON.parse(String(message))
         if (sinkObj.type == 'connectRequest') {
 
-
-
             syncErrorData.emit("syncErrorData",
                 {
                     sampleAdjustSource: sinkObj.sampleAdjustSource,
@@ -43,8 +39,6 @@ socketAudio.on('message', function (message, remote) {
                     port: sinkObj.port
                 }
             )
-
-
 
             let foundaudioSink = false
             audioSinkList.forEach(function (value, index) {
@@ -87,9 +81,6 @@ socketAudio.on('message', function (message, remote) {
         }
     }
 });
-
-
-
 
 function retrunsetuppbuffer() {
     let sourceObj = {
@@ -171,7 +162,6 @@ let socketControlReady = false
 
 function setupControl() {
 
-
     socketControl.on('error', (err) => {
         console.log(new Date().toISOString(), `socketControl error:\n${err.stack}`);
     });
@@ -184,11 +174,8 @@ function setupControl() {
         socketControlReady = true
     });
 
-
-
     socketControl.on('message', function (messageControl, remote) {
         let messageControlObj = JSON.parse(String(messageControl))
-
         //console.log(messageControlObj)
     })
 
