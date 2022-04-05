@@ -39,7 +39,7 @@ let volume
 if (settings.volumeControlScript) {
     volume = require(settings.volumeControlScript);
 } else {
-    volume = require(`./spdifVolume.js`);
+    volume = require(`./SPDIFvolume.js`);
 }
 
 
