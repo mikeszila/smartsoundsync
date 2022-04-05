@@ -117,7 +117,12 @@ function spawnpcmRecord() {
 
             //console.log(volumeCount, volumeCountOn, volumeCountOff, hwCaptureState, restartCount, volumeLeft, volumeRight)
 
-            if (volumeLeft == volumeLeftLast && volumeRight == volumeRightLast) {
+            let volumeLeftDiff = Math.abs(volumeLeft - volumeLeftLast)
+            let volumeRightDiff = Math.abs(volumeRight - volumeRightLast)
+            let volumeDiffSilentMax = 5
+
+
+            if (volumeLeftDiff <= volumeDiffSilentMax && volumeRightDiff <= volumeDiffSilentMax) {
                 restartCount = restartCount + 1
                 if (restartCount > restartCountGo) {
                     console.log('idle count exit!!!')
@@ -134,7 +139,7 @@ function spawnpcmRecord() {
                 }
                 
             }
-            if (volumeLeft != volumeLeftLast || volumeRight != volumeRightLast) {
+            if (volumeLeftDiff > volumeDiffSilentMax || volumeRightDiff > volumeDiffSilentMax) {
                 restartCount = 0
                 if (volumeCount < 0 || hwCaptureState != 'active') {volumeCount = volumeCount + 1}
                 if (volumeCount > volumeCountOn && hwCaptureState != 'active') {
@@ -250,9 +255,9 @@ function processAplayStderr(stderr) {
     }
 }
 
-
 function checkState() {
-    if (hwCaptureState != 'idle' && ((Date.now() - 10000) > htstamp)) {
+
+    if (hwCaptureState != 'idle' && ((Date.now() - 9000) > htstamp)) {
         console.log('idle timeout')
         hwCaptureState = 'idle'
     }

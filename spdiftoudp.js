@@ -24,57 +24,26 @@ if (cmdSettingsJSON != 0) {
     settings = { ...settings, ...cmdSettingsObj }
 }
 
+
+ 
+
+
 console.log(settings)
 
 global.hwtobuffer = require('./hwtobuffer.js')
 global.buffertoudp = require('./buffertoudp.js')
 
-function spawnremote() {
-    console.log(new Date().toISOString(), 'started remote')
-    remote = spawn('/usr/bin/irw');
 
-    remote.stdout.on('data', (data) => {
-        //console.log(new Date().toISOString(), 'remote', 'stdout', `${data}`)
+let volume
 
-        //  if (playbackHostname == hostname && playbackPort == audioSourcePort) {
-
-        command = String(data)
-
-        if (command.includes(' 01 ') == false && captureState == 'active') {
-
-            if (command.includes('KEY_VOLUMEUP')) {
-                console.log('UP')
-                volumeOut = volumeOut + settings.volume_db_step
-            }
-
-            if (command.includes('KEY_VOLUMEDOWN')) {
-                console.log('DOWN')
-                volumeOut = volumeOut - settings.volume_db_step
-            }
-
-            if (volumeOut > settings.volume_db_max) {
-                volumeOut = settings.volume_db_max
-            }
-
-            if (volumeOut < settings.volume_db_min) {
-                volumeOut = settings.volume_db_min
-            }
-            buffertoudp.sendStatusUpdatetoSink()
-        }
-        //  }
-    });
-
-    remote.stderr.on('data', (data) => {
-        console.log(new Date().toISOString(), 'remote', 'stderr', `${data}`)
-    });
-
-    remote.on('close', (code) => {
-        console.log('remote CLOSED with code ', code)
-    });
+if (settings.volumeControlScript) {
+    volume = require(settings.volumeControlScript);
+} else {
+    volume = require(`./spdifVolume.js`);
 }
 
 
-spawnremote()
+
 
 var captureStateLast
 function checkState() {
