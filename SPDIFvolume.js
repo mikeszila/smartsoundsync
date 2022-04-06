@@ -79,8 +79,8 @@ function spawnremote() {
                 adjustVolume('DOWN')
             }
 
-            if (command.includes('KEY_VOLUMEMUTE')) {
-                console.log('KEY_VOLUMEMUTE')
+            if (command.includes('KEY_MUTE')) {
+                console.log('KEY_MUTE')
                 adjustVolume('MUTE')
             }
         }
