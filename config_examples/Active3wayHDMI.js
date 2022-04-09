@@ -21,7 +21,7 @@ settings.controller = {
 
 settings.sink = {
     controllerHostname: os.hostname(),  //used to find the controller on the network
-    cardName: 'hw:0,3', // the name of your soundcard.  Use aplay -l to find.  smartsoundsync must have direct access to the hardware of the card for syncronization to function correctly.  plughw or any ALSA specification other than hw:? will not work.  
+    cardName: 'hw:HDMI,3', // the name of your soundcard.  Use aplay -l to find.  smartsoundsync must have direct access to the hardware of the card for syncronization to function correctly.  plughw or any ALSA specification other than hw:? will not work.  
     alsaVolumeControlName: 'Digital',  //the name of the alsa volume control that adjusts the volume of your speakers.  look in alsamixer or run amixer to find the name.     
     soundCardSupportsDecibels: true,  //  If your soundcard supports decibels set to true, if not false. 
     //volumeOutMin: -60,  //The value to send the mixer for minimum volume.  Not necessary if your card supports decibels.  Use 'amixer' then look for something like 'Limits: 0 - 255' to find the minimum value your mixer is expecting.
