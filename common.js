@@ -29,6 +29,7 @@ global.settings = {  //basic settings for running outside systemd and other comm
     volume_db_max: 0,
     volume_db_min: -60,
     volume_db_step: 2,
+    volume_shape: 2,
     initialVolume: -40,
     cardName: 'hw:0',
     bytesPerSample: 2,

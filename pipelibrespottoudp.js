@@ -125,9 +125,14 @@ function spawnlibrespot() {
             let librespot_volume = message.slice(message.lastIndexOf('spotify volume:') + 15, message.lastIndexOf('\n') + 1)
             librespot_volume = librespot_volume.slice(0, librespot_volume.indexOf('\n'))
             librespot_volume = Number(librespot_volume)
-            let librespot_db_volume = (settings.volume_db_min - settings.volume_db_max) / (settings.volume_librespot_min - settings.volume_librespot_max) * (librespot_volume - settings.volume_librespot_min) + settings.volume_db_min
+            let librespot_percent = (librespot_volume - settings.volume_librespot_min) / (settings.volume_librespot_max - settings.volume_librespot_min)
+            let l2 = ((1 - librespot_percent) ** settings.volume_shape)
+            let librespot_adjusted_percent = 1 - l2
+            let librespot_db_volume = (settings.volume_db_max - settings.volume_db_min) * librespot_adjusted_percent + settings.volume_db_min
 
-            console.log('Librespot Volume ///////////////////////////', librespot_volume, librespot_db_volume)
+            //let librespot_db_volume = (settings.volume_db_min - settings.volume_db_max) / (settings.volume_librespot_min - settings.volume_librespot_max) * (librespot_volume - settings.volume_librespot_min) + settings.volume_db_min
+
+            console.log('Librespot Volume ///////////////////////////',settings.volume_shape, librespot_percent, l2, librespot_adjusted_percent,  librespot_volume, librespot_db_volume)
 
             if (highVolumeLimit) {
                 if (librespot_db_volume <= -20) {
@@ -237,15 +242,15 @@ buffertoudp.syncErrorData.on("syncErrorData", function (data) {
 let avgErr = 0
 
 function sinkErrorReport() {
-    console.log('-')
+    //console.log('-')
     buffertoudp.audioSinkList.forEach(function (value, index) {
-        console.log(value.hostname, value.sampleAdjustSource)
+        //console.log(value.hostname, value.sampleAdjustSource)
         avgErr = avgErr + value.sampleAdjustSource
         value.sampleAdjustSource = 0
     })
     if (buffertoudp.audioSinkList.length > 0) {
         avgErr = avgErr / buffertoudp.audioSinkList.length
-        console.log('average', avgErr)
+        //console.log('average', avgErr)
         sendTime = sendTime - (avgErr * sampleTimeMS)
         avgErr = 0
     }

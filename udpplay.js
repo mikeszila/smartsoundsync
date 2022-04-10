@@ -298,7 +298,7 @@ socketAudio.on('message', function (message, remote) {
 
                 if (volumeOut != sourceObj.volumeOut) {
                     volumeOut = sourceObj.volumeOut
-                    volume.set_volume(volumeOut)
+                    volume.set_volume(volumeOut, selectedSource)
                 }
 
                 if (sourceObjLast &&

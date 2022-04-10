@@ -23,7 +23,7 @@ if (!settings.alsaVolumeControlUnit) {
 
 var amixer
 
-function set_volume(volume_db) {
+function set_volume(volume_db, selectedSource) {
 
   let volumeOut = (settings.volumeOutMin - settings.volumeOutMax) / (settings.volume_db_min - settings.volume_db_max) * (volume_db - settings.volume_db_min) + settings.volumeOutMin
 
