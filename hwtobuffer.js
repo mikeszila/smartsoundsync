@@ -115,7 +115,7 @@ function spawnpcmRecord() {
 
             //console.log(volumeLeft, volumeRight)
 
-            //console.log(volumeCount, volumeCountOn, volumeCountOff, hwCaptureState, restartCount, volumeLeft, volumeRight)
+            console.log(volumeCount, volumeCountOn, volumeCountOff, hwCaptureState, restartCount, volumeLeft, volumeRight)
 
             let volumeLeftDiff = Math.abs(volumeLeft - volumeLeftLast)
             let volumeRightDiff = Math.abs(volumeRight - volumeRightLast)

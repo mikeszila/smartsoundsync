@@ -145,7 +145,7 @@ socketControl.on('message', function (messageControl, remote) {
         selectedSource = JSON.parse(JSON.stringify(newSource));
 
         if (selectedSource) {
-            if (!audioConnectRequestTimoutPointer) {audioConnectRequest()}
+            if (!audioConnectRequestTimoutPointer) { audioConnectRequest() }
         }
 
     }
@@ -489,7 +489,8 @@ async function spawnaplay() {
 
     aplay = spawn("/bin/sh", ["-c", teststr])
 
-    aplay.stdout.on('data', (data) => {
+    aplay.stdout.on('data', (data) => {     
+
 
         if (data.includes('Read:')) {
             processStatus(data)
@@ -510,12 +511,21 @@ async function spawnaplay() {
 
     aplayInit()
 
-    pcmPID = Number(execSync(`pidof pcm`))
+    setTimeout(pcmPIDCheck, 1000)
 
-    console.log('pcmPID:', pcmPID)
 
-    common.setPriority(pcmPID, 99)
 }
+
+function pcmPIDCheck() {
+        pcmPID = Number(execSync(`pidof pcm`))
+
+        console.log('pcmPID:', pcmPID)
+
+        common.setPriority(pcmPID, 99)    
+}
+
+
+
 var sampleAdjustSinkTotal = 0
 
 let syncIndex = 0
@@ -657,15 +667,15 @@ function sendData() {
             sampleAdjustSink = Math.floor(Math.abs(sinkErrorSamplesAverage))
 
             //if (sinkErrorSamplesAverage < -0.2 && sinkErrorSamplesAverage > -1) {sampleAdjustSink = 1}
-            if (samples_since_correct_sink < (sourceObj.reported_exact_rate / 5)) {sampleAdjustSink = 0}
-            if (sampleAdjustSink > 2) {sampleAdjustSink = 2}
+            if (samples_since_correct_sink < (sourceObj.reported_exact_rate / 5)) { sampleAdjustSink = 0 }
+            if (sampleAdjustSink > 2) { sampleAdjustSink = 2 }
             if (sinkErrorSamplesAverage > 0) { sampleAdjustSink = sampleAdjustSink * -1 }
         }
 
-        if (sampleAdjustSink != 0) {            
+        if (sampleAdjustSink != 0) {
             sinkErrorSamplesArray.forEach(function (value, index) {
                 sinkErrorSamplesArray[index] = sinkErrorSamplesArray[index] + sampleAdjustSink
-                
+
             })
             sinkErrorSamplesAverage = average(sinkErrorSamplesArray)
         }
@@ -674,7 +684,7 @@ function sendData() {
 
         if (sourceObj.sourceSampleAdjust != 0) {
 
-            sourceErrorSamples = Math.floor(Math.abs(syncErrorMS / sampleTimeMS ) / sampleAdjustSourceScaler ) * sampleAdjustSourceScaler
+            sourceErrorSamples = Math.floor(Math.abs(syncErrorMS / sampleTimeMS) / sampleAdjustSourceScaler) * sampleAdjustSourceScaler
             if (syncErrorMS < 0) { sourceErrorSamples = sourceErrorSamples * -1 }
 
             if (sourceErrorSamplesArray.push(sourceErrorSamples) > sourceErrorSamplesArrayLengthSetpoint) {
@@ -684,13 +694,13 @@ function sendData() {
 
             sampleAdjustSource = 0
             if (sampleTotal / 128 >= sampleAdjustSourceStartSecondsSetpoint) {
-                sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage ) / sampleAdjustSourceScaler) * sampleAdjustSourceScaler
-                if (sampleAdjustSource > sampleAdjustSourceScaler) {sampleAdjustSource = sampleAdjustSourceScaler}
+                sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage) / sampleAdjustSourceScaler) * sampleAdjustSourceScaler
+                if (sampleAdjustSource > sampleAdjustSourceScaler) { sampleAdjustSource = sampleAdjustSourceScaler }
 
                 //if (sourceErrorSamplesAverage > (0.4 + sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler * -1}
                 //if (sourceErrorSamplesAverage < (0.4 - sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler }
 
-                if (samples_since_correct_source < (sourceObj.reported_exact_rate * sampleAdjustSourceScaler)) {sampleAdjustSource = 0}
+                if (samples_since_correct_source < (sourceObj.reported_exact_rate * sampleAdjustSourceScaler)) { sampleAdjustSource = 0 }
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
@@ -765,14 +775,14 @@ function sendData() {
     } else {
         console.log('SHORTDATAERROR!!!')
     }
-    
 
 
-    
+
+
     if (settings.verbose || sampleAdjustSink != 0 || sampleAdjustSource != 0 || avail > delay) {
 
-        if (sampleAdjustSink != 0) {SASink = samples_since_correct_sink} else {SASink = ''}
-        if (sampleAdjustSource != 0) {SASource = samples_since_correct_source} else {SASource = ''}
+        if (sampleAdjustSink != 0) { SASink = samples_since_correct_sink } else { SASink = '' }
+        if (sampleAdjustSource != 0) { SASource = samples_since_correct_source } else { SASource = '' }
 
         console.log(
             'frames', pad(2, String(Object.keys(framesList).length), ' '),
@@ -782,13 +792,13 @@ function sendData() {
             'idx', pad(10, String(syncIndexWritten), ' '),
             //'receiveIndex', pad(10, String(receiveIndex), ' '),
             //'ecasoundIndex', pad(10, String(ecasoundIndexLast), ' '),
-            
+
             //'last read', pad(4, String(read), ' '),
             //'last written', pad(4, String(written), ' '),
             //'sent', pad(4, String(sentlength), ' '),
-            
 
-            
+
+
             //'abtime', audiobuffferTime,
 
 
