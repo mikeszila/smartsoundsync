@@ -11,7 +11,7 @@ global.reported_period_time = 0
 global.source_buffer_time = 0
 global.playback_period_time = (1 / settings.source_rate) * 1000 * settings.playback_period_size
 global.playback_buffer_size = settings.playback_period_size * settings.playback_buffer_periods
-global.playback_buffer_time = playback_period_time * settings.playback_buffer_periods 
+global.playback_buffer_time = playback_period_time * settings.playback_buffer_periods
 global.desired_playback_delay = 0
 
 
@@ -22,6 +22,8 @@ var volumeRightLast
 var sampleTimeMS = 0
 
 var sampleIndex = 0
+
+let silent = true
 
 
 let volumeCount = 0
@@ -122,32 +124,44 @@ function spawnpcmRecord() {
             let volumeDiffSilentMax = 5
 
 
-            if (volumeLeftDiff <= volumeDiffSilentMax && volumeRightDiff <= volumeDiffSilentMax) {
-                restartCount = restartCount + 1
-                if (restartCount > restartCountGo) {
-                    console.log('idle count exit!!!')
-                    process.exit()
-                }
 
-                if (volumeCount > 0 || hwCaptureState == 'active') {volumeCount = volumeCount - 1}
-                if (volumeCount < volumeCountOff && hwCaptureState == 'active') {
-                    hwCaptureState = 'idle'
-                    console.log('HWidle!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1')
-                    common.setPriority(process.pid, -19)
-                    common.setPriority(pcmRecord.pid, -19)
-                    volumeCount = 0
-                }
-                
+            if (volumeLeftDiff <= volumeDiffSilentMax && volumeRightDiff <= volumeDiffSilentMax) {
+                silent = true
+            } else {
+                silent = false
             }
-            if (volumeLeftDiff > volumeDiffSilentMax || volumeRightDiff > volumeDiffSilentMax) {
-                restartCount = 0
-                if (volumeCount < 0 || hwCaptureState != 'active') {volumeCount = volumeCount + 1}
-                if (volumeCount > volumeCountOn && hwCaptureState != 'active') {
-                    hwCaptureState = 'active'
-                    common.setPriority(process.pid, 98)
-                    common.setPriority(pcmRecord.pid, 99)
-                    console.log('HWactive!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1')
+
+
+            if (hwCaptureState == 'active') {
+                if (silent == true) {
+                    volumeCount = volumeCount - 1
+                    if (volumeCount < volumeCountOff && hwCaptureState == 'active') {
+                        hwCaptureState = 'idle'
+                        console.log('HWidle!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1')
+                        common.setPriority(process.pid, -19)
+                        common.setPriority(pcmRecord.pid, -19)
+                        volumeCount = 0
+                    }
+                } else {
                     volumeCount = 0
+                    restartCount = 0
+                }
+            } else {
+                if (silent == true) {
+                    restartCount = restartCount + 1
+                    if (restartCount > restartCountGo) {
+                        console.log('idle count exit!!!')
+                        process.exit()
+                    }
+                } else {
+                    volumeCount = volumeCount + 1
+                    if (volumeCount > volumeCountOn) {
+                        hwCaptureState = 'active'
+                        common.setPriority(process.pid, 98)
+                        common.setPriority(pcmRecord.pid, 99)
+                        console.log('HWactive!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1')
+                        volumeCount = 0
+                    }
                 }
             }
 
