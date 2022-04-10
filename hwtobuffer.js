@@ -36,6 +36,7 @@ let restartCountGo = (60 * 60) / (global.playback_period_time / 1000)
 var sendTimeLast = 0
 var htstampLast = 0
 var silenceStartTime = 0
+let volumeDiffSilentMax = 5
 function spawnpcmRecord() {
     console.log(new Date().toISOString(), 'starting pcmRecord')
 
@@ -117,11 +118,11 @@ function spawnpcmRecord() {
 
             //console.log(volumeLeft, volumeRight)
 
-            console.log(volumeCount, volumeCountOn, volumeCountOff, hwCaptureState, restartCount, volumeLeft, volumeRight)
+           //console.log(volumeCount, volumeCountOn, volumeCountOff, hwCaptureState, restartCount, volumeLeft, volumeRight)
 
             let volumeLeftDiff = Math.abs(volumeLeft - volumeLeftLast)
             let volumeRightDiff = Math.abs(volumeRight - volumeRightLast)
-            let volumeDiffSilentMax = 5
+            
 
 
 
