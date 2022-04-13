@@ -489,7 +489,7 @@ async function spawnaplay() {
 
     aplay = spawn("/bin/sh", ["-c", teststr])
 
-    aplay.stdout.on('data', (data) => {     
+    aplay.stdout.on('data', (data) => {
 
 
         if (data.includes('Read:')) {
@@ -517,11 +517,11 @@ async function spawnaplay() {
 }
 
 function pcmPIDCheck() {
-        pcmPID = Number(execSync(`pidof pcm`))
+    pcmPID = Number(execSync(`pidof pcm`))
 
-        console.log('pcmPID:', pcmPID)
+    console.log('pcmPID:', pcmPID)
 
-        common.setPriority(pcmPID, 99)    
+    common.setPriority(pcmPID, 99)
 }
 
 
@@ -921,11 +921,17 @@ async function spawnecasound() {
         killUDPPlay()
     });
 
+    setTimeout(ecasoundPIDCheck, 1000)
+}
+
+
+function ecasoundPIDCheck() {
     ecasoundPID = Number(execSync(`pidof ecasound`))
 
     console.log('ecasoundPID:', ecasoundPID)
     common.setPriority(ecasoundPID.pid, 90)
 }
+
 
 socketControl.bind(0);
 socketAudio.bind(0);
