@@ -51,7 +51,7 @@ devices_lines.forEach(function (value, index) {
         deviceHandlers.includes('kbd') &&
         !deviceName.includes('Power') &&
         !deviceName.includes('Video') &&
-        !deviceName.includes('flirc Keyboard') &&
+        //!deviceName.includes('flirc Keyboard') &&
         !deviceName.includes('flirc System Control') &&
         !deviceName.includes('HP Wireless hotkeys') &&
         !deviceName.includes('HP WMI hotkeys') &&
