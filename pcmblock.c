@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 
         
 
-        while (avail < 128 && snd_pcm_status_get_state(status) == SND_PCM_STATE_RUNNING)
+        while (avail < reported_period_size && snd_pcm_status_get_state(status) == SND_PCM_STATE_RUNNING)
         {
             nanosleep((const struct timespec[]){{0, 100000}}, NULL);
             if ((err = snd_pcm_status(pcm_handle, status)) < 0)

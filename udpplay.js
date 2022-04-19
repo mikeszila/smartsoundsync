@@ -2,6 +2,7 @@
 
 global.common = require('./common.js')
 const { exec, spawn, execSync } = require('child_process');
+const { settings } = require('cluster');
 const fs = require('fs');
 //const { settings } = require('cluster');
 
@@ -85,14 +86,18 @@ if (!settings.hostnameForMatch) {
 
 let volume
 
-if (settings.volumeControlScript) {
-    volume = require(settings.volumeControlScript);
-} else {
-    volume = require(`./volume.js`);
+if (settings.alsaVolumeControlName != 'softvol') {
+
+    if (settings.volumeControlScript) {
+        volume = require(settings.volumeControlScript);
+    } else {
+        volume = require(`./volume.js`);
+    }
+    global.volumeOut = settings.volume_db_min
+    volume.set_volume(volumeOut)
 }
 
-global.volumeOut = settings.volume_db_min
-volume.set_volume(volumeOut)
+let volumescale = 0
 
 const outputbytesPerSample = settings.bytesPerSample * settings.outputChannels
 const sourcebytesPerSample = settings.bytesPerSample * settings.source_channels
@@ -212,6 +217,8 @@ let ecasoundIndexLast = 0
 let lowestEccasoundlast = 0
 let ecasoundWaitCount = 0
 
+
+
 function sendEccasound() {
     if (ecasoundIndex == 0) {
         let lowestEccasound = 0
@@ -249,6 +256,8 @@ var sourceObjLast
 
 var aplay = false
 
+
+
 socketAudio.on('message', function (message, remote) {
 
     let messageType = String(message.slice(0, 10))
@@ -265,6 +274,13 @@ socketAudio.on('message', function (message, remote) {
                 dataTime: message.readDoubleLE(0),
                 dataIndex: message.readDoubleLE(8),
                 audioChunk: message.slice(16)
+            }
+
+            if (volumescale < 1) {
+                for (var i = 0; i < frameObject.audioChunk.length; i += 2) {
+                    //console.log(i)
+                    frameObject.audioChunk.writeInt16LE(frameObject.audioChunk.readInt16LE(i) * volumescale, i)
+                }
             }
 
             //console.log('Received', frameObject.dataTime - Date.now())
@@ -298,7 +314,13 @@ socketAudio.on('message', function (message, remote) {
 
                 if (volumeOut != sourceObj.volumeOut) {
                     volumeOut = sourceObj.volumeOut
-                    volume.set_volume(volumeOut, selectedSource)
+                    if (settings.alsaVolumeControlName != 'softvol') {
+                        volume.set_volume(volumeOut, selectedSource)
+                        volumescale = 1
+                    } else {
+                        volumescale = 10 ** (sourceObj.volumeOut / 20)
+                        console.log('volumescale', volumescale)
+                    }
                 }
 
                 if (sourceObjLast &&
@@ -606,7 +628,9 @@ function getData() {
                 //console.log(frame)
                 if (frame.ecasoundChunk) {
 
-                    //console.log('Index frame.ecasoundChunk.length', syncIndex, frame.ecasoundChunk.length / outputbytesPerSample)
+                    sinkErrorSamplesArray.forEach(function (value, index) {
+                        sinkErrorSamplesArray[index] = sinkErrorSamplesArray[index] + sampleAdjustSink
+                    })
 
                     audiobuffferTime = frame.dataTime - (audiobuffer.length / outputbytesPerSample * sampleTimeMS)
                     audiobuffer = Buffer.concat([audiobuffer, frame.ecasoundChunk])
@@ -668,7 +692,7 @@ function sendData() {
 
             //if (sinkErrorSamplesAverage < -0.2 && sinkErrorSamplesAverage > -1) {sampleAdjustSink = 1}
             if (samples_since_correct_sink < (sourceObj.reported_exact_rate / 5)) { sampleAdjustSink = 0 }
-            if (sampleAdjustSink > 2) { sampleAdjustSink = 2 }
+            //if (sampleAdjustSink > 20) { sampleAdjustSink = 20 }
             if (sinkErrorSamplesAverage > 0) { sampleAdjustSink = sampleAdjustSink * -1 }
         }
 
@@ -779,7 +803,7 @@ function sendData() {
 
 
 
-    if (settings.verbose || sampleAdjustSink != 0 || sampleAdjustSource != 0 || avail > delay) {
+    if ((settings.verbose || sampleAdjustSink != 0 || sampleAdjustSource != 0 || avail > delay)) {
 
         if (sampleAdjustSink != 0) { SASink = samples_since_correct_sink } else { SASink = '' }
         if (sampleAdjustSource != 0) { SASource = samples_since_correct_source } else { SASource = '' }
