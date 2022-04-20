@@ -8,13 +8,13 @@ if (audio_devices.includes('ICUSBAUDIO7D')) {
 
 function keyBoardProcess(data) {
     keyData = String(data)
-    if (keyData.includes('(KEY_VOLUMEUP), value 1') || keyData.includes('(KEY_VOLUMEUP), value 2')) {
+    if (keyData.includes('(KEY_VOLUMEUP)') && (keyData.includes('value 1') || keyData.includes('value 2'))) {
         adjustVolume('UP')
     }
-    if (keyData.includes('(KEY_VOLUMEDOWN), value 1') || keyData.includes('(KEY_VOLUMEDOWN), value 2')) {
+    if (keyData.includes('(KEY_VOLUMEDOWN)') && (keyData.includes('value 1') || keyData.includes('value 2'))) {
         adjustVolume('DOWN')
     }
-    if (keyData.includes('(KEY_MUTE), value 1') || keyData.includes('(KEY_MUTE), value 2')) {
+    if (keyData.includes('(KEY_MUTE)') && (keyData.includes('value 1') || keyData.includes('value 2'))) {
         adjustVolume('MUTE')
     }
 }
