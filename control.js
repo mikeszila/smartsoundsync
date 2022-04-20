@@ -260,20 +260,16 @@ function sendSubscribe() {
 
     let statusBuffer = Buffer.from(JSON.stringify(statusObject))
 
-    //console.log('hello')
-
     try {
         socketControlGroupClient.send(statusBuffer, 0, statusBuffer.length, settings.remoteControllerPort, settings.remoteControllerHostname, function (err, bytes) {
-            if (err) throw err;
+            if (err) {
+                console.log('could not connect to', settings.remoteControllerHostname)
+            };
         });
-    } catch (e) {
-
-        console.log('could not connect to', settings.remoteControllerHostname)
-
+    } catch (error) {
+        console.error(error);
     }
 }
-
-console.log('hello!!', settings.controllerPort)
 
 socketControlLocal.bind(settings.controllerPort);
 
