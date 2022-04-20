@@ -26,6 +26,8 @@ int main(int argc, char **argv)
     fprintf(stderr, "HELLO!!!\n");
     unsigned int pcm, tmp, dir, reported_period_time, reported_rate, written, written2, statusLength, readLength, rate, channels, buffer_size, buff_size, bytesPerSample, bypesPerOutputSample, readTarget;
 
+    long availwait;
+
     snd_pcm_t *pcm_handle;
     snd_pcm_hw_params_t *hw_params;
     snd_pcm_uframes_t reported_period_size, reported_buffer_size, period_size, reported_boundary;
@@ -205,19 +207,23 @@ int main(int argc, char **argv)
         }
         avail = snd_pcm_status_get_avail(status);
 
-        
-
         while (avail < reported_period_size && snd_pcm_status_get_state(status) == SND_PCM_STATE_RUNNING)
         {
-            nanosleep((const struct timespec[]){{0, 100000}}, NULL);
+
+            
+
+            
             if ((err = snd_pcm_status(pcm_handle, status)) < 0)
             {
                 fprintf(stderr, "Stream status error: %s\n", snd_strerror(err));
             }
             avail = snd_pcm_status_get_avail(status);
-        }
 
-        
+            
+            availwait = reported_period_time * (1 - (avail / reported_period_size)) * 1000;
+
+            nanosleep((const struct timespec[]){{0, availwait}}, NULL);
+        }
 
         snd_pcm_status_get_trigger_htstamp(status, &trigger_tstamp);
         snd_pcm_status_get_htstamp(status, &htstamp);
@@ -239,7 +245,6 @@ int main(int argc, char **argv)
     snd_pcm_drain(pcm_handle);
     snd_pcm_close(pcm_handle);
     free(buff);
-
 
     return 0;
 }
