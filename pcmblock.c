@@ -210,7 +210,9 @@ int main(int argc, char **argv)
         while (avail < reported_period_size && snd_pcm_status_get_state(status) == SND_PCM_STATE_RUNNING)
         {
 
-            
+            availwait = reported_period_time * (1 - (avail / reported_period_size)) * 1000 / 4;
+
+            nanosleep((const struct timespec[]){{0, availwait}}, NULL);
 
             
             if ((err = snd_pcm_status(pcm_handle, status)) < 0)
@@ -220,9 +222,7 @@ int main(int argc, char **argv)
             avail = snd_pcm_status_get_avail(status);
 
             
-            availwait = reported_period_time * (1 - (avail / reported_period_size)) * 1000 / 4;
-
-            nanosleep((const struct timespec[]){{0, availwait}}, NULL);
+            
         }
 
         snd_pcm_status_get_trigger_htstamp(status, &trigger_tstamp);
