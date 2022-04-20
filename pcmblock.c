@@ -210,7 +210,7 @@ int main(int argc, char **argv)
         while (avail < reported_period_size && snd_pcm_status_get_state(status) == SND_PCM_STATE_RUNNING)
         {
 
-            availwait = reported_period_time * (1 - (avail / reported_period_size)) * 1000 / 4;
+            availwait = reported_period_time * (1 - (avail / reported_period_size)) * 100;
 
             nanosleep((const struct timespec[]){{0, availwait}}, NULL);
 
