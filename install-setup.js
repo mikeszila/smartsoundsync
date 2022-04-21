@@ -266,7 +266,7 @@ if (!stopOnly) {
 
     }
 
-    if (hasHifiberryDacDSP) {
+    if (false && hasHifiberryDacDSP) {
 
         try {execSync('which dsptoolkit')}
         catch(error) {
@@ -427,7 +427,7 @@ WantedBy=multi-user.target
         serviceName = `smartsoundsyncsink.service`
 
         writeServiceFile(serviceName, serviceTemplate)
-        servicesToStart.push(serviceName)
+        if (!hasHifiberryDacDSP) {servicesToStart.push(serviceName)}
 
     }
 

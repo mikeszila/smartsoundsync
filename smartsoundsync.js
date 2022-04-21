@@ -65,6 +65,11 @@ speedup()
 try {
 
     execSync('which dsptoolkit')
+
+    if (fs.existsSync('/lib/systemd/system/smartsoundsyncsink.service')) {
+        execSync('systemctl stop smartsoundsyncsink')
+    }
+    
     execSyncPrint('dsptoolkit install-profile https://raw.githubusercontent.com/hifiberry/hifiberry-os/master/buildroot/package/dspprofiles/dspdac-12.xml')
     execSyncPrint('amixer sset DSPVolume 0')
     execSyncPrint('dsptoolkit set-volume 0%')
@@ -73,6 +78,12 @@ try {
     execSyncPrint('dsptoolkit write-reg 0xF195 0x0000')
     execSyncPrint('dsptoolkit write-reg 0xF194 0x0033')
     execSyncPrint('dsptoolkit write-reg 0xF21C 0x6C40')
+
+    if (fs.existsSync('/lib/systemd/system/smartsoundsyncsink.service')) {
+        execSync('systemctl enable smartsoundsyncsink')
+        execSync('systemctl start smartsoundsyncsink')
+    }
+    
     
 
 
