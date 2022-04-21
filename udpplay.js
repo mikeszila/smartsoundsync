@@ -553,6 +553,8 @@ var sampleAdjustSinkTotal = 0
 let syncIndex = 0
 let sampleAdjustSink = 0
 var sampleAdjustSinkTotalABS = 0
+var sampleAdjustSinkTotalRing = 0
+var sampleAdjustSinkRingLast = 0
 var sampleTotal = 0
 let audiobuffferTime = 0
 
@@ -748,6 +750,11 @@ function sendData() {
         sampleAdjustSinkTotal = sampleAdjustSinkTotal + sampleAdjustSink
         sampleAdjustSinkTotalABS = sampleAdjustSinkTotalABS + Math.abs(sampleAdjustSink)
 
+        if ((sampleAdjustSinkRingLast > 0 && sampleAdjustSink < 0) || (sampleAdjustSinkRingLast < 0 && sampleAdjustSink > 0)) {
+            sampleAdjustSinkTotalRing = sampleAdjustSinkTotalRing + Math.abs(sampleAdjustSink)        
+        }
+        sampleAdjustSinkRingLast = sampleAdjustSink
+
 
         if (sampleAdjustSink > audiobuffer.length / outputbytesPerSample) { sampleAdjustSink = audiobuffer.length / outputbytesPerSample }
         if (sampleAdjustSink < audiobuffer.length / outputbytesPerSample * -1) { sampleAdjustSink = audiobuffer.length / outputbytesPerSample * -1 }
@@ -836,9 +843,12 @@ function sendData() {
             'AdjSink', pad(String(sampleAdjustSink), 4, ' '),
             'AdjSource', pad(String(sampleAdjustSource), 4, ' '),
 
-            'AdjRing', pad(6, String(sampleAdjustSinkTotalABS - Math.abs(sampleAdjustSinkTotal)), ' '),
-            //'AdjTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
-            //'AdjTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
+            
+            'AdjTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
+            'AdjTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
+            'AdjRing', pad(6, String(sampleAdjustSinkTotalRing), ' '),
+
+
             //'SampleTotal', pad(String(sampleTotal), 10, ' '),
             'SAsink', pad(10, String(SASink), ' '),
             'SAsrc', pad(10, String(SASource), ' ')
