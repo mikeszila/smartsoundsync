@@ -832,11 +832,13 @@ function sendData() {
             //'SourceErr', pad(String(numberFormat(sourceErrorSamplesAverage)), 6, ' '),
             'ErrSamples', pad(String(numberFormat(sinkErrorSamplesAverage)), 6, ' '),
 
+            
             'AdjSink', pad(String(sampleAdjustSink), 4, ' '),
             'AdjSource', pad(String(sampleAdjustSource), 4, ' '),
 
-            'AdjTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
-            'AdjTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
+            'AdjRing', pad(6, String(sampleAdjustSinkTotalABS - sampleAdjustSinkTotal), ' '),
+            //'AdjTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
+            //'AdjTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
             //'SampleTotal', pad(String(sampleTotal), 10, ' '),
             'SAsink', pad(10, String(SASink), ' '),
             'SAsrc', pad(10, String(SASource), ' ')
