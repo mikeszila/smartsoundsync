@@ -71,6 +71,7 @@ try {
     execSyncPrint('dsptoolkit write-reg 0xF195 0x0000')
     execSyncPrint('dsptoolkit write-reg 0xF194 0x0033')
     execSyncPrint('dsptoolkit write-reg 0xF21C 0x6C40')
+    execSyncPrint('amixer sset DSPVolume 0')
 
 
 }
