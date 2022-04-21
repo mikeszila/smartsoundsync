@@ -1,6 +1,7 @@
 "use strict";
 
 const { exec, spawn, execSync } = require('child_process');
+const fs = require('fs');
 
 function ntpXFACCheck() {
 
@@ -67,7 +68,7 @@ try {
     execSync('which dsptoolkit')
 
     if (fs.existsSync('/lib/systemd/system/smartsoundsyncsink.service')) {
-        execSync('systemctl stop smartsoundsyncsink')
+        execSyncPrint('systemctl stop smartsoundsyncsink')
     }
     
     execSyncPrint('dsptoolkit install-profile https://raw.githubusercontent.com/hifiberry/hifiberry-os/master/buildroot/package/dspprofiles/dspdac-12.xml')
@@ -80,14 +81,12 @@ try {
     execSyncPrint('dsptoolkit write-reg 0xF21C 0x6C40')
 
     if (fs.existsSync('/lib/systemd/system/smartsoundsyncsink.service')) {
-        execSync('systemctl enable smartsoundsyncsink')
-        execSync('systemctl start smartsoundsyncsink')
+        execSyncPrint('systemctl enable smartsoundsyncsink')
+        execSyncPrint('systemctl start smartsoundsyncsink')
     }
-    
-    
-
 
 }
 catch (error) {
     console.log('dspsetuperror')
+    console.error(error)   
 }
