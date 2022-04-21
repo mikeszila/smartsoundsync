@@ -66,12 +66,13 @@ try {
 
     execSync('which dsptoolkit')
     execSyncPrint('dsptoolkit install-profile https://raw.githubusercontent.com/hifiberry/hifiberry-os/master/buildroot/package/dspprofiles/dspdac-12.xml')
+    execSyncPrint('amixer sset DSPVolume 0')
     execSyncPrint('dsptoolkit write-reg 0xF106 0x0003')
     execSyncPrint('dsptoolkit write-reg 0xF146 0x0004')
     execSyncPrint('dsptoolkit write-reg 0xF195 0x0000')
     execSyncPrint('dsptoolkit write-reg 0xF194 0x0033')
     execSyncPrint('dsptoolkit write-reg 0xF21C 0x6C40')
-    execSyncPrint('amixer sset DSPVolume 0')
+    
 
 
 }
