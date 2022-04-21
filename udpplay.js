@@ -848,8 +848,8 @@ function sendData() {
             'AdjSource', pad(String(sampleAdjustSource), 4, ' '),
 
             
-            'AdjTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
-            'AdjTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
+            //'AdjTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
+            //'AdjTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
             'AdjRing', pad(6, String(sampleAdjustSinkTotalRing), ' '),
 
 
