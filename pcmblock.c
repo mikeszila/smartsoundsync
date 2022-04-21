@@ -36,6 +36,8 @@ int main(int argc, char **argv)
     snd_pcm_status_t *status;
     snd_pcm_audio_tstamp_config_t tstamp_config;
 
+    float avail_scaler;
+
     bytesPerSample = 2;
 
     if (argc < 4)
@@ -209,8 +211,10 @@ int main(int argc, char **argv)
 
         while (avail < reported_period_size && snd_pcm_status_get_state(status) == SND_PCM_STATE_RUNNING)
         {
+            avail_scaler = ((float)1 - ((float)avail / (float)reported_period_size));
 
-            availwait = reported_period_time * (1 - (avail / reported_period_size)) * 100;
+            availwait = reported_period_time * 1000 * avail_scaler;
+            //fprintf(stderr, "avail: %d availwait: %d avail_scaler: %f\n", avail,  availwait, avail_scaler);
 
             nanosleep((const struct timespec[]){{0, availwait}}, NULL);
 
