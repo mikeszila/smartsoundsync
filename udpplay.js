@@ -750,10 +750,14 @@ function sendData() {
         sampleAdjustSinkTotal = sampleAdjustSinkTotal + sampleAdjustSink
         sampleAdjustSinkTotalABS = sampleAdjustSinkTotalABS + Math.abs(sampleAdjustSink)
 
+        
         if ((sampleAdjustSinkRingLast > 0 && sampleAdjustSink < 0) || (sampleAdjustSinkRingLast < 0 && sampleAdjustSink > 0)) {
             sampleAdjustSinkTotalRing = sampleAdjustSinkTotalRing + Math.abs(sampleAdjustSink)        
         }
-        sampleAdjustSinkRingLast = sampleAdjustSink
+        
+        if (sampleAdjustSink != 0 || sampleAdjustSinkRingLast == 0) {
+            sampleAdjustSinkRingLast = sampleAdjustSink
+        }
 
 
         if (sampleAdjustSink > audiobuffer.length / outputbytesPerSample) { sampleAdjustSink = audiobuffer.length / outputbytesPerSample }
