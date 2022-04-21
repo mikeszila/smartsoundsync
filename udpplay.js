@@ -836,7 +836,7 @@ function sendData() {
             'AdjSink', pad(String(sampleAdjustSink), 4, ' '),
             'AdjSource', pad(String(sampleAdjustSource), 4, ' '),
 
-            'AdjRing', pad(6, String(sampleAdjustSinkTotalABS - sampleAdjustSinkTotal), ' '),
+            'AdjRing', pad(6, String(sampleAdjustSinkTotalABS - Math.abs(sampleAdjustSinkTotal)), ' '),
             //'AdjTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
             //'AdjTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
             //'SampleTotal', pad(String(sampleTotal), 10, ' '),
