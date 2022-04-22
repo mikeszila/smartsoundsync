@@ -72,6 +72,13 @@ try {
     }
     
     execSyncPrint('dsptoolkit install-profile dacdspprofile.xml')
+    execSyncPrint('amixer sset DSPVolume 0')
+    execSyncPrint('dsptoolkit set-volume 0%')
+    execSyncPrint('dsptoolkit write-reg 0xF106 0x0003')
+    execSyncPrint('dsptoolkit write-reg 0xF146 0x0004')
+    execSyncPrint('dsptoolkit write-reg 0xF195 0x0000')
+    execSyncPrint('dsptoolkit write-reg 0xF194 0x0033')
+    execSyncPrint('dsptoolkit write-reg 0xF21C 0x6C40')
 
     if (fs.existsSync('/lib/systemd/system/smartsoundsyncsink.service')) {
         execSyncPrint('systemctl enable smartsoundsyncsink')
