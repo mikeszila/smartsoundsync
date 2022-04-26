@@ -36,16 +36,9 @@ global.source_buffer_time = settings.source_buffer_periods * reported_period_tim
 global.playback_period_time = (1 / settings.source_rate) * 1000 * settings.playback_period_size
 global.playback_buffer_size = settings.playback_period_size * settings.playback_buffer_periods
 global.playback_buffer_time = playback_period_time * settings.playback_buffer_periods
+global.desired_playback_delay = 0
 
 let sampleTimeMS = 1 / reported_exact_rate * 1000
-
-if (source_buffer_time > playback_buffer_time) {
-    global.desired_playback_delay = source_buffer_time + 50
-    console.log('source buffer time', desired_playback_delay)
-} else {
-    global.desired_playback_delay = playback_buffer_time + 50
-    console.log('playback buffer time', desired_playback_delay)
-}
 
 let highVolumeLimit = true
 
@@ -73,10 +66,11 @@ let sinkErrorReportPointer = false
 
 function stateInactiveCheck() {
     captureState = 'idle'
-    if (readFuncIntervalPointer) {
-        clearInterval(readFuncIntervalPointer)
-        readFuncIntervalPointer = false
-    }
+    console.log('captureState', captureState)
+    // if (readFuncIntervalPointer) {
+    //    clearInterval(readFuncIntervalPointer)
+    //     readFuncIntervalPointer = false
+    // }
     if (sinkErrorReportPointer) {
         clearInterval(sinkErrorReportPointer)
         sinkErrorReportPointer = false
@@ -109,7 +103,8 @@ function spawnlibrespot() {
             captureState = 'active'
             common.setPriority(process.pid, 80)
             common.setPriority(librespot.pid, 80)
-            readFuncIntervalPointer = setInterval(readFunc, Math.floor(reported_period_time * 0.75))
+            //readFuncIntervalPointer = setInterval(readFunc, Math.floor(reported_period_time * 0.75))
+            readFunc()
 
             if (!sinkErrorReportPointer) {
                 sinkErrorReportPointer = setInterval(sinkErrorReport, 1000)
@@ -132,7 +127,7 @@ function spawnlibrespot() {
 
             //let librespot_db_volume = (settings.volume_db_min - settings.volume_db_max) / (settings.volume_librespot_min - settings.volume_librespot_max) * (librespot_volume - settings.volume_librespot_min) + settings.volume_db_min
 
-            console.log('Librespot Volume ///////////////////////////',settings.volume_shape, librespot_percent, l2, librespot_adjusted_percent,  librespot_volume, librespot_db_volume)
+            console.log('Librespot Volume ///////////////////////////', settings.volume_shape, librespot_percent, l2, librespot_adjusted_percent, librespot_volume, librespot_db_volume)
 
             if (highVolumeLimit) {
                 if (librespot_db_volume <= -20) {
@@ -166,54 +161,51 @@ function spawnlibrespot() {
 
 var readStream = fs.createReadStream(`${audiofifopath}`);
 var sendTime = 0
-var lastData = 0
 var sampleIndex = 0
-
-
 let captureStateLast = 'init'
 
-
-let timeAdjust = 0
-
-
-
-let syncErrorAverageAll = 0
-let syncErrorAverageAllLast = 0
-let syncErrorDiff = 0
-
+let audioDataLength = 0
 
 function readFunc() {
 
     //console.log('hello')
-    if (captureState == 'active' && (sendTime < (Date.now() + desired_playback_delay) || sendTime == 0)) {
+    if (captureState == 'active') {
         audioData = readStream.read(reported_period_size * 4)
 
         if (audioData == null) {
+            audioDataLength = 0
             console.log('is null')
-            audioData = Buffer.alloc(reported_period_size * 4);
-        }
+            //audioData = Buffer.alloc(reported_period_size * 4);
+        } else {
+            audioDataLength = audioData.length / 4
+            sendTime = sendTime + (reported_period_time * ntpCorrection)
+            sampleIndex = sampleIndex + 1
+            if (sendTime == 0) {
+                sendTime = Date.now() + reported_period_time
+                console.log('Send Time INIT!!!')
+            }
 
-        if (audioData.length != reported_period_size * 4) {
-            console.log('size different!!!!!!!!!!!!!!!!!!!!', audioData.length / 4)
-        }
+            if (sendTime < Date.now()) {
+                console.log('SEND TIME RESET!!!!!', sendTime, Date.now(), sendTime - Date.now())
+                sendTime = Date.now() + reported_period_time // reset sendTime if it get's too far behind, typically due to pause or first scan.  
+            }
+            buffertoudp.sendAudioUDP(audioData, sendTime, sampleIndex)
 
-        if (sendTime == 0 || sendTime < (Date.now() - desired_playback_delay)) {
-            console.log('SEND TIME RESET!!!!!', sendTime, (Date.now() - desired_playback_delay), sendTime - (Date.now() - desired_playback_delay))
-            sendTime = Date.now() // reset sendTime if it get's too far behind, typically due to pause or first scan.  
         }
-        buffertoudp.sendAudioUDP(audioData, sendTime, sampleIndex)
-
         //console.log(ntpCorrection, reported_period_time,  reported_period_time - (reported_period_time / ntpCorrection))
-        sendTime = sendTime + (reported_period_time * ntpCorrection)
-        sampleIndex = sampleIndex + 1
-        lastData = Date.now()
-    }
 
-    //   if (sendTime == 0 || sendTime < (Date.now() - source_buffer_time * 20)) {
-    //       captureState = 'idle'
-    //   } else {
-    //       captureState = 'active'
-    //   }
+        let waitTime = sendTime - Date.now() - source_buffer_time
+
+        if (waitTime < 0) { 
+            console.log('short wait time:', waitTime)    
+            waitTime = 1 
+        }
+        if (waitTime > reported_period_time * 1.1 ) { 
+            console.log('Long wait time:', waitTime)    
+            waitTime = reported_period_time 
+        }
+        setTimeout(readFunc, waitTime)
+    }
 
     if (captureState != captureStateLast) {
         buffertoudp.sendStatusUpdatetoControl()
