@@ -194,7 +194,7 @@ function readFunc() {
         }
         //console.log(ntpCorrection, reported_period_time,  reported_period_time - (reported_period_time / ntpCorrection))
 
-        let waitTime = sendTime - Date.now() - source_buffer_time
+        let waitTime = sendTime - Date.now() - reported_period_time - source_buffer_time
 
         if (waitTime < 0) { 
             console.log('short wait time:', waitTime)    
