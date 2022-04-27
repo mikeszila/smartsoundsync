@@ -101,8 +101,8 @@ function spawnlibrespot() {
                 stateInactiveCheckPointer = false
             }
             captureState = 'active'
-            common.setPriority(process.pid, 80)
-            common.setPriority(librespot.pid, 80)
+            common.setPriority(process.pid, 99)
+            common.setPriority(librespot.pid, 90)
             //readFuncIntervalPointer = setInterval(readFunc, Math.floor(reported_period_time * 0.75))
             readFunc()
 
@@ -166,8 +166,11 @@ let captureStateLast = 'init'
 
 let audioDataLength = 0
 
+let readsleep
+
 function readFunc() {
 
+    //console.log(Date.now() - sendTime + reported_period_time + source_buffer_time)
     //console.log('hello')
     if (captureState == 'active') {
         audioData = readStream.read(reported_period_size * 4)
@@ -195,7 +198,7 @@ function readFunc() {
         //console.log(ntpCorrection, reported_period_time,  reported_period_time - (reported_period_time / ntpCorrection))
 
         let waitTime = sendTime - Date.now() - reported_period_time - source_buffer_time
-
+        //console.log(waitTime)
         if (waitTime < 0) { 
             console.log('short wait time:', waitTime)    
             waitTime = 1 
@@ -204,7 +207,20 @@ function readFunc() {
             console.log('Long wait time:', waitTime)    
             waitTime = reported_period_time 
         }
-        setTimeout(readFunc, waitTime)
+        //setTimeout(readFunc, waitTime)
+        if (false) {
+        exec(`sleep ${waitTime / 1000}`, (err, stdout, stderr) => {
+            if (err) {
+              console.error(`exec error: ${err}`);
+              return;
+            }
+            readFunc()
+          });
+        } else {
+            execSync(`sleep ${waitTime / 1000}`)
+            //console.log(waitTime, 'hello')
+            setImmediate(readFunc)
+        }
     }
 
     if (captureState != captureStateLast) {
