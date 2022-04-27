@@ -167,10 +167,12 @@ if (!stopOnly) {
 
     let npmDependencies = ['pad']
 
+    let npmUser = String(execSync('stat -c "%U" $PWD'))
+
     npmDependencies.forEach(function (value, index) {
         let installed = String(execSync(`npm list -g --depth=0 --loglevel=error`))
         if (!installed.includes(value)) {
-            try { execSyncPrint(`npm install -g ${value} -y`) }
+            try { execSyncPrint(`runuser -l ${npmUser} -c npm install -g ${value} -y`) }
             catch (error) { console.log('Error: could not install', value, error) }
         }
     })
