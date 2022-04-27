@@ -93,6 +93,22 @@ let hasAirplay = false
 let hasSPDIF = false
 let hasHifiberryDacDSP = false
 
+
+let ecasoundChainSetupFileDir = '/usr/local/etc/smartsoundsync/ecasound/'
+let ecasoundChainSetupFileName = 'chainsetup-file.ecs'
+let ecasoundChainSetupFilePath = ecasoundChainSetupFileDir.concat(ecasoundChainSetupFileName)
+let ecasoundFilterFileName = "default.ecp"
+let ecasoundFilterFilePath = ecasoundChainSetupFileDir.concat(ecasoundFilterFileName)
+
+function makeEcasoundConfig() {
+
+    execSync(`mkdir -p ${ecasoundChainSetupFileDir}`)
+    
+    execSync(`cp ${installLocation}/config_examples/${ecasoundChainSetupFileName} ${ecasoundChainSetupFilePath}`)
+    execSync(`cp ${installLocation}/config_examples/${ecasoundFilterFileName} ${ecasoundFilterFilePath}`)
+    execSyncPrint(`chown -R ${installLocationUser} ${configFileDir}`)
+}
+
 if (!stopOnly) {
     if (fs.existsSync('/usr/local/etc/smartsoundsyncconf.js')) {  //move old style config to new style
         console.log('found old style config.  Converting to new style at', configFilePath)
@@ -106,9 +122,14 @@ if (!stopOnly) {
         execSync(`mkdir -p ${configFileDir}`)
         execSync(`cp ${installLocation}/config_examples/standardconf.js ${configFilePath}`)
         execSyncPrint(`chown -R ${installLocationUser} ${configFileDir}`)
-        console.log(`No config file found.  Created standard config file at ${configFilePath}.  Please ensure config is correct for your setup and re-run this script.`)
+        console.log(`No config found. Created standard config file at ${configFilePath} and default ecasound configuration at ${ecasoundChainSetupFileDir}. Please ensure config is correct for your setup and re-run this script.`)
+
+        makeEcasoundConfig()
         process.exit()
-    }
+    }  
+
+
+
 
     let settings = require(configFilePath)
 
@@ -124,6 +145,15 @@ if (!stopOnly) {
 
     if (settings.sink) {
         dependencies = dependencies.concat(dependenciessink)
+
+        if (fs.existsSync(ecasoundChainSetupFilePath)) {
+            console.log('config exists', ecasoundChainSetupFilePath)
+        } else {
+            console.log(`No ecasound config file found.  Created standard ecasound config file at ${ecasoundChainSetupFilePath}.  Please ensure config is correct for your setup and re-run this script.`)
+            
+            makeEcasoundConfig()
+            process.exit()
+        }
     }
 
     if (settings.sources) {
@@ -370,24 +400,7 @@ WantedBy=multi-user.target
 
     if (settings.sink) {
 
-        let ecasoundChainSetupFileDir = '/usr/local/etc/smartsoundsync/ecasound/'
-        let ecasoundChainSetupFileName = 'chainsetup-file.ecs'
-        let ecasoundChainSetupFilePath = ecasoundChainSetupFileDir.concat(ecasoundChainSetupFileName)
-        let ecasoundFilterFileName = "Ecasound_Chain_Stereo_Flat.ecp"
-        let ecasoundFilterFilePath = ecasoundChainSetupFileDir.concat(ecasoundFilterFileName)
-
-        if (fs.existsSync(ecasoundChainSetupFilePath)) {
-            console.log('config exists', ecasoundChainSetupFilePath)
-        } else {
-            console.log(`No ecasound config file found.  Created standard ecasound config file at ${ecasoundChainSetupFilePath}.  Please ensure config is correct for your setup and re-run this script.`)
-            
-            execSync(`mkdir -p ${ecasoundChainSetupFileDir}`)
-            
-            execSync(`cp ${installLocation}/config_examples/chainsetup-file.ecs ${ecasoundChainSetupFilePath}`)
-            execSync(`cp ${installLocation}/config_examples/Ecasound_Chain_Stereo_Flat.ecp ${ecasoundFilterFilePath}`)
-            execSyncPrint(`chown -R ${installLocationUser} ${configFileDir}`)
-            //process.exit()
-        }
+        
 
 
 

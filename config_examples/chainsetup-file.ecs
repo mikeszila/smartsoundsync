@@ -1,1 +1,1 @@
- export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -z:nodb -b:ecasoundBufferSize -f:16,2,44100 -i stdin -pf:/usr/local/etc/smartsoundsync/ecasound/Ecasound_Chain_Stereo_Flat.ecp -f:s16_le,2,44100 -o:stdout
+ export LADSPA_PATH=/usr/local/lib/ladspa:/usr/lib/ladspa; stdbuf -i0 -o0 -e0 ecasound -B:rt -z:nodb -b:ecasoundBufferSize -f:16,2,44100 -i stdin -pf:/usr/local/etc/smartsoundsync/ecasound/default.ecp -f:s16_le,2,44100 -o:stdout
