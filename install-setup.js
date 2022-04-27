@@ -314,6 +314,7 @@ ExecStart=/usr/bin/node ${installLocation}/smartsoundsync.js ${execArguments}
 TimeoutStopSec=5
 
 Restart=always
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
@@ -353,6 +354,7 @@ ExecStart=/usr/bin/node ${installLocation}/control.js ${execArguments}
 TimeoutStopSec=5
 
 Restart=always
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
@@ -420,6 +422,7 @@ ExecStart=/usr/bin/node ${installLocation}/udpplay.js ${execArguments}
 TimeoutStopSec=5
 
 Restart=always
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
@@ -497,6 +500,7 @@ ExecStart=/usr/bin/node ${installLocation}/pipelibrespottoudp.js "${execArgument
 TimeoutStopSec=5
 
 Restart=always
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
@@ -534,6 +538,7 @@ ExecStart=/usr/bin/node ${installLocation}/pipeshairporttoudp.js "${execArgument
 TimeoutStopSec=5
 
 Restart=always
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
