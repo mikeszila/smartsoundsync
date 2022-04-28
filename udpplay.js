@@ -572,7 +572,7 @@ let sampleAdjustSource = 0
 let sourceErrorSamples = 0
 var sourceErrorSamplesAverage = 0
 var sourceErrorSamplesArray = []
-var sourceErrorSamplesAverageSeconds = 1
+var sourceErrorSamplesAverageSeconds = settings.sinkErrorSamplesAverageSeconds // 1
 var sourceErrorSamplesArrayLengthSetpoint = Math.round(44100 / 128 * sourceErrorSamplesAverageSeconds)
 
 var sampleAdjustSourceStartSeconds = 2
@@ -581,7 +581,7 @@ var sampleAdjustSourceStartSecondsSetpoint = Math.round(44100 / 128 * sampleAdju
 var syncErrorMSamplesAverage = 0
 var syncErrorMSamplesArray = []
 
-var syncErrorMSamplesAverageSeconds = settings.sinkErrorSamplesAverageSeconds // 1
+var syncErrorMSamplesAverageSeconds =  1
 
 var syncErrorMSamplesArrayLengthSetpoint = Math.round(44100 / 128 * syncErrorMSamplesAverageSeconds)
 
