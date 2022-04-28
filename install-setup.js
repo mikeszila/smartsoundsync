@@ -198,6 +198,7 @@ if (!stopOnly) {
     let npmDependencies = ['pad']
 
     let npmUser = String(execSync('stat -c "%U" $PWD'))
+    npmUser = npmUser.replace(/(\r\n|\n|\r)/gm, "");
 
     npmDependencies.forEach(function (value, index) {
         let installed = String(execSync(`npm list -g --depth=0 --loglevel=error`))
