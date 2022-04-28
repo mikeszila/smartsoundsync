@@ -1,8 +1,12 @@
 "use strict";
 const { exec, spawn, execSync } = require('child_process');
 
+
+let npmGlobal = String(execSync('npm root --quiet -g'))
+global.npmGlobal = npmGlobal.replace(/(\r\n|\n|\r)/gm, "");
+
 global.process = require("process");
-global.pad = require('pad')
+global.pad = require(`${npmGlobal}/pad`)
 global.dgram = require('dgram')
 global.os = require('os')
 global.fs = require('fs');
