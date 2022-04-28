@@ -581,7 +581,7 @@ var sampleAdjustSourceStartSecondsSetpoint = Math.round(44100 / 128 * sampleAdju
 var syncErrorMSamplesAverage = 0
 var syncErrorMSamplesArray = []
 
-var syncErrorMSamplesAverageSeconds =  1
+var syncErrorMSamplesAverageSeconds =  10
 
 var syncErrorMSamplesArrayLengthSetpoint = Math.round(44100 / 128 * syncErrorMSamplesAverageSeconds)
 
