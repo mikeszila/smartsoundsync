@@ -68,6 +68,7 @@ var localSettings = {
     outputChannels: 2,
     playback_buffer_periods: 4,
     mono: false,
+    sinkErrorSamplesAverageSeconds: 0.05
 }
 
 settings = { ...settings, ...localSettings }
@@ -562,8 +563,7 @@ let syncErrorMS = 0
 let sinkErrorSamples = 0
 var sinkErrorSamplesAverage = 0
 var sinkErrorSamplesArray = []
-var sinkErrorSamplesAverageSeconds = 0.1
-var sinkErrorSamplesArrayLengthSetpoint = Math.round(44100 / 128 * sinkErrorSamplesAverageSeconds)
+var sinkErrorSamplesArrayLengthSetpoint = Math.round(44100 / 128 * settings.sinkErrorSamplesAverageSeconds)
 
 var sampleAdjustSinkStartSeconds = 2
 var sampleAdjustSinkStartSecondsSetpoint = Math.round(44100 / 128 * sampleAdjustSinkStartSeconds)
@@ -664,6 +664,8 @@ let SASink
 let SASource
 let sampleAdjustSourceScaler = 0.5
 
+let sampleAdjustPositive
+
 function sendData() {
 
     transmitSize = avail
@@ -683,6 +685,8 @@ function sendData() {
         sinkErrorSamples = Math.floor(Math.abs(syncErrorMS / (sampleTimeMS)))
         if (syncErrorMS < 0) { sinkErrorSamples = sinkErrorSamples * -1 }
 
+
+
         if (sinkErrorSamplesArray.push(sinkErrorSamples) > sinkErrorSamplesArrayLengthSetpoint) {
             sinkErrorSamplesArray.shift()
         }
@@ -693,12 +697,19 @@ function sendData() {
             sampleAdjustSink = Math.floor(Math.abs(sinkErrorSamplesAverage))
 
             //if (sinkErrorSamplesAverage < -0.2 && sinkErrorSamplesAverage > -1) {sampleAdjustSink = 1}
-            if (samples_since_correct_sink < (sourceObj.reported_exact_rate / 5)) { sampleAdjustSink = 0 }
+            //if (samples_since_correct_sink < (sourceObj.reported_exact_rate / 5)) { sampleAdjustSink = 0 }
             //if (sampleAdjustSink > 20) { sampleAdjustSink = 20 }
             if (sinkErrorSamplesAverage > 0) { sampleAdjustSink = sampleAdjustSink * -1 }
         }
 
-        if (sampleAdjustSink != 0) {
+        if (sampleAdjustSink > 10) {sampleAdjustPositive = true}
+        if (sampleAdjustSink < 10) {sampleAdjustPositive = false}
+
+        if (sampleAdjustPositive && sampleAdjustSink < 0) {sampleAdjustSink = 0}
+        if (!sampleAdjustPositive && sampleAdjustSink > 0) {sampleAdjustSink = 0}
+
+
+        if ( sampleAdjustSink != 0) {
             sinkErrorSamplesArray.forEach(function (value, index) {
                 sinkErrorSamplesArray[index] = sinkErrorSamplesArray[index] + sampleAdjustSink
 
