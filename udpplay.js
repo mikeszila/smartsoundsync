@@ -702,8 +702,7 @@ function sendData() {
             if (sinkErrorSamplesAverage > 0) { sampleAdjustSink = sampleAdjustSink * -1 }
         }
 
-        if (sampleAdjustSink > 10) {sampleAdjustPositive = true}
-        if (sampleAdjustSink < 10) {sampleAdjustPositive = false}
+        
 
         if (sampleAdjustPositive && sampleAdjustSink < 0) {sampleAdjustSink = 0}
         if (!sampleAdjustPositive && sampleAdjustSink > 0) {sampleAdjustSink = 0}
@@ -716,6 +715,9 @@ function sendData() {
             })
             sinkErrorSamplesAverage = average(sinkErrorSamplesArray)
         }
+
+        if (sampleAdjustSink > 10) {sampleAdjustPositive = true}
+        if (sampleAdjustSink < -10) {sampleAdjustPositive = false}
 
         //syncErrorB
 
