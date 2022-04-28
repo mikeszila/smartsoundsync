@@ -701,15 +701,15 @@ function sendData() {
             //if (sampleAdjustSink > 20) { sampleAdjustSink = 20 }
             if (sinkErrorSamplesAverage > 0) { sampleAdjustSink = sampleAdjustSink * -1 }
         }
-        if (sampleAdjustSink > 10) {sampleAdjustPositive = true}
-        if (sampleAdjustSink < -10) {sampleAdjustPositive = false}
-        
-
-        if (sampleAdjustPositive && sampleAdjustSink < 0) {sampleAdjustSink = 0}
-        if (!sampleAdjustPositive && sampleAdjustSink > 0) {sampleAdjustSink = 0}
+        if (sampleAdjustSink > 10) { sampleAdjustPositive = true }
+        if (sampleAdjustSink < -10) { sampleAdjustPositive = false }
 
 
-        if ( sampleAdjustSink != 0) {
+        if (sampleAdjustPositive && sampleAdjustSink < 0) { sampleAdjustSink = 0 }
+        if (!sampleAdjustPositive && sampleAdjustSink > 0) { sampleAdjustSink = 0 }
+
+
+        if (sampleAdjustSink != 0) {
             sinkErrorSamplesArray.forEach(function (value, index) {
                 sinkErrorSamplesArray[index] = sinkErrorSamplesArray[index] + sampleAdjustSink
 
@@ -717,7 +717,7 @@ function sendData() {
             sinkErrorSamplesAverage = average(sinkErrorSamplesArray)
         }
 
-        
+
 
         //syncErrorB
 
@@ -743,6 +743,9 @@ function sendData() {
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
+            if (sampleAdjustPositive && sampleAdjustSource < 0) { sampleAdjustSource = 0 }
+            if (!sampleAdjustPositive && sampleAdjustSource > 0) { sampleAdjustSource = 0 }
+
             if (sampleAdjustSource != 0) {
                 sourceErrorSamplesArray.forEach(function (value, index) {
                     sourceErrorSamplesArray[index] = sourceErrorSamplesArray[index] + sampleAdjustSource
@@ -763,11 +766,11 @@ function sendData() {
         sampleAdjustSinkTotal = sampleAdjustSinkTotal + sampleAdjustSink
         sampleAdjustSinkTotalABS = sampleAdjustSinkTotalABS + Math.abs(sampleAdjustSink)
 
-        
+
         if ((sampleAdjustSinkRingLast > 0 && sampleAdjustSink < 0) || (sampleAdjustSinkRingLast < 0 && sampleAdjustSink > 0)) {
-            sampleAdjustSinkTotalRing = sampleAdjustSinkTotalRing + Math.abs(sampleAdjustSink)        
+            sampleAdjustSinkTotalRing = sampleAdjustSinkTotalRing + Math.abs(sampleAdjustSink)
         }
-        
+
         if (sampleAdjustSink != 0 || sampleAdjustSinkRingLast == 0) {
             sampleAdjustSinkRingLast = sampleAdjustSink
         }
@@ -855,9 +858,9 @@ function sendData() {
             'ERRms', pad(String(numberFormat(syncErrorMSamplesAverage * sampleTimeMS)), 6, ' '),
 
             'ERRsamp', pad(String(numberFormat(syncErrorMSamplesAverage)), 6, ' '),
-            
 
-            
+
+
 
 
             //'SourceErr', pad(String(numberFormat(sourceErrorSamplesAverage)), 6, ' '),
@@ -865,11 +868,11 @@ function sendData() {
 
 
 
-            
+
             'AdjSink', pad(String(sampleAdjustSink), 4, ' '),
             'AdjSource', pad(String(sampleAdjustSource), 4, ' '),
 
-            
+
             //'AdjTotal', pad(6, String(sampleAdjustSinkTotal), ' '),
             //'AdjTotalABS', pad(6, String(sampleAdjustSinkTotalABS), ' '),
             'AdjRing', pad(6, String(sampleAdjustSinkTotalRing), ' '),
