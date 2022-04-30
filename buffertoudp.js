@@ -18,7 +18,7 @@ socketAudio.on('listening', () => {
     setupControl()
 });
 
-var EventEmitter = require('events'); 
+var EventEmitter = require('events');
 var syncErrorData = new EventEmitter()
 
 socketAudio.on('message', function (message, remote) {
@@ -95,7 +95,9 @@ function retrunsetuppbuffer() {
         captureState: captureState,
         volumeOut: volumeOut,
         sinkCount: audioSinkList.length,
-        sourceSampleAdjust: settings.sourceSampleAdjust
+        sourceSampleAdjust: settings.sourceSampleAdjust,
+        audioSourceType: settings.audioSourceType,
+        audioSourceDisplayName: settings.audioSourceDisplayName
     }
 
     let setuppbuffer = Buffer.from(JSON.stringify(sourceObj))

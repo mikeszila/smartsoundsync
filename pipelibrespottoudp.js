@@ -80,6 +80,8 @@ function stateInactiveCheck() {
     common.setPriority(librespot.pid, -19)
 }
 
+let readFuncRunning = false
+
 function spawnlibrespot() {
 
     console.log('starting librespot')
@@ -104,10 +106,17 @@ function spawnlibrespot() {
             common.setPriority(process.pid, 99)
             common.setPriority(librespot.pid, 90)
             //readFuncIntervalPointer = setInterval(readFunc, Math.floor(reported_period_time * 0.75))
-            readFunc()
+            
 
             if (!sinkErrorReportPointer) {
                 sinkErrorReportPointer = setInterval(sinkErrorReport, 1000)
+            }
+
+            console.log("readFuncRunningin", readFuncRunning)
+            if (readFuncRunning != true) {
+                readFuncRunning = true
+                console.log('readFuncGO')
+                readFunc()
             }
         }
 
@@ -182,6 +191,8 @@ function readFunc() {
         } else {
             audioDataLength = audioData.length / 4
             sendTime = sendTime + (reported_period_time * ntpCorrection)
+
+            //console.log(audioDataLength)
             sampleIndex = sampleIndex + 1
             if (sendTime == 0) {
                 sendTime = Date.now() + reported_period_time
@@ -200,11 +211,11 @@ function readFunc() {
         let waitTime = sendTime - Date.now() - reported_period_time - source_buffer_time
         //console.log(waitTime)
         if (waitTime < 0) { 
-            console.log('short wait time:', waitTime)    
+            console.log('short wait time:', waitTime, sendTime)    
             waitTime = 1 
         }
         if (waitTime > reported_period_time * 1.1 ) { 
-            console.log('Long wait time:', waitTime)    
+            console.log('Long wait time:', waitTime, sendTime)    
             waitTime = reported_period_time 
         }
         //setTimeout(readFunc, waitTime)
@@ -221,6 +232,9 @@ function readFunc() {
             //console.log(waitTime, 'hello')
             setImmediate(readFunc)
         }
+    } else {
+        readFuncRunning = false
+        console.log('readFuncDONE')
     }
 
     if (captureState != captureStateLast) {
