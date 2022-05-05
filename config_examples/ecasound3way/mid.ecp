@@ -1,0 +1,2 @@
+# mid.ecp
+mid = -el:RTlr4hipass,500 -el:RTlr4lowpass,3000 -eadb:-6 -el:RTlowshelf,0,150,0.71

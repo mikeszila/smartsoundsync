@@ -1,0 +1,2 @@
+# tweeter.ecp
+tweeter = -el:RTlr4hipass,3000 -el:RTlr4lowpass,20000 -eadb:-3 -el:RTlowshelf,0,150,0.71
