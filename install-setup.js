@@ -133,7 +133,7 @@ if (!stopOnly) {
 
     let settings = require(configFilePath)
 
-    let dependencies = ['ntp']
+    let dependencies = ['ntp', 'npm']
 
     let dependenciesSpotify = ['build-essential', 'cargo']
 
