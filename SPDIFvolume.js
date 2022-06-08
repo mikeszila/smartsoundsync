@@ -168,4 +168,4 @@ function spawnremote() {
         console.log('remote CLOSED with code ', code)
     });
 }
-spawnremote()
+//spawnremote()

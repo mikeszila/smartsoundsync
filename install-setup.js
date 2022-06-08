@@ -141,7 +141,7 @@ if (!stopOnly) {
 
     let dependenciessink = ['alsa-utils', 'alsa-tools', 'libasound2-plugins', 'ecasound', 'cmt', 'swh-plugins', 'ladspa-sdk', 'libasound2-dev', 'cmake']
 
-    let dependenciesspdif = ['lirc', 'evtest', 'python3-pip', 'libxslt1-dev', 'libxml2-dev', 'zlib1g-dev', 'python3-lxml',  'libxml2-dev', 'libxslt1-dev', 'python-dev', 'libasound2-dev']
+    let dependenciesspdif = ['lirc', 'evtest', 'python3-pip', 'libxslt1-dev', 'libxml2-dev', 'zlib1g-dev', 'python3-lxml',  'libxml2-dev', 'libxslt1-dev', 'python2-dev', 'libasound2-dev']
 
     if (settings.sink) {
         dependencies = dependencies.concat(dependenciessink)
