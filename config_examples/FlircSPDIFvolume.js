@@ -34,7 +34,7 @@ function createKeyboard(eventNumber) {
 
 }
 
-let proc_bus_input_devices = execSync('cat /proc/bus/input/devices', {})
+let proc_bus_input_devices = execSync('cat ', {})
 proc_bus_input_devices = String(proc_bus_input_devices)
 
 let devices_lines = proc_bus_input_devices.split('\n\n');
@@ -51,7 +51,7 @@ devices_lines.forEach(function (value, index) {
         deviceHandlers.includes('kbd') &&
         !deviceName.includes('Power') &&
         !deviceName.includes('Video') &&
-        !deviceName.includes('flirc Keyboard') &&
+        //!deviceName.includes('flirc Keyboard') &&
         !deviceName.includes('flirc System Control') &&
         !deviceName.includes('HP Wireless hotkeys') &&
         !deviceName.includes('HP WMI hotkeys') &&

@@ -96,7 +96,7 @@ function spawnlibrespot() {
         //console.error('librespot', String(data))
         message = String(data)
 
-        if (message.includes('== Starting sink ==')) {
+        if (message.includes('== Starting sink ==') || message.includes('kPlayStatusPlay') ) {
             console.log('== Starting sink ==')
             if (stateInactiveCheckPointer) {
                 clearTimeout(stateInactiveCheckPointer)
