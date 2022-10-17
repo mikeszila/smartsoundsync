@@ -104,7 +104,7 @@ function spawnlibrespot() {
         console.log('librespot', String(data))
     });
     librespot.stderr.on('data', (data) => {
-        //console.error('librespot', String(data))
+        console.error('librespot', String(data))
         message = String(data)        
 
         if (message.includes('spotify volume:')) {
