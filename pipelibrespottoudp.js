@@ -60,27 +60,38 @@ if (fs.existsSync(audiofifopath)) {
     execSync(`mkfifo ${audiofifopath}`)
 }
 
-let stateInactiveCheckPointer = false
-let readFuncIntervalPointer = false
-let sinkErrorReportPointer = false
+function librespotCheck() {
 
-function stateInactiveCheck() {
-    captureState = 'idle'
-    console.log('captureState', captureState)
-    // if (readFuncIntervalPointer) {
-    //    clearInterval(readFuncIntervalPointer)
-    //     readFuncIntervalPointer = false
-    // }
-    if (sinkErrorReportPointer) {
-        clearInterval(sinkErrorReportPointer)
-        sinkErrorReportPointer = false
+    readFunc()
+
+    lastDataAge = Date.now() - lastData
+
+    if (lastDataAge > 5000 && captureState == 'active') {
+        captureState = 'idle'
+        console.log('captureState is now ', captureState)
+        if (readFuncIntervalPointer) {
+            clearInterval(readFuncIntervalPointer)
+        }
+        common.setPriority(process.pid, -19)
+        common.setPriority(librespot.pid, -19)
+        buffertoudp.sendStatusUpdatetoControl()
+
     }
 
-    common.setPriority(process.pid, -19)
-    common.setPriority(librespot.pid, -19)
+    if (lastDataAge < 1000 && captureState != 'active') {
+        captureState = 'active'
+        console.log('captureState is now ', captureState)
+        common.setPriority(process.pid, 99)
+        common.setPriority(librespot.pid, 90)
+        readFuncIntervalPointer = setInterval(readFunc, read_time_interval)
+        buffertoudp.sendStatusUpdatetoControl()
+    }
+
+    if (captureState == 'active') {sinkErrorReport()}
+
 }
 
-let readFuncRunning = false
+
 
 function spawnlibrespot() {
 
@@ -93,37 +104,8 @@ function spawnlibrespot() {
         console.log('librespot', String(data))
     });
     librespot.stderr.on('data', (data) => {
-        //console.error('librespot', String(data))
-        message = String(data)
-
-        if (message.includes('== Starting sink ==')  ) {  //|| message.includes('kPlayStatusPlay')
-            console.log('== Starting sink ==')
-            if (stateInactiveCheckPointer) {
-                clearTimeout(stateInactiveCheckPointer)
-                stateInactiveCheckPointer = false
-            }
-            captureState = 'active'
-            common.setPriority(process.pid, 99)
-            common.setPriority(librespot.pid, 90)
-            //readFuncIntervalPointer = setInterval(readFunc, Math.floor(reported_period_time * 0.75))
-            
-
-            if (!sinkErrorReportPointer) {
-                sinkErrorReportPointer = setInterval(sinkErrorReport, 1000)
-            }
-
-            console.log("readFuncRunningin", readFuncRunning)
-            if (readFuncRunning != true) {
-                readFuncRunning = true
-                console.log('readFuncGO')
-                readFunc()
-            }
-        }
-
-        if (message.includes('== Stopping sink ==')) {
-            console.log('== Stopping sink ==')
-            stateInactiveCheckPointer = setTimeout(stateInactiveCheck, 5000)
-        }
+        console.error('librespot', String(data))
+        message = String(data)        
 
         if (message.includes('spotify volume:')) {
             let librespot_volume = message.slice(message.lastIndexOf('spotify volume:') + 15, message.lastIndexOf('\n') + 1)
@@ -171,24 +153,22 @@ function spawnlibrespot() {
 var readStream = fs.createReadStream(`${audiofifopath}`);
 var sendTime = 0
 var sampleIndex = 0
-let captureStateLast = 'init'
-
+var lastData
 let audioDataLength = 0
-
-let readsleep
 
 function readFunc() {
 
     //console.log(Date.now() - sendTime + reported_period_time + source_buffer_time)
     //console.log('hello')
-    if (captureState == 'active') {
+    if (((Date.now() - sendTime + reported_period_time + source_buffer_time) > 0)) {
         audioData = readStream.read(reported_period_size * 4)
 
         if (audioData == null) {
             audioDataLength = 0
-            console.log('is null')
+            if( captureState == 'active') {console.log('is null')}
             //audioData = Buffer.alloc(reported_period_size * 4);
         } else {
+            lastData = Date.now()
             audioDataLength = audioData.length / 4
             sendTime = sendTime + (reported_period_time * ntpCorrection)
 
@@ -203,50 +183,15 @@ function readFunc() {
                 console.log('SEND TIME RESET!!!!!', sendTime, Date.now(), sendTime - Date.now())
                 sendTime = Date.now() + reported_period_time // reset sendTime if it get's too far behind, typically due to pause or first scan.  
             }
-            buffertoudp.sendAudioUDP(audioData, sendTime, sampleIndex)
+            if( captureState == 'active') {buffertoudp.sendAudioUDP(audioData, sendTime, sampleIndex)}
 
         }
-        //console.log(ntpCorrection, reported_period_time,  reported_period_time - (reported_period_time / ntpCorrection))
-
-        let waitTime = sendTime - Date.now() - reported_period_time - source_buffer_time
-        //console.log(waitTime)
-        if (waitTime < 0) { 
-            console.log('short wait time:', waitTime, sendTime)    
-            waitTime = 1 
-        }
-        if (waitTime > reported_period_time * 1.1 ) { 
-            console.log('Long wait time:', waitTime, sendTime)    
-            waitTime = reported_period_time 
-        }
-        //setTimeout(readFunc, waitTime)
-        if (false) {
-        exec(`sleep ${waitTime / 1000}`, (err, stdout, stderr) => {
-            if (err) {
-              console.error(`exec error: ${err}`);
-              return;
-            }
-            readFunc()
-          });
-        } else {
-            execSync(`sleep ${waitTime / 1000}`)
-            //console.log(waitTime, 'hello')
-            setImmediate(readFunc)
-        }
-    } else {
-        readFuncRunning = false
-        console.log('readFuncDONE')
-    }
-
-    if (captureState != captureStateLast) {
-        buffertoudp.sendStatusUpdatetoControl()
-        console.log('captureState now: ', captureState)
-        captureStateLast = captureState
+        //console.log(ntpCorrection, reported_period_time,  reported_period_time - (reported_period_time / ntpCorrection))        
     }
 }
 
-spawnlibrespot()
-
-console.log('read time interval', Math.floor(reported_period_time * 0.75))
+let read_time_interval = Math.floor(reported_period_time * 0.75)
+console.log('read_time_interval', read_time_interval)
 
 buffertoudp.syncErrorData.on("syncErrorData", function (data) {
     buffertoudp.audioSinkList.forEach(function (value, index) {
@@ -277,3 +222,6 @@ function sinkErrorReport() {
         avgErr = 0
     }
 }
+
+spawnlibrespot()
+setInterval(librespotCheck, 1000)
