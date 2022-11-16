@@ -60,6 +60,8 @@ if (fs.existsSync(audiofifopath)) {
     execSync(`mkfifo ${audiofifopath}`)
 }
 
+let readFuncIntervalPointer
+
 function librespotCheck() {
 
     if (!readFuncIntervalPointer) {readFunc()}
