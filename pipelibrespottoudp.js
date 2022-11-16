@@ -62,7 +62,7 @@ if (fs.existsSync(audiofifopath)) {
 
 function librespotCheck() {
 
-    readFunc()
+    if (!readFuncIntervalPointer) {readFunc()}
 
     lastDataAge = Date.now() - lastData
 
