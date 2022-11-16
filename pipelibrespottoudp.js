@@ -82,7 +82,7 @@ function librespotCheck() {
         captureState = 'active'
         console.log('captureState is now ', captureState)
         common.setPriority(process.pid, 99)
-        common.setPriority(librespot.pid, 90)
+        common.setPriority(librespot.pid, 99)
         readFuncIntervalPointer = setInterval(readFunc, read_time_interval)
         buffertoudp.sendStatusUpdatetoControl()
     }
@@ -158,7 +158,7 @@ let audioDataLength = 0
 
 function readFunc() {
 
-    //console.log(Date.now() - sendTime + reported_period_time + source_buffer_time)
+    if ((captureState == 'active') && (sendTime - reported_period_time) < Date.now()) { console.log(sendTime - Date.now())}
     //console.log('hello')
     if (((Date.now() - sendTime + reported_period_time + source_buffer_time) > 0)) {
         audioData = readStream.read(reported_period_size * 4)
