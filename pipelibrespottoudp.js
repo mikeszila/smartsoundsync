@@ -73,6 +73,7 @@ function librespotCheck() {
         console.log('captureState is now ', captureState)
         if (readFuncIntervalPointer) {
             clearInterval(readFuncIntervalPointer)
+            readFuncIntervalPointer = false
         }
         common.setPriority(process.pid, -19)
         common.setPriority(librespot.pid, -19)
