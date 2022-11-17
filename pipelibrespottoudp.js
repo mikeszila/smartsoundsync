@@ -164,7 +164,7 @@ function readFunc() {
 
     let dateNow = Date.now()
 
-    if (captureState == 'active' && lastData - dateNow < reported_period_time) {console.log('long scan time', lastData - dateNow)}
+    if (captureState == 'active' && dateNow - lastData < reported_period_time) {console.log('long scan time:', dateNow - lastData, 'period time:', reported_period_time)}
 
     //console.log('hello')
     if (((dateNow - sendTime + reported_period_time + source_buffer_time) > 0)) {
