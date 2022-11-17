@@ -157,6 +157,7 @@ var readStream = fs.createReadStream(`${audiofifopath}`);
 var sendTime = 0
 var sampleIndex = 0
 var lastData
+var lastScan
 let audioDataLength = 0
 
 function readFunc() {
@@ -164,7 +165,8 @@ function readFunc() {
 
     let dateNow = Date.now()
 
-    if ((captureState == 'active') && ((dateNow - lastData) > reported_period_time)) {console.log('long scan time:', dateNow - lastData, 'period time:', reported_period_time)}
+    if ((captureState == 'active') && ((dateNow - lastScan) > reported_period_time)) {console.log('long scan time:', dateNow - lastScan, 'period time:', reported_period_time)}
+    lastScan = dateNow
 
     //console.log('hello')
     if (((dateNow - sendTime + reported_period_time + source_buffer_time) > 0)) {
