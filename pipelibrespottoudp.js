@@ -161,9 +161,13 @@ let audioDataLength = 0
 
 function readFunc() {
 
-    if ((captureState == 'active') && (sendTime - reported_period_time) < Date.now()) { console.log(sendTime - Date.now())}
+
+    let dateNow = Date.now()
+
+    if (captureState == 'active' && lastData - dateNow < reported_period_time) {console.log('long scan time', lastData - dateNow)}
+
     //console.log('hello')
-    if (((Date.now() - sendTime + reported_period_time + source_buffer_time) > 0)) {
+    if (((dateNow - sendTime + reported_period_time + source_buffer_time) > 0)) {
         audioData = readStream.read(reported_period_size * 4)
 
         if (audioData == null) {
@@ -171,20 +175,20 @@ function readFunc() {
             if( captureState == 'active') {console.log('is null')}
             //audioData = Buffer.alloc(reported_period_size * 4);
         } else {
-            lastData = Date.now()
+            lastData = dateNow
             audioDataLength = audioData.length / 4
             sendTime = sendTime + (reported_period_time * ntpCorrection)
 
             //console.log(audioDataLength)
             sampleIndex = sampleIndex + 1
             if (sendTime == 0) {
-                sendTime = Date.now() + reported_period_time
+                sendTime = dateNow + reported_period_time
                 console.log('Send Time INIT!!!')
             }
 
-            if (sendTime < Date.now()) {
-                console.log('SEND TIME RESET!!!!!', sendTime, Date.now(), sendTime - Date.now())
-                sendTime = Date.now() + reported_period_time // reset sendTime if it get's too far behind, typically due to pause or first scan.  
+            if (sendTime < dateNow) {
+                console.log('SEND TIME RESET!!!!!', sendTime, dateNow, sendTime - dateNow)
+                sendTime = dateNow + reported_period_time // reset sendTime if it get's too far behind, typically due to pause or first scan.  
             }
             if( captureState == 'active') {buffertoudp.sendAudioUDP(audioData, sendTime, sampleIndex)}
 
