@@ -66,7 +66,7 @@ function readNTP() {
         //console.log(Number(data))
 
         ntpCorrection = 1 + (1 / (1000000 / Number(data)))
-        console.log(ntpCorrection)
+        //console.log(ntpCorrection)
     }
     catch (error) {
         ntpCorrection = 1
