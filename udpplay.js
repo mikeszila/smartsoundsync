@@ -742,7 +742,7 @@ function sendData() {
                 //if (sourceErrorSamplesAverage > (0.4 + sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler * -1}
                 //if (sourceErrorSamplesAverage < (0.4 - sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler }
 
-                if (samples_since_correct_source < (sourceObj.reported_exact_rate * sampleAdjustSourceScaler)) { sampleAdjustSource = 0 }
+                if (samples_since_correct_source < (sourceObj.reported_exact_rate * sampleAdjustSourceScaler * 0.5)) { sampleAdjustSource = 0 }
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
