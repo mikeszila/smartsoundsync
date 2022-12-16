@@ -51,6 +51,11 @@ function spawnpcmRecord() {
         testStr = 'END\n'
         audioData = chunk2.slice(chunk2.lastIndexOf(testStr) + testStr.length)
 
+        for (var i = 0; i < audioData.length; i += 2) {
+            //console.log(i)
+            audioData.writeInt16LE(audioData.readInt16LE(i) * 2, i)
+        }
+
         if (audioData.length == 0) {
             console.log(String(chunk2))
         }
@@ -64,8 +69,6 @@ function spawnpcmRecord() {
             read = chunk2.slice(chunk2.lastIndexOf(testStr) + testStr.length)
             read = Number(read.slice(0, read.indexOf(' ')))
         }
-
-
 
         testStr = 'Index: '
         if (chunk2.includes(testStr)) {
@@ -104,10 +107,7 @@ function spawnpcmRecord() {
             state = String(state.slice(0, state.indexOf(' ')))
         }
 
-
         if (reportedFound) {
-
-
 
             let sendTime = htstamp - (delay * sampleTimeMS) + source_buffer_time
 
@@ -118,20 +118,16 @@ function spawnpcmRecord() {
 
             //console.log(volumeLeft, volumeRight)
 
-           //console.log(volumeCount, volumeCountOn, volumeCountOff, hwCaptureState, restartCount, volumeLeft, volumeRight)
+            //console.log(volumeCount, volumeCountOn, volumeCountOff, hwCaptureState, restartCount, volumeLeft, volumeRight)
 
             let volumeLeftDiff = Math.abs(volumeLeft - volumeLeftLast)
             let volumeRightDiff = Math.abs(volumeRight - volumeRightLast)
-            
-
-
 
             if (volumeLeftDiff <= volumeDiffSilentMax && volumeRightDiff <= volumeDiffSilentMax) {
                 silent = true
             } else {
                 silent = false
             }
-
 
             if (hwCaptureState == 'active') {
                 if (silent == true) {
@@ -210,7 +206,6 @@ function spawnpcmRecord() {
     common.setPriority(pcmRecord.pid, 99)
 }
 
-
 function processAplayStderr(stderr) {
     console.log(new Date().toISOString(), 'processAplayStderr')
     console.log(new Date().toISOString(), String(stderr))
@@ -271,7 +266,6 @@ function processAplayStderr(stderr) {
 }
 
 function checkState() {
-
     if (hwCaptureState != 'idle' && ((Date.now() - 9000) > htstamp)) {
         console.log('idle timeout')
         hwCaptureState = 'idle'
@@ -281,6 +275,3 @@ function checkState() {
 setInterval(checkState, 10000)
 
 spawnpcmRecord()
-
-
-

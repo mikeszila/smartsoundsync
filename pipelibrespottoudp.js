@@ -62,9 +62,11 @@ if (fs.existsSync(audiofifopath)) {
 
 let readFuncIntervalPointer
 
+let sinkErrorReportGoCounter = 0
+
 function librespotCheck() {
 
-    if (!readFuncIntervalPointer) {readFunc()}
+    if (!readFuncIntervalPointer) { readFunc() }
 
     lastDataAge = Date.now() - lastData
 
@@ -90,7 +92,13 @@ function librespotCheck() {
         buffertoudp.sendStatusUpdatetoControl()
     }
 
-    if (captureState == 'active') {sinkErrorReport()}
+    if (captureState == 'active') {
+        sinkErrorReportGoCounter = sinkErrorReportGoCounter + 1
+        if (sinkErrorReportGoCounter > 5) {
+            sinkErrorReport()
+            sinkErrorReportGoCounter = 0
+        }
+    }
 
 }
 
@@ -108,7 +116,7 @@ function spawnlibrespot() {
     });
     librespot.stderr.on('data', (data) => {
         console.error('librespot', String(data))
-        message = String(data)        
+        message = String(data)
 
         if (message.includes('spotify volume:')) {
             let librespot_volume = message.slice(message.lastIndexOf('spotify volume:') + 15, message.lastIndexOf('\n') + 1)
@@ -155,6 +163,7 @@ function spawnlibrespot() {
 
 var readStream = fs.createReadStream(`${audiofifopath}`);
 var sendTime = 0
+var sendTimeAdjust = 0
 var sampleIndex = 0
 var lastData
 var lastScan
@@ -165,7 +174,7 @@ function readFunc() {
 
     let dateNow = Date.now()
 
-    if ((captureState == 'active') && ((dateNow - lastScan) > reported_period_time)) {console.log('long scan time:', dateNow - lastScan, 'period time:', reported_period_time)}
+    if ((captureState == 'active') && ((dateNow - lastScan) > reported_period_time)) { console.log('long scan time:', dateNow - lastScan, 'period time:', reported_period_time, 'read interval:', read_time_interval) }
     lastScan = dateNow
 
     //console.log('hello')
@@ -174,7 +183,7 @@ function readFunc() {
 
         if (audioData == null) {
             audioDataLength = 0
-            if( captureState == 'active') {console.log('is null')}
+            if (captureState == 'active') { console.log('is null') }
             //audioData = Buffer.alloc(reported_period_size * 4);
         } else {
             lastData = dateNow
@@ -192,14 +201,14 @@ function readFunc() {
                 console.log('SEND TIME RESET!!!!!', sendTime, dateNow, sendTime - dateNow)
                 sendTime = dateNow + reported_period_time // reset sendTime if it get's too far behind, typically due to pause or first scan.  
             }
-            if( captureState == 'active') {buffertoudp.sendAudioUDP(audioData, sendTime, sampleIndex)}
+            if (captureState == 'active') { buffertoudp.sendAudioUDP(audioData, sendTime, sampleIndex) }
 
         }
         //console.log(ntpCorrection, reported_period_time,  reported_period_time - (reported_period_time / ntpCorrection))        
     }
 }
 
-let read_time_interval = Math.floor(reported_period_time * 0.75)
+let read_time_interval = Math.floor(reported_period_time * 0.4)
 console.log('read_time_interval', read_time_interval)
 
 buffertoudp.syncErrorData.on("syncErrorData", function (data) {
@@ -217,19 +226,51 @@ buffertoudp.syncErrorData.on("syncErrorData", function (data) {
 
 let avgErr = 0
 
+function numberFormat(x, decimalLength) {
+    let returnNumber = String(Number.parseFloat(x).toFixed(decimalLength))
+
+    if (x >= 0) {
+        returnNumber = " " + returnNumber
+    }
+    
+    return returnNumber
+}
+
 function sinkErrorReport() {
     //console.log('-')
+
+    let errordata = ""
+    errordata = errordata.concat("SINKERR: ")
     buffertoudp.audioSinkList.forEach(function (value, index) {
         //console.log(value.hostname, value.sampleAdjustSource)
+
+        errordata = errordata.concat(value.hostname)
+        errordata = errordata.concat(": ")
+        //errordata = errordata.concat(pad(value.sampleAdjustSource, 4, " "))
+        errordata = errordata.concat(pad(String(numberFormat(value.sampleAdjustSource, 1)), 4, ' '))
+        errordata = errordata.concat(", ")
+
         avgErr = avgErr + value.sampleAdjustSource
         value.sampleAdjustSource = 0
     })
     if (buffertoudp.audioSinkList.length > 0) {
         avgErr = avgErr / buffertoudp.audioSinkList.length
+        errordata = errordata.concat("AVG: ")
+        //errordata = errordata.concat(avgErr)
+        errordata = errordata.concat(pad(String(numberFormat(avgErr, 3)), 6, ' '))
         //console.log('average', avgErr)
-        sendTime = sendTime - (avgErr * sampleTimeMS)
+        sendTimeAdjust = avgErr * sampleTimeMS
+
+        errordata = errordata.concat(" msADJ: ")
+        errordata = errordata.concat(pad(String(numberFormat(sendTimeAdjust, 3)), 6, ' '))
+
+        sendTime = sendTime - sendTimeAdjust
+        //errordata = errordata.concat(" sendTIme: ")
+        //errordata = errordata.concat(sendTime)
         avgErr = 0
+        console.log(errordata)
     }
+    
 }
 
 spawnlibrespot()

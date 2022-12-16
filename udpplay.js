@@ -578,12 +578,14 @@ var sourceErrorSamplesArrayLengthSetpoint = Math.round(44100 / 128 * sourceError
 var sampleAdjustSourceStartSeconds = 2
 var sampleAdjustSourceStartSecondsSetpoint = Math.round(44100 / 128 * sampleAdjustSourceStartSeconds)
 
-var syncErrorMSamplesAverage = 0
+/* var syncErrorMSamplesAverage = 0
 var syncErrorMSamplesArray = []
 
-var syncErrorMSamplesAverageSeconds =  10
+var syncErrorMSamplesAverageSeconds =  2
 
 var syncErrorMSamplesArrayLengthSetpoint = Math.round(44100 / 128 * syncErrorMSamplesAverageSeconds)
+
+*/
 
 function syncErrorresetAverage() {
     sinkErrorSamplesArray = []
@@ -740,7 +742,7 @@ function sendData() {
                 //if (sourceErrorSamplesAverage > (0.4 + sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler * -1}
                 //if (sourceErrorSamplesAverage < (0.4 - sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler }
 
-                if (samples_since_correct_source < (sourceObj.reported_exact_rate * sampleAdjustSourceScaler)) { sampleAdjustSource = 0 }
+                //if (samples_since_correct_source < (sourceObj.reported_exact_rate * sampleAdjustSourceScaler)) { sampleAdjustSource = 0 }
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
@@ -757,10 +759,14 @@ function sendData() {
 
         //syncErrorM
 
+        /*
+
         if (syncErrorMSamplesArray.push(sinkErrorSamples) > syncErrorMSamplesArrayLengthSetpoint) {
             syncErrorMSamplesArray.shift()
         }
         syncErrorMSamplesAverage = average(syncErrorMSamplesArray)
+
+        */
 
 
 
@@ -856,9 +862,9 @@ function sendData() {
 
             //  'cardTimePeriod', pad(String((cardTimeht - cardTimehtLast) / written), 22, ' '),
 
-            'ERRms', pad(String(numberFormat(syncErrorMSamplesAverage * sampleTimeMS)), 6, ' '),
+            'ERRms', pad(String(numberFormat(sinkErrorSamplesAverage * sampleTimeMS)), 6, ' '),
 
-            'ERRsamp', pad(String(numberFormat(syncErrorMSamplesAverage)), 6, ' '),
+            'ERRsamp', pad(String(numberFormat(sinkErrorSamplesAverage)), 6, ' '),
 
 
 
