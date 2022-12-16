@@ -665,7 +665,7 @@ function numberFormat(x) {
 
 let SASink
 let SASource
-let sampleAdjustSourceScaler = 0.5
+let sampleAdjustSourceScaler = 0.2
 
 let sampleAdjustPositive
 
