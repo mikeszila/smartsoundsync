@@ -701,7 +701,7 @@ function sendData() {
 
             //if (sinkErrorSamplesAverage < -0.2 && sinkErrorSamplesAverage > -1) {sampleAdjustSink = 1}
             //if (samples_since_correct_sink < (sourceObj.reported_exact_rate / 5)) { sampleAdjustSink = 0 }
-            //if (sampleAdjustSink > 20) { sampleAdjustSink = 20 }
+            if (sampleAdjustSink > 20) { sampleAdjustSink = 20 }
             if (sinkErrorSamplesAverage > 0) { sampleAdjustSink = sampleAdjustSink * -1 }
         }
         if (sampleAdjustSink > 10) { sampleAdjustPositive = true }
