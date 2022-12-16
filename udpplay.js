@@ -775,7 +775,7 @@ function sendData() {
 
 
         if ((sampleAdjustSinkRingLast > 0 && sampleAdjustSink < 0) || (sampleAdjustSinkRingLast < 0 && sampleAdjustSink > 0)) {
-            sampleAdjustSinkTotalRing = sampleAdjustSinkTotalRing + Math.abs(sampleAdjustSink)
+            sampleAdjustSinkTotalRing = sampleAdjustSinkTotalRing + 1 //Math.abs(sampleAdjustSink)
         }
 
         if (sampleAdjustSink != 0 || sampleAdjustSinkRingLast == 0) {
