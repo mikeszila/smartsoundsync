@@ -94,7 +94,7 @@ function librespotCheck() {
 
     if (captureState == 'active') {
         sinkErrorReportGoCounter = sinkErrorReportGoCounter + 1
-        if (sinkErrorReportGoCounter > 5) {
+        if (sinkErrorReportGoCounter >= 1) {
             sinkErrorReport()
             sinkErrorReportGoCounter = 0
         }
