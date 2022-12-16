@@ -746,8 +746,8 @@ function sendData() {
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
-            //if (sampleAdjustPositive && sampleAdjustSource < 0) { sampleAdjustSource = 0 }
-            //if (!sampleAdjustPositive && sampleAdjustSource > 0) { sampleAdjustSource = 0 }
+            if (sampleAdjustPositive && sampleAdjustSource < 0) { sampleAdjustSource = 0 }
+            if (!sampleAdjustPositive && sampleAdjustSource > 0) { sampleAdjustSource = 0 }
 
             if (sampleAdjustSource != 0) {
                 sourceErrorSamplesArray.forEach(function (value, index) {
