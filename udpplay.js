@@ -194,8 +194,13 @@ function audioConnectRequest() {
             type: 'connectRequest',
             hostname: os.hostname(),
             port: socketAudio.address().port,
-            sampleAdjustSource: sampleAdjustSource
+            sampleAdjustSource: sampleAdjustSourceSend,
+            sampleAdjustSink: sampleAdjustSinkSend
         }
+
+        sampleAdjustSourceSend = 0
+        sampleAdjustSinkSend = 0
+
         let connectRequestBuffer = Buffer.from(JSON.stringify(connectObj))
         connectRequestBuffer = Buffer.concat([messageTypeJSON, connectRequestBuffer])
         socketAudio.send(connectRequestBuffer, 0, connectRequestBuffer.length, selectedSource.audioPort, selectedSource.hostname, function (err, bytes) {
@@ -553,6 +558,7 @@ var sampleAdjustSinkTotal = 0
 
 let syncIndex = 0
 let sampleAdjustSink = 0
+let sampleAdjustSinkSend = 0
 var sampleAdjustSinkTotalABS = 0
 var sampleAdjustSinkTotalRing = 0
 var sampleAdjustSinkRingLast = 0
@@ -569,6 +575,7 @@ var sampleAdjustSinkStartSeconds = 2
 var sampleAdjustSinkStartSecondsSetpoint = Math.round(44100 / 128 * sampleAdjustSinkStartSeconds)
 
 let sampleAdjustSource = 0
+let sampleAdjustSourceSend = 0
 let sourceErrorSamples = 0
 var sourceErrorSamplesAverage = 0
 var sourceErrorSamplesArray = []
@@ -665,7 +672,7 @@ function numberFormat(x) {
 
 let SASink
 let SASource
-let sampleAdjustSourceScaler = 0.2
+let sampleAdjustSourceScaler = 0.5
 
 let sampleAdjustPositive
 
@@ -711,6 +718,10 @@ function sendData() {
         if (sampleAdjustPositive && sampleAdjustSink < 0) { sampleAdjustSink = 0 }
         if (!sampleAdjustPositive && sampleAdjustSink > 0) { sampleAdjustSink = 0 }
 
+        if (sampleAdjustSink > audiobuffer.length / outputbytesPerSample) { sampleAdjustSink = audiobuffer.length / outputbytesPerSample }
+        if (sampleAdjustSink < audiobuffer.length / outputbytesPerSample * -1) { sampleAdjustSink = audiobuffer.length / outputbytesPerSample * -1 }
+
+        sampleAdjustSinkSend = sampleAdjustSink
 
         if (sampleAdjustSink != 0) {
             sinkErrorSamplesArray.forEach(function (value, index) {
@@ -749,11 +760,12 @@ function sendData() {
             if (sampleAdjustPositive && sampleAdjustSource < 0) { sampleAdjustSource = 0 }
             if (!sampleAdjustPositive && sampleAdjustSource > 0) { sampleAdjustSource = 0 }
 
+            sampleAdjustSourceSend = sampleAdjustSource
+
             if (sampleAdjustSource != 0) {
                 sourceErrorSamplesArray.forEach(function (value, index) {
                     sourceErrorSamplesArray[index] = sourceErrorSamplesArray[index] + sampleAdjustSource
-                })
-                audioConnectRequest()
+                })                
             }
         }
 
@@ -768,6 +780,7 @@ function sendData() {
 
         */
 
+        if (sampleAdjustSourceSend != 0 || sampleAdjustSinkSend != 0) {audioConnectRequest()}
 
 
         sampleAdjustSinkTotal = sampleAdjustSinkTotal + sampleAdjustSink
@@ -781,10 +794,7 @@ function sendData() {
         if (sampleAdjustSink != 0 || sampleAdjustSinkRingLast == 0) {
             sampleAdjustSinkRingLast = sampleAdjustSink
         }
-
-
-        if (sampleAdjustSink > audiobuffer.length / outputbytesPerSample) { sampleAdjustSink = audiobuffer.length / outputbytesPerSample }
-        if (sampleAdjustSink < audiobuffer.length / outputbytesPerSample * -1) { sampleAdjustSink = audiobuffer.length / outputbytesPerSample * -1 }
+      
 
         let sampleAdjustSinkMS = sampleAdjustSink * sampleTimeMS
 
