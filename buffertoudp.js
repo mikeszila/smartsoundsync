@@ -35,6 +35,7 @@ socketAudio.on('message', function (message, remote) {
             syncErrorData.emit("syncErrorData",
                 {
                     sampleAdjustSource: sinkObj.sampleAdjustSource,
+                    sampleAdjustSink: sinkObj.sampleAdjustSink,
                     hostname: sinkObj.hostname,
                     port: sinkObj.port
                 }

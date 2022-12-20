@@ -221,7 +221,7 @@ buffertoudp.syncErrorData.on("syncErrorData", function (data) {
             &&
             data.port == value.port
         ) {
-            console.log(data.hostname, data.sampleAdjustSink,  data.sampleAdjustSource)
+           // console.log(data.hostname, data.sampleAdjustSink,  data.sampleAdjustSource)
             if (!value.sampleAdjustSink) { value.sampleAdjustSink = 0 }
             value.sampleAdjustSink = value.sampleAdjustSink + data.sampleAdjustSink
             sinkErrorSamples = sinkErrorSamples + (data.sampleAdjustSink / buffertoudp.audioSinkList.length)
