@@ -708,7 +708,7 @@ function sendData() {
 
             //if (sinkErrorSamplesAverage < -0.2 && sinkErrorSamplesAverage > -1) {sampleAdjustSink = 1}
             //if (samples_since_correct_sink < (sourceObj.reported_exact_rate / 5)) { sampleAdjustSink = 0 }
-            if (sampleAdjustSink > 20) { sampleAdjustSink = 20 }
+            //if (sampleAdjustSink > 20) { sampleAdjustSink = 20 }
             if (sinkErrorSamplesAverage > 0) { sampleAdjustSink = sampleAdjustSink * -1 }
         }
         if (sampleAdjustSink > 10) { sampleAdjustPositive = true }
@@ -753,7 +753,7 @@ function sendData() {
                 //if (sourceErrorSamplesAverage > (0.4 + sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler * -1}
                 //if (sourceErrorSamplesAverage < (0.4 - sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler }
 
-                if (samples_since_correct_source < (sourceObj.reported_exact_rate * sampleAdjustSourceScaler * 0.5)) { sampleAdjustSource = 0 }
+                if (samples_since_correct_source < (sourceObj.reported_exact_rate * sampleAdjustSourceScaler )) { sampleAdjustSource = 0 }
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 
