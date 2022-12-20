@@ -221,7 +221,7 @@ buffertoudp.syncErrorData.on("syncErrorData", function (data) {
             &&
             data.port == value.port
         ) {
-
+            console.log(data.hostname, data.sampleAdjustSink,  data.sampleAdjustSource)
             if (!value.sampleAdjustSink) { value.sampleAdjustSink = 0 }
             value.sampleAdjustSink = value.sampleAdjustSink + data.sampleAdjustSink
             sinkErrorSamples = sinkErrorSamples + (data.sampleAdjustSink / buffertoudp.audioSinkList.length)
@@ -251,7 +251,7 @@ function sinkErrorReport() {
     //console.log('-')
 
     let errordata = ""
-    errordata = errordata.concat("SINKERR: ")
+    errordata = errordata.concat("ERR: ")
     buffertoudp.audioSinkList.forEach(function (value, index) {
         //console.log(value.hostname, value.sampleAdjustSource)
         if (!value.sampleAdjustSink) { value.sampleAdjustSink = 0 }
