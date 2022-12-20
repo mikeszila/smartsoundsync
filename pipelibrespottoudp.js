@@ -260,7 +260,7 @@ function sinkErrorReport() {
         errordata = errordata.concat(value.hostname)
         errordata = errordata.concat(": ")
         //errordata = errordata.concat(pad(value.sampleAdjustSource, 4, " "))
-        errordata = errordata.concat(pad(String(numberFormat(value.sampleAdjustSink, 1)), 4, ' '))
+        errordata = errordata.concat(pad(String(numberFormat(value.sampleAdjustSink, 0)), 2, ' '))
         errordata = errordata.concat(',')
         errordata = errordata.concat(pad(String(numberFormat(value.sampleAdjustSource, 1)), 4, ' '))
         errordata = errordata.concat(", ")
