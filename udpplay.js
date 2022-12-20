@@ -359,6 +359,8 @@ var reported_buffer_size = 0
 var reported_period_size = 0
 var reported_period_time = 0
 
+var sourceSamplePerCorrection = 0
+
 var samples_per_ms
 var reportedBufferMS = 0
 
@@ -414,6 +416,8 @@ function processAplayStderr(stderr) {
             negativeLimit = reported_period_time * 0
 
             reportedBufferMS = reported_buffer_size / reported_period_size * reported_period_time
+
+            sourceSamplePerCorrection = reported_exact_rate / sourceCorrectionsPerSecond
 
             //transmitSize = Math.floor(reported_period_size / 4)
 
@@ -579,6 +583,7 @@ let sampleAdjustSourceSend = 0
 let sourceErrorSamples = 0
 var sourceErrorSamplesAverage = 0
 var sourceErrorSamplesArray = []
+let sourceCorrectionsPerSecond = 4
 var sourceErrorSamplesAverageSeconds = settings.sinkErrorSamplesAverageSeconds // 1
 var sourceErrorSamplesArrayLengthSetpoint = Math.round(44100 / 128 * sourceErrorSamplesAverageSeconds)
 
@@ -753,7 +758,7 @@ function sendData() {
                 //if (sourceErrorSamplesAverage > (0.4 + sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler * -1}
                 //if (sourceErrorSamplesAverage < (0.4 - sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler }
 
-                if (samples_since_correct_source < (sourceObj.reported_exact_rate * sampleAdjustSourceScaler )) { sampleAdjustSource = 0 }
+                if (samples_since_correct_source < sourceSamplePerCorrection) { sampleAdjustSource = 0 }
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
 

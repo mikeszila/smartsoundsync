@@ -211,6 +211,9 @@ function readFunc() {
 let read_time_interval = Math.floor(reported_period_time * 0.4)
 console.log('read_time_interval', read_time_interval)
 
+let sourceErrorSamples = 0
+let sinkErrorSamples = 0
+
 buffertoudp.syncErrorData.on("syncErrorData", function (data) {
     buffertoudp.audioSinkList.forEach(function (value, index) {
         if (
@@ -218,13 +221,19 @@ buffertoudp.syncErrorData.on("syncErrorData", function (data) {
             &&
             data.port == value.port
         ) {
+            if (!value.sampleAdjustSink) { value.sampleAdjustSink = 0 }
+            value.sampleAdjustSink = value.sampleAdjustSink + data.sampleAdjustSink
+            sinkErrorSamples = sinkErrorSamples + (data.sampleAdjustSink / buffertoudp.audioSinkList.length)
             if (!value.sampleAdjustSource) { value.sampleAdjustSource = 0 }
             value.sampleAdjustSource = value.sampleAdjustSource + data.sampleAdjustSource
+            sourceErrorSamples = sourceErrorSamples + (data.sampleAdjustSource / buffertoudp.audioSinkList.length)
         }
     })
 });
 
-let avgErr = 0
+let avgErrSink = 0
+let avgErrSource = 0
+
 
 function numberFormat(x, decimalLength) {
     let returnNumber = String(Number.parseFloat(x).toFixed(decimalLength))
@@ -247,27 +256,35 @@ function sinkErrorReport() {
         errordata = errordata.concat(value.hostname)
         errordata = errordata.concat(": ")
         //errordata = errordata.concat(pad(value.sampleAdjustSource, 4, " "))
+        errordata = errordata.concat(pad(String(numberFormat(value.sampleAdjustSink, 1)), 4, ' '))
+        errordata = errordata.concat(',')
         errordata = errordata.concat(pad(String(numberFormat(value.sampleAdjustSource, 1)), 4, ' '))
         errordata = errordata.concat(", ")
 
-        avgErr = avgErr + value.sampleAdjustSource
+        avgErrSink = avgErrSink + value.sampleAdjustSink
+        value.sampleAdjustSink = 0
+        avgErrSource = avgErrSource + value.sampleAdjustSource
         value.sampleAdjustSource = 0
     })
     if (buffertoudp.audioSinkList.length > 0) {
-        avgErr = avgErr / buffertoudp.audioSinkList.length
+        avgErrSink = avgErrSink / buffertoudp.audioSinkList.length
+        avgErrSource = avgErrSource / buffertoudp.audioSinkList.length
         errordata = errordata.concat("AVG: ")
         //errordata = errordata.concat(avgErr)
-        errordata = errordata.concat(pad(String(numberFormat(avgErr, 3)), 6, ' '))
+        errordata = errordata.concat(pad(String(numberFormat(avgErrSink, 3)), 6, ' '))
+        errordata = errordata.concat(',')
+        errordata = errordata.concat(pad(String(numberFormat(avgErrSource, 3)), 6, ' '))
         //console.log('average', avgErr)
-        sendTimeAdjust = avgErr * sampleTimeMS
+        //sendTimeAdjust = avgErr * sampleTimeMS
 
-        errordata = errordata.concat(" msADJ: ")
-        errordata = errordata.concat(pad(String(numberFormat(sendTimeAdjust, 3)), 6, ' '))
+        //errordata = errordata.concat(" msADJ: ")
+        //errordata = errordata.concat(pad(String(numberFormat(sendTimeAdjust, 3)), 6, ' '))
 
-        sendTime = sendTime - sendTimeAdjust
+        //sendTime = sendTime - sendTimeAdjust
         //errordata = errordata.concat(" sendTIme: ")
         //errordata = errordata.concat(sendTime)
-        avgErr = 0
+        avgErrSink = 0
+        avgErrSource = 0
         console.log(errordata)
     }
     
