@@ -221,12 +221,14 @@ buffertoudp.syncErrorData.on("syncErrorData", function (data) {
             &&
             data.port == value.port
         ) {
+
             if (!value.sampleAdjustSink) { value.sampleAdjustSink = 0 }
             value.sampleAdjustSink = value.sampleAdjustSink + data.sampleAdjustSink
             sinkErrorSamples = sinkErrorSamples + (data.sampleAdjustSink / buffertoudp.audioSinkList.length)
             if (!value.sampleAdjustSource) { value.sampleAdjustSource = 0 }
             value.sampleAdjustSource = value.sampleAdjustSource + data.sampleAdjustSource
             sourceErrorSamples = sourceErrorSamples + (data.sampleAdjustSource / buffertoudp.audioSinkList.length)
+            
         }
     })
 });
@@ -252,6 +254,8 @@ function sinkErrorReport() {
     errordata = errordata.concat("SINKERR: ")
     buffertoudp.audioSinkList.forEach(function (value, index) {
         //console.log(value.hostname, value.sampleAdjustSource)
+        if (!value.sampleAdjustSink) { value.sampleAdjustSink = 0 }
+        if (!value.sampleAdjustSource) { value.sampleAdjustSource = 0 }
 
         errordata = errordata.concat(value.hostname)
         errordata = errordata.concat(": ")
