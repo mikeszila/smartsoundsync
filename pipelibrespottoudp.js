@@ -175,6 +175,10 @@ let audioDataLength = 0
 let sinkErrorAdjust = 0
 let sourceErrorAdjust = 0
 
+let sinkErrorAdjustReport = 0
+
+let sourceErrorAdjustReport = 0
+
 function readFunc() {
 
 
@@ -198,11 +202,13 @@ function readFunc() {
 
             sinkErrorAdjust = sinkErrorSamples * errorDistrobutionMultiplier
             sinkErrorSamples = sinkErrorSamples - sinkErrorAdjust
+            sinkErrorAdjustReport = sinkErrorAdjustReport + sinkErrorAdjust
             sinkErrorAdjustms = sinkErrorAdjust * sampleTimeMS
             sendTime = sendTime - sinkErrorAdjustms
 
             SourceErrorAdjust = sourceErrorSamples * errorDistrobutionMultiplier
             sourceErrorSamples = sourceErrorSamples - SourceErrorAdjust
+            sourceErrorAdjustReport = sourceErrorAdjustReport + sourceErrorAdjust
             SourceErrorAdjustms = SourceErrorAdjust * sampleTimeMS
             sendTime = sendTime - SourceErrorAdjustms
 
@@ -296,9 +302,13 @@ function sinkErrorReport() {
         errordata = errordata.concat(pad(String(numberFormat(avgErrSource, 3)), 6, ' '))
         errordata = errordata.concat(' ')
         errordata = errordata.concat("ADJ:")
-        errordata = errordata.concat(pad(String(numberFormat(sinkErrorAdjust, 3)), 6, ' '))
+        errordata = errordata.concat(pad(String(numberFormat(sinkErrorAdjustReport, 3)), 6, ' '))
         errordata = errordata.concat(',')
-        errordata = errordata.concat(pad(String(numberFormat(sourceErrorAdjust, 3)), 6, ' '))
+        errordata = errordata.concat(pad(String(numberFormat(sourceErrorAdjustReport, 3)), 6, ' '))
+
+        sinkErrorAdjustReport = 0
+
+        sourceErrorAdjustReport = 0
 
         //console.log('average', avgErr)
         //sendTimeAdjust = avgErr * sampleTimeMS
