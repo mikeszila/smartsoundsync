@@ -201,8 +201,8 @@ function readFunc() {
             sinkErrorAdjustms = sinkErrorAdjust * sampleTimeMS
             sendTime = sendTime - sinkErrorAdjustms
 
-            SourceErrorAdjust = SourceErrorSamples * errorDistrobutionMultiplier
-            SourceErrorSamples = SourceErrorSamples - SourceErrorAdjust
+            SourceErrorAdjust = sourceErrorSamples * errorDistrobutionMultiplier
+            sourceErrorSamples = sourceErrorSamples - SourceErrorAdjust
             SourceErrorAdjustms = SourceErrorAdjust * sampleTimeMS
             sendTime = sendTime - SourceErrorAdjustms
 
