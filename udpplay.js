@@ -679,7 +679,8 @@ let SASink
 let SASource
 let sampleAdjustSourceScaler = 0.5
 
-let sampleAdjustPositive
+let sampleAdjustSinkPositive
+let sampleAdjustSourcePositive
 
 function sendData() {
 
@@ -716,17 +717,17 @@ function sendData() {
             //if (sampleAdjustSink > 20) { sampleAdjustSink = 20 }
             if (sinkErrorSamplesAverage > 0) { sampleAdjustSink = sampleAdjustSink * -1 }
         }
-        if (sampleAdjustSink > 10) { sampleAdjustPositive = true }
-        if (sampleAdjustSink < -10) { sampleAdjustPositive = false }
+        if (sampleAdjustSink > 10) { sampleAdjustSinkPositive = true }
+        if (sampleAdjustSink < -10) { sampleAdjustSinkPositive = false }
 
 
-        if (sampleAdjustPositive && sampleAdjustSink < 0) { sampleAdjustSink = 0 }
-        if (!sampleAdjustPositive && sampleAdjustSink > 0) { sampleAdjustSink = 0 }
+        if (sampleAdjustSinkPositive && sampleAdjustSink < 0) { sampleAdjustSink = 0 }
+        if (!sampleAdjustSinkPositive && sampleAdjustSink > 0) { sampleAdjustSink = 0 }
 
         if (sampleAdjustSink > audiobuffer.length / outputbytesPerSample) { sampleAdjustSink = audiobuffer.length / outputbytesPerSample }
         if (sampleAdjustSink < audiobuffer.length / outputbytesPerSample * -1) { sampleAdjustSink = audiobuffer.length / outputbytesPerSample * -1 }
 
-        if (sampleAdjustSink >= -2 && sampleAdjustSink <= 2) {sampleAdjustSinkSend = sampleAdjustSink}
+        if (sampleAdjustSink >= -2 && sampleAdjustSink <= 2) { sampleAdjustSinkSend = sampleAdjustSink }
 
         if (sampleAdjustSink != 0) {
             sinkErrorSamplesArray.forEach(function (value, index) {
@@ -758,19 +759,23 @@ function sendData() {
                 //if (sourceErrorSamplesAverage > (0.4 + sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler * -1}
                 //if (sourceErrorSamplesAverage < (0.4 - sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler }
 
+                if (sampleAdjustSource > 10) { sampleAdjustSourcePositive = true }
+                if (sampleAdjustSource < -10) { sampleAdjustSourcePositive = false }
+
+
+                if (sampleAdjustSourcePositive && sampleAdjustSource < 0) { sampleAdjustSource = 0 }
+                if (!sampleAdjustSourcePositive && sampleAdjustSource > 0) { sampleAdjustSource = 0 }
+
                 if (samples_since_correct_source < sourceSamplePerCorrection) { sampleAdjustSource = 0 }
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
             }
-
-            if (sampleAdjustPositive && sampleAdjustSource < 0) { sampleAdjustSource = 0 }
-            if (!sampleAdjustPositive && sampleAdjustSource > 0) { sampleAdjustSource = 0 }
 
             sampleAdjustSourceSend = sampleAdjustSource
 
             if (sampleAdjustSource != 0) {
                 sourceErrorSamplesArray.forEach(function (value, index) {
                     sourceErrorSamplesArray[index] = sourceErrorSamplesArray[index] + sampleAdjustSource
-                })                
+                })
             }
         }
 
@@ -785,7 +790,7 @@ function sendData() {
 
         */
 
-        if (sampleAdjustSourceSend != 0 || sampleAdjustSinkSend != 0) {audioConnectRequest()}
+        if (sampleAdjustSourceSend != 0 || sampleAdjustSinkSend != 0) { audioConnectRequest() }
 
 
         sampleAdjustSinkTotal = sampleAdjustSinkTotal + sampleAdjustSink
@@ -799,7 +804,7 @@ function sendData() {
         if (sampleAdjustSink != 0 || sampleAdjustSinkRingLast == 0) {
             sampleAdjustSinkRingLast = sampleAdjustSink
         }
-      
+
 
         let sampleAdjustSinkMS = sampleAdjustSink * sampleTimeMS
 
