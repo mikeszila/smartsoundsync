@@ -720,8 +720,8 @@ function sendData() {
         if (sampleAdjustSink > 10) { sampleAdjustSinkPositive = true }
         if (sampleAdjustSink < -10) { sampleAdjustSinkPositive = false }
 
-        if (sampleAdjustSink > 5) { sampleAdjustSourcePositive = true }
-        if (sampleAdjustSink < -5) { sampleAdjustSourcePositive = false }
+     //   if (sampleAdjustSink > 5) { sampleAdjustSourcePositive = true }
+     //   if (sampleAdjustSink < -5) { sampleAdjustSourcePositive = false }
 
 
         if (sampleAdjustSinkPositive && sampleAdjustSink < 0) { sampleAdjustSink = 0 }
@@ -759,8 +759,8 @@ function sendData() {
                 sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage) / sampleAdjustSourceScaler) * sampleAdjustSourceScaler
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }                
 
-                if (sampleAdjustSourcePositive && sampleAdjustSource < 0) { sampleAdjustSource = 0 }
-                if (!sampleAdjustSourcePositive && sampleAdjustSource > 0) { sampleAdjustSource = 0 }
+                if (sampleAdjustSinkPositive && sampleAdjustSource < 0) { sampleAdjustSource = 0 }
+                if (!sampleAdjustSinkPositive && sampleAdjustSource > 0) { sampleAdjustSource = 0 }
 
                 if (samples_since_correct_source < sourceSamplePerCorrection) { sampleAdjustSource = 0 }
                 
