@@ -754,20 +754,18 @@ function sendData() {
             sampleAdjustSource = 0
             if (sampleTotal / 128 >= sampleAdjustSourceStartSecondsSetpoint) {
                 sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage) / sampleAdjustSourceScaler) * sampleAdjustSourceScaler
-                if (sampleAdjustSource > sampleAdjustSourceScaler) { sampleAdjustSource = sampleAdjustSourceScaler }
+                if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }                
 
-                //if (sourceErrorSamplesAverage > (0.4 + sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler * -1}
-                //if (sourceErrorSamplesAverage < (0.4 - sampleAdjustSourceScaler)) {sampleAdjustSource = sampleAdjustSourceScaler }
-
-                if (sampleAdjustSource > 10) { sampleAdjustSourcePositive = true }
-                if (sampleAdjustSource < -10) { sampleAdjustSourcePositive = false }
-
+                if (sampleAdjustSource > 5) { sampleAdjustSourcePositive = true }
+                if (sampleAdjustSource < -5) { sampleAdjustSourcePositive = false }
 
                 if (sampleAdjustSourcePositive && sampleAdjustSource < 0) { sampleAdjustSource = 0 }
                 if (!sampleAdjustSourcePositive && sampleAdjustSource > 0) { sampleAdjustSource = 0 }
 
                 if (samples_since_correct_source < sourceSamplePerCorrection) { sampleAdjustSource = 0 }
-                if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
+                
+                if (sampleAdjustSource > sampleAdjustSourceScaler) { sampleAdjustSource = sampleAdjustSourceScaler }
+                if (sampleAdjustSource < sampleAdjustSourceScaler * -1) { sampleAdjustSource = sampleAdjustSourceScaler * -1}
             }
 
             sampleAdjustSourceSend = sampleAdjustSource
