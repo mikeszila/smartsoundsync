@@ -583,7 +583,7 @@ let sampleAdjustSourceSend = 0
 let sourceErrorSamples = 0
 var sourceErrorSamplesAverage = 0
 var sourceErrorSamplesArray = []
-let sourceCorrectionsPerSecond = 10
+let sourceCorrectionsPerSecond = 20
 var sourceErrorSamplesAverageSeconds = settings.sinkErrorSamplesAverageSeconds // 1
 var sourceErrorSamplesArrayLengthSetpoint = Math.round(44100 / 128 * sourceErrorSamplesAverageSeconds)
 
@@ -765,8 +765,8 @@ function sendData() {
                 if (sampleAdjustSource > 5) { sampleAdjustSourcePositive = true }
                 if (sampleAdjustSource < -5) { sampleAdjustSourcePositive = false }
 
-                if (sampleAdjustSourcePositive && sampleAdjustSource < 0) { sampleAdjustSource = 0 }
-                if (!sampleAdjustSourcePositive && sampleAdjustSource > 0) { sampleAdjustSource = 0 }
+                //if (sampleAdjustSourcePositive && sampleAdjustSource < 0) { sampleAdjustSource = 0 }
+                //if (!sampleAdjustSourcePositive && sampleAdjustSource > 0) { sampleAdjustSource = 0 }
 
                 if (samples_since_correct_source < sourceSamplePerCorrection) { sampleAdjustSource = 0 }
 
