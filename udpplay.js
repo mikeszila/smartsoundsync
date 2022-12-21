@@ -583,7 +583,7 @@ let sampleAdjustSourceSend = 0
 let sourceErrorSamples = 0
 var sourceErrorSamplesAverage = 0
 var sourceErrorSamplesArray = []
-let sourceCorrectionsPerSecond = 4
+let sourceCorrectionsPerSecond = 10
 var sourceErrorSamplesAverageSeconds = settings.sinkErrorSamplesAverageSeconds // 1
 var sourceErrorSamplesArrayLengthSetpoint = Math.round(44100 / 128 * sourceErrorSamplesAverageSeconds)
 

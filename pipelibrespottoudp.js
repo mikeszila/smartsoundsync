@@ -327,4 +327,4 @@ function sinkErrorReport() {
 }
 
 spawnlibrespot()
-setInterval(librespotCheck, 1000)
+setInterval(librespotCheck, 2000)
