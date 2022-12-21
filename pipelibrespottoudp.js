@@ -206,11 +206,11 @@ function readFunc() {
             sinkErrorAdjustms = sinkErrorAdjust * sampleTimeMS
             sendTime = sendTime - sinkErrorAdjustms
 
-            SourceErrorAdjust = sourceErrorSamples / errorDistrobutionMultiplier
-            sourceErrorSamples = sourceErrorSamples - SourceErrorAdjust
+            sourceErrorAdjust = sourceErrorSamples / errorDistrobutionMultiplier
+            sourceErrorSamples = sourceErrorSamples - sourceErrorAdjust
             sourceErrorAdjustReport = sourceErrorAdjustReport + sourceErrorAdjust
-            SourceErrorAdjustms = SourceErrorAdjust * sampleTimeMS
-            sendTime = sendTime - SourceErrorAdjustms
+            sourceErrorAdjustms = sourceErrorAdjust * sampleTimeMS
+            sendTime = sendTime - sourceErrorAdjustms
 
             //console.log(audioDataLength)
             sampleIndex = sampleIndex + 1
