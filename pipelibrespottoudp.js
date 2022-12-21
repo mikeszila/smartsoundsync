@@ -38,7 +38,7 @@ global.playback_buffer_size = settings.playback_period_size * settings.playback_
 global.playback_buffer_time = playback_period_time * settings.playback_buffer_periods
 global.desired_playback_delay = 0
 
-errorDistrobutionSeconds = 1
+errorDistrobutionSeconds = 5
 errorDistrobutionMultiplier = errorDistrobutionSeconds * 1000 / reported_period_time
 
 let sampleTimeMS = 1 / reported_exact_rate * 1000
@@ -246,10 +246,10 @@ buffertoudp.syncErrorData.on("syncErrorData", function (data) {
            // console.log(data.hostname, data.sampleAdjustSink,  data.sampleAdjustSource)
             if (!value.sampleAdjustSink) { value.sampleAdjustSink = 0 }
             value.sampleAdjustSink = value.sampleAdjustSink + data.sampleAdjustSink
-            sinkErrorSamples = sinkErrorSamples + (data.sampleAdjustSink / buffertoudp.audioSinkList.length)
+            sinkErrorSamples = sinkErrorSamples + data.sampleAdjustSink //  / buffertoudp.audioSinkList.length)
             if (!value.sampleAdjustSource) { value.sampleAdjustSource = 0 }
             value.sampleAdjustSource = value.sampleAdjustSource + data.sampleAdjustSource
-            sourceErrorSamples = sourceErrorSamples + (data.sampleAdjustSource / buffertoudp.audioSinkList.length)
+            sourceErrorSamples = sourceErrorSamples + data.sampleAdjustSource //  / buffertoudp.audioSinkList.length)
             
         }
     })
