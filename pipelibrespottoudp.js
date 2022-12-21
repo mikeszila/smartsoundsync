@@ -263,6 +263,7 @@ function sinkErrorReport() {
         errordata = errordata.concat(pad(String(numberFormat(value.sampleAdjustSink, 0)), 2, ' '))
         errordata = errordata.concat(',')
         errordata = errordata.concat(pad(String(numberFormat(value.sampleAdjustSource, 1)), 4, ' '))
+        errordata = errordata.concat(' ')
  
         avgErrSink = avgErrSink + value.sampleAdjustSink
         value.sampleAdjustSink = 0
