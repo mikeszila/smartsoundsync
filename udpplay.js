@@ -765,8 +765,8 @@ function sendData() {
                 if (sampleAdjustSource > 5) { sampleAdjustSourcePositive = true }
                 if (sampleAdjustSource < -5) { sampleAdjustSourcePositive = false }
 
-                //if (sampleAdjustSourcePositive && sampleAdjustSource < 0) { sampleAdjustSource = 0 }
-                //if (!sampleAdjustSourcePositive && sampleAdjustSource > 0) { sampleAdjustSource = 0 }
+                if (sampleAdjustSourcePositive && sampleAdjustSource < 0) { sampleAdjustSource = 0 }
+                if (!sampleAdjustSourcePositive && sampleAdjustSource > 0) { sampleAdjustSource = 0 }
 
                 if (samples_since_correct_source < sourceSamplePerCorrection) { sampleAdjustSource = 0 }
 
