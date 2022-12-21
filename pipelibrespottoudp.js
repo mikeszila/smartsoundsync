@@ -200,17 +200,27 @@ function readFunc() {
             audioDataLength = audioData.length / 4
             sendTime = sendTime + (reported_period_time * ntpCorrection)
 
-            sinkErrorAdjust = sinkErrorSamples / errorDistrobutionMultiplier
-            sinkErrorSamples = sinkErrorSamples - sinkErrorAdjust
-            sinkErrorAdjustReport = sinkErrorAdjustReport + sinkErrorAdjust
-            sinkErrorAdjustms = sinkErrorAdjust * sampleTimeMS
-            sendTime = sendTime - sinkErrorAdjustms
+            if (buffertoudp.audioSinkList.length > 1) {
+
+                sinkErrorAdjust = sinkErrorSamples / errorDistrobutionMultiplier
+                sinkErrorSamples = sinkErrorSamples - sinkErrorAdjust
+                sinkErrorAdjustReport = sinkErrorAdjustReport + sinkErrorAdjust
+                sinkErrorAdjustms = sinkErrorAdjust * sampleTimeMS
+                sendTime = sendTime - sinkErrorAdjustms
+
+                sourceErrorAdjust = sourceErrorSamples / errorDistrobutionMultiplier
+
+            } else {
+                sourceErrorAdjust = sourceErrorSamples
+
+            }
 
             sourceErrorAdjust = sourceErrorSamples / errorDistrobutionMultiplier
             sourceErrorSamples = sourceErrorSamples - sourceErrorAdjust
             sourceErrorAdjustReport = sourceErrorAdjustReport + sourceErrorAdjust
             sourceErrorAdjustms = sourceErrorAdjust * sampleTimeMS
             sendTime = sendTime - sourceErrorAdjustms
+
 
             //console.log(audioDataLength)
             sampleIndex = sampleIndex + 1
@@ -243,14 +253,14 @@ buffertoudp.syncErrorData.on("syncErrorData", function (data) {
             &&
             data.port == value.port
         ) {
-           // console.log(data.hostname, data.sampleAdjustSink,  data.sampleAdjustSource)
+            // console.log(data.hostname, data.sampleAdjustSink,  data.sampleAdjustSource)
             if (!value.sampleAdjustSink) { value.sampleAdjustSink = 0 }
             value.sampleAdjustSink = value.sampleAdjustSink + data.sampleAdjustSink
             sinkErrorSamples = sinkErrorSamples + data.sampleAdjustSink //  / buffertoudp.audioSinkList.length)
             if (!value.sampleAdjustSource) { value.sampleAdjustSource = 0 }
             value.sampleAdjustSource = value.sampleAdjustSource + data.sampleAdjustSource
             sourceErrorSamples = sourceErrorSamples + data.sampleAdjustSource //  / buffertoudp.audioSinkList.length)
-            
+
         }
     })
 });
@@ -265,7 +275,7 @@ function numberFormat(x, decimalLength) {
     if (x >= 0) {
         returnNumber = " " + returnNumber
     }
-    
+
     return returnNumber
 }
 
@@ -286,7 +296,7 @@ function sinkErrorReport() {
         errordata = errordata.concat(',')
         errordata = errordata.concat(pad(String(numberFormat(value.sampleAdjustSource, 1)), 4, ' '))
         errordata = errordata.concat(' ')
- 
+
         avgErrSink = avgErrSink + value.sampleAdjustSink
         value.sampleAdjustSink = 0
         avgErrSource = avgErrSource + value.sampleAdjustSource
@@ -327,7 +337,7 @@ function sinkErrorReport() {
         avgErrSource = 0
         console.log(errordata)
     }
-    
+
 }
 
 spawnlibrespot()
