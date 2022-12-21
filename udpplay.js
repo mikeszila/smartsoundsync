@@ -739,9 +739,9 @@ function sendData() {
             })
             sinkErrorSamplesAverage = average(sinkErrorSamplesArray)
 
-            sourceErrorSamplesArray.forEach(function (value, index) {
-                sourceErrorSamplesArray[index] = sourceErrorSamplesArray[index] + sampleAdjustSink
-            })
+          //  sourceErrorSamplesArray.forEach(function (value, index) {
+          //      sourceErrorSamplesArray[index] = sourceErrorSamplesArray[index] + sampleAdjustSink
+          //  })
 
 
 
