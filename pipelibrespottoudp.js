@@ -38,7 +38,7 @@ global.playback_buffer_size = settings.playback_period_size * settings.playback_
 global.playback_buffer_time = playback_period_time * settings.playback_buffer_periods
 global.desired_playback_delay = 0
 
-errorDistrobutionSeconds = 5
+errorDistrobutionSeconds = 20
 errorDistrobutionMultiplier = errorDistrobutionSeconds * 1000 / reported_period_time
 
 let sampleTimeMS = 1 / reported_exact_rate * 1000
