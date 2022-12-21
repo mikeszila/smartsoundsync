@@ -200,13 +200,13 @@ function readFunc() {
             audioDataLength = audioData.length / 4
             sendTime = sendTime + (reported_period_time * ntpCorrection)
 
-            sinkErrorAdjust = sinkErrorSamples * errorDistrobutionMultiplier
+            sinkErrorAdjust = sinkErrorSamples / errorDistrobutionMultiplier
             sinkErrorSamples = sinkErrorSamples - sinkErrorAdjust
             sinkErrorAdjustReport = sinkErrorAdjustReport + sinkErrorAdjust
             sinkErrorAdjustms = sinkErrorAdjust * sampleTimeMS
             sendTime = sendTime - sinkErrorAdjustms
 
-            SourceErrorAdjust = sourceErrorSamples * errorDistrobutionMultiplier
+            SourceErrorAdjust = sourceErrorSamples / errorDistrobutionMultiplier
             sourceErrorSamples = sourceErrorSamples - SourceErrorAdjust
             sourceErrorAdjustReport = sourceErrorAdjustReport + sourceErrorAdjust
             SourceErrorAdjustms = SourceErrorAdjust * sampleTimeMS
