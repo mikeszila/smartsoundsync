@@ -726,7 +726,7 @@ function sendData() {
         if (sampleAdjustSink > audiobuffer.length / outputbytesPerSample) { sampleAdjustSink = audiobuffer.length / outputbytesPerSample }
         if (sampleAdjustSink < audiobuffer.length / outputbytesPerSample * -1) { sampleAdjustSink = audiobuffer.length / outputbytesPerSample * -1 }
 
-        sampleAdjustSinkSend = sampleAdjustSink
+        if (sampleAdjustSink >= -2 && sampleAdjustSink <= 2) {sampleAdjustSinkSend = sampleAdjustSink}
 
         if (sampleAdjustSink != 0) {
             sinkErrorSamplesArray.forEach(function (value, index) {

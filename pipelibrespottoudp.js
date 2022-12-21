@@ -258,13 +258,12 @@ function sinkErrorReport() {
         if (!value.sampleAdjustSource) { value.sampleAdjustSource = 0 }
 
         errordata = errordata.concat(value.hostname)
-        errordata = errordata.concat(": ")
+        errordata = errordata.concat(":")
         //errordata = errordata.concat(pad(value.sampleAdjustSource, 4, " "))
         errordata = errordata.concat(pad(String(numberFormat(value.sampleAdjustSink, 0)), 2, ' '))
         errordata = errordata.concat(',')
         errordata = errordata.concat(pad(String(numberFormat(value.sampleAdjustSource, 1)), 4, ' '))
-        errordata = errordata.concat(", ")
-
+ 
         avgErrSink = avgErrSink + value.sampleAdjustSink
         value.sampleAdjustSink = 0
         avgErrSource = avgErrSource + value.sampleAdjustSource
