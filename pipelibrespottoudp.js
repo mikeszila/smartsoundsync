@@ -300,11 +300,15 @@ function sinkErrorReport() {
         errordata = errordata.concat(pad(String(numberFormat(avgErrSink, 3)), 6, ' '))
         errordata = errordata.concat(',')
         errordata = errordata.concat(pad(String(numberFormat(avgErrSource, 3)), 6, ' '))
+        errordata = errordata.concat(',')
+        errordata = errordata.concat(pad(String(numberFormat(avgErrSink + avgErrSource, 3)), 6, ' '))
         errordata = errordata.concat(' ')
         errordata = errordata.concat("ADJ:")
         errordata = errordata.concat(pad(String(numberFormat(sinkErrorAdjustReport, 3)), 6, ' '))
         errordata = errordata.concat(',')
         errordata = errordata.concat(pad(String(numberFormat(sourceErrorAdjustReport, 3)), 6, ' '))
+        errordata = errordata.concat(',')
+        errordata = errordata.concat(pad(String(numberFormat(sinkErrorAdjustReport + sourceErrorAdjustReport, 3)), 6, ' '))
 
         sinkErrorAdjustReport = 0
 
