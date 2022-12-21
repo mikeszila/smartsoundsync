@@ -38,6 +38,9 @@ global.playback_buffer_size = settings.playback_period_size * settings.playback_
 global.playback_buffer_time = playback_period_time * settings.playback_buffer_periods
 global.desired_playback_delay = 0
 
+errorDistrobutionSeconds = 1
+errorDistrobutionMultiplier = errorDistrobutionSeconds * 1000 / reported_period_time
+
 let sampleTimeMS = 1 / reported_exact_rate * 1000
 
 let highVolumeLimit = true
@@ -169,6 +172,9 @@ var lastData
 var lastScan
 let audioDataLength = 0
 
+let sinkErrorAdjust = 0
+let sourceErrorAdjust = 0
+
 function readFunc() {
 
 
@@ -189,6 +195,16 @@ function readFunc() {
             lastData = dateNow
             audioDataLength = audioData.length / 4
             sendTime = sendTime + (reported_period_time * ntpCorrection)
+
+            sinkErrorAdjust = sinkErrorSamples * errorDistrobutionMultiplier
+            sinkErrorSamples = sinkErrorSamples - sinkErrorAdjust
+            sinkErrorAdjustms = sinkErrorAdjust * sampleTimeMS
+            sendTime = sendTime - sinkErrorAdjustms
+
+            SourceErrorAdjust = SourceErrorSamples * errorDistrobutionMultiplier
+            SourceErrorSamples = SourceErrorSamples - SourceErrorAdjust
+            SourceErrorAdjustms = SourceErrorAdjust * sampleTimeMS
+            sendTime = sendTime - SourceErrorAdjustms
 
             //console.log(audioDataLength)
             sampleIndex = sampleIndex + 1
@@ -273,11 +289,17 @@ function sinkErrorReport() {
     if (buffertoudp.audioSinkList.length > 0) {
         avgErrSink = avgErrSink / buffertoudp.audioSinkList.length
         avgErrSource = avgErrSource / buffertoudp.audioSinkList.length
-        errordata = errordata.concat("AVG: ")
+        errordata = errordata.concat("AVG:")
         //errordata = errordata.concat(avgErr)
         errordata = errordata.concat(pad(String(numberFormat(avgErrSink, 3)), 6, ' '))
         errordata = errordata.concat(',')
         errordata = errordata.concat(pad(String(numberFormat(avgErrSource, 3)), 6, ' '))
+        errordata = errordata.concat(' ')
+        errordata = errordata.concat("ADJ:")
+        errordata = errordata.concat(pad(String(numberFormat(sinkErrorAdjust, 3)), 6, ' '))
+        errordata = errordata.concat(',')
+        errordata = errordata.concat(pad(String(numberFormat(sourceErrorAdjust, 3)), 6, ' '))
+
         //console.log('average', avgErr)
         //sendTimeAdjust = avgErr * sampleTimeMS
 
@@ -295,4 +317,4 @@ function sinkErrorReport() {
 }
 
 spawnlibrespot()
-setInterval(librespotCheck, 500)
+setInterval(librespotCheck, 1000)
