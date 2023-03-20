@@ -76,13 +76,14 @@ function librespotCheck() {
     if (lastDataAge > 5000 && captureState == 'active') {
         captureState = 'idle'
         console.log('captureState is now ', captureState)
+        common.setPriority(process.pid, -19)
+        common.setPriority(librespot.pid, -19)
+        buffertoudp.sendStatusUpdatetoControl()
         if (readFuncIntervalPointer) {
             clearInterval(readFuncIntervalPointer)
             readFuncIntervalPointer = false
         }
-        common.setPriority(process.pid, -19)
-        common.setPriority(librespot.pid, -19)
-        buffertoudp.sendStatusUpdatetoControl()
+        
 
     }
 
