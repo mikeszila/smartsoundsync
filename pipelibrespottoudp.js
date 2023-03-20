@@ -76,8 +76,9 @@ function librespotCheck() {
     if (lastDataAge > 5000 && captureState == 'active') {
         captureState = 'idle'
         console.log('captureState is now ', captureState)
-        common.setPriority(process.pid, 1)
-        common.setPriority(librespot.pid, 1)
+        common.setPrioritySlow(process.pid)
+        common.setPrioritySlow(librespot.pid)
+        
         buffertoudp.sendStatusUpdatetoControl()
         if (readFuncIntervalPointer) {
             clearInterval(readFuncIntervalPointer)
@@ -90,8 +91,8 @@ function librespotCheck() {
     if (lastDataAge < 1000 && captureState != 'active') {
         captureState = 'active'
         console.log('captureState is now ', captureState)
-        common.setPriority(process.pid, 99)
-        common.setPriority(librespot.pid, 99)
+        common.setPriorityFast(process.pid)
+        common.setPriorityFast(librespot.pid)
         readFuncIntervalPointer = setInterval(readFunc, read_time_interval)
         buffertoudp.sendStatusUpdatetoControl()
     }
@@ -342,6 +343,4 @@ function sinkErrorReport() {
 }
 
 spawnlibrespot()
-//common.setPriority(process.pid, 1)
-//common.setPriority(librespot.pid, 1)
 setInterval(librespotCheck, 2000)

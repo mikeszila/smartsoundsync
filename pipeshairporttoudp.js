@@ -90,8 +90,8 @@ function spawnshairport() {
                     message.includes('bufferDuration/2:') || message.includes('start.sh')
                 ) {
                     captureState = 'active'
-                    common.setPriority(process.pid, 80)
-                    common.setPriority(shairport.pid, 80)
+                    common.setPriorityFast(process.pid)
+                    common.setPriorityFast(shairport.pid)
 
                     buffertoudp.sendStatusUpdatetoSink()
                     buffertoudp.sendStatusUpdatetoControl()
@@ -101,8 +101,8 @@ function spawnshairport() {
                     message.includes('stop.sh')
                 ) {
                     captureState = 'idle'
-                    common.setPriority(process.pid, -19)
-                    common.setPriority(shairport.pid, -19)
+                    common.setPrioritySlow(process.pid)
+                    common.setPrioritySlow(shairport.pid)
                     buffertoudp.sendStatusUpdatetoSink()
                     buffertoudp.sendStatusUpdatetoControl()
                 }

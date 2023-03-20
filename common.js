@@ -89,26 +89,31 @@ function setPriority(pid, priority) {
             // node couldn't execute the command
             return;
         }
+    });
+}
 
-        // the *entire* stdout and stderr (buffered)
-        console.log(`stdout: ${stdout}`);
-        console.log(`stderr: ${stderr}`);
+function setPriorityFast(pid) {
+    exec(`chrt -p 50 ${pid}`, (err, stdout, stderr) => {
+        if (err) {
+            // node couldn't execute the command
+            return;
+        }
+    });
+}
 
-        exec(`chrt -p ${pid}`, (err, stdout, stderr) => {
-            if (err) {
-                // node couldn't execute the command
-                return;
-            }
-
-            // the *entire* stdout and stderr (buffered)
-            console.log(`stdout: ${stdout}`);
-            console.log(`stderr: ${stderr}`);
-        });
+function setPrioritySlow(pid, priority) {
+    exec(`chrt -o -p 0 ${pid}`, (err, stdout, stderr) => {
+        if (err) {
+            // node couldn't execute the command
+            return;
+        }
     });
 }
 
 module.exports = {
     setPriority,
+    setPriorityFast,
+    setPrioritySlow,
     execSyncPrint,
     tryExec
 }

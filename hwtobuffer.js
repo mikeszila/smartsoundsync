@@ -135,8 +135,8 @@ function spawnpcmRecord() {
                     if (volumeCount < volumeCountOff && hwCaptureState == 'active') {
                         hwCaptureState = 'idle'
                         console.log('HWidle!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1')
-                        common.setPriority(process.pid, -19)
-                        common.setPriority(pcmRecord.pid, -19)
+                        common.setPrioritySlow(process.pid)
+                        common.setPrioritySlow(pcmRecord.pid)
                         volumeCount = 0
                     }
                 } else {
@@ -154,8 +154,8 @@ function spawnpcmRecord() {
                     volumeCount = volumeCount + 1
                     if (volumeCount > volumeCountOn) {
                         hwCaptureState = 'active'
-                        common.setPriority(process.pid, 98)
-                        common.setPriority(pcmRecord.pid, 99)
+                        common.setPriorityFast(process.pid)
+                        common.setPriorityFast(pcmRecord.pid)
                         console.log('HWactive!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1')
                         volumeCount = 0
                     }
@@ -203,7 +203,7 @@ function spawnpcmRecord() {
         setTimeout(spawnpcmRecord, 2000)
     });
 
-    common.setPriority(pcmRecord.pid, 99)
+    //common.setPriority(pcmRecord.pid, 99)
 }
 
 function processAplayStderr(stderr) {
