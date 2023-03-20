@@ -342,6 +342,6 @@ function sinkErrorReport() {
 }
 
 spawnlibrespot()
-common.setPriority(process.pid, 1)
-common.setPriority(librespot.pid, 1)
+//common.setPriority(process.pid, 1)
+//common.setPriority(librespot.pid, 1)
 setInterval(librespotCheck, 2000)
