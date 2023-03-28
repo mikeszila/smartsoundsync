@@ -49,11 +49,13 @@ global.captureState = 'idle'
 
 global.ntpCorrection = 1
 
+let usePriority = false
+
 function execSyncPrint(command) {
     let returnData
     console.log(command)
-    try {returnData = execSync(command, { stdio: 'inherit' })}
-    catch(error) {console.log('could not execute', command)}
+    try { returnData = execSync(command, { stdio: 'inherit' }) }
+    catch (error) { console.log('could not execute', command) }
     //console.log(String(returnData))
     return returnData
 }
@@ -84,6 +86,8 @@ function tryExec(commands) {
 }
 
 function setPriority(pid, priority) {
+
+    console.log("//////////////////////////////////////////////////////////////////////////Set Priority Used!!!")
     exec(`chrt -p ${priority} ${pid}`, (err, stdout, stderr) => {
         if (err) {
             // node couldn't execute the command
@@ -93,21 +97,27 @@ function setPriority(pid, priority) {
 }
 
 function setPriorityFast(pid) {
-    exec(`chrt -p 50 ${pid}`, (err, stdout, stderr) => {
-        if (err) {
-            // node couldn't execute the command
-            return;
-        }
-    });
+
+    if (usePriority) {
+        exec(`chrt -p 50 ${pid}`, (err, stdout, stderr) => {
+            if (err) {
+                // node couldn't execute the command
+                return;
+            }
+        });
+    }
 }
 
 function setPrioritySlow(pid, priority) {
-    exec(`chrt -o -p 0 ${pid}`, (err, stdout, stderr) => {
-        if (err) {
-            // node couldn't execute the command
-            return;
-        }
-    });
+
+    if (usePriority) {
+        exec(`chrt -o -p 0 ${pid}`, (err, stdout, stderr) => {
+            if (err) {
+                // node couldn't execute the command
+                return;
+            }
+        });
+    }
 }
 
 module.exports = {
