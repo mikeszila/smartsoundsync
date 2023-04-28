@@ -51,10 +51,10 @@ function spawnpcmRecord() {
         testStr = 'END\n'
         audioData = chunk2.slice(chunk2.lastIndexOf(testStr) + testStr.length)
 
-        for (var i = 0; i < audioData.length; i += 2) {
-            //console.log(i)
-            audioData.writeInt16LE(audioData.readInt16LE(i) * 2, i)
-        }
+       // for (var i = 0; i < audioData.length; i += 2) {
+       //     //console.log(i)
+       //     audioData.writeInt16LE(audioData.readInt16LE(i) * 2, i)
+       // }
 
         if (audioData.length == 0) {
             console.log(String(chunk2))

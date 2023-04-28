@@ -128,44 +128,60 @@ function adjustVolume(button) {
 }
 
 function spawnremote() {
-    console.log(new Date().toISOString(), 'started remote')
-    remote = spawn('/usr/bin/irw');
 
-    remote.stdout.on('data', (data) => {
-        //console.log(new Date().toISOString(), 'remote', 'stdout', `${data}`)
+    try {
+        execSync('which /usr/bin/irw')
 
-        //  if (playbackHostname == hostname && playbackPort == audioSourcePort) {
 
-        command = String(data)
 
-        if (command.includes(' 01 ') == false && captureState == 'active') {
 
-            if (command.includes('KEY_VOLUMEUP')) {
-                console.log('KEY_VOLUMEUP')
-                adjustVolume('UP')
+
+        console.log(new Date().toISOString(), 'IRW Found started remote')
+        remote = spawn('/usr/bin/irw');
+
+        remote.stdout.on('data', (data) => {
+            //console.log(new Date().toISOString(), 'remote', 'stdout', `${data}`)
+
+            //  if (playbackHostname == hostname && playbackPort == audioSourcePort) {
+
+            command = String(data)
+
+            if (command.includes(' 01 ') == false && captureState == 'active') {
+
+                if (command.includes('KEY_VOLUMEUP')) {
+                    console.log('KEY_VOLUMEUP')
+                    adjustVolume('UP')
+                }
+
+                if (command.includes('KEY_VOLUMEDOWN')) {
+                    console.log('KEY_VOLUMEDOWN')
+                    adjustVolume('DOWN')
+                }
+
+                if (command.includes('KEY_MUTE')) {
+                    console.log('KEY_MUTE')
+                    adjustVolume('MUTE')
+                }
+
+
             }
+            //  }
+        });
 
-            if (command.includes('KEY_VOLUMEDOWN')) {
-                console.log('KEY_VOLUMEDOWN')
-                adjustVolume('DOWN')
-            }
+        remote.stderr.on('data', (data) => {
+            console.log(new Date().toISOString(), 'remote', 'stderr', `${data}`)
+        });
 
-            if (command.includes('KEY_MUTE')) {
-                console.log('KEY_MUTE')
-                adjustVolume('MUTE')
-            }
+        remote.on('close', (code) => {
+            console.log('remote CLOSED with code ', code)
+        });
+    }
 
+    catch (error) {
+        console.log("IRW not found remote not started")
+    }
 
-        }
-        //  }
-    });
-
-    remote.stderr.on('data', (data) => {
-        console.log(new Date().toISOString(), 'remote', 'stderr', `${data}`)
-    });
-
-    remote.on('close', (code) => {
-        console.log('remote CLOSED with code ', code)
-    });
 }
-//spawnremote()
+
+
+spawnremote()
