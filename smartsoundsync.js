@@ -13,6 +13,12 @@ function ntpXFACCheck() {
         console.log('.XFAC. found, restarting NTP')
         execSync('systemctl restart ntp')
     }
+    if (ntpData.includes('.INIT.')) {
+        console.log('.INIT. found, restarting NTP')
+        execSync('systemctl restart ntp')
+    }
+
+
 }
 
 console.log('smartsoundsync ntp XFAC reset logic')
