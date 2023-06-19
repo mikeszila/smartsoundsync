@@ -169,6 +169,6 @@ function spawnremote() {
     });
 }
 let irwtest
-try {let irwtest = execSync('which irw')}
+try {irwtest = execSync('which irw')}
 catch {console.log('irw not installed, not starting remote')}
 if (irwtest) { spawnremote() }
