@@ -100,16 +100,25 @@ function makeEcasoundConfig() {
 }
 
 function ensureRustToolchain() {
+    let hasRustup = false;
+
     try {
-        const rustcVersion = String(execSync(`bash -lc 'source "$HOME/.cargo/env" 2>/dev/null; rustc --version'`)).trim();
-        console.log("rustc already installed:", rustcVersion);
+        const rustupVersion = String(execSync(`bash -lc 'command -v rustup && rustup --version'`)).trim();
+        console.log("rustup already installed:", rustupVersion);
+        hasRustup = true;
     } catch (error) {
+        hasRustup = false;
+    }
+
+    if (!hasRustup) {
         console.log("Installing rustup and stable Rust toolchain");
         execSyncPrint(`bash -lc 'curl https://sh.rustup.rs -sSf | sh -s -- -y'`);
     }
 
-    execSyncPrint(`bash -lc 'source "$HOME/.cargo/env"; rustup toolchain install stable'`);
-    execSyncPrint(`bash -lc 'source "$HOME/.cargo/env"; rustup default stable'`);
+    execSyncPrint(`bash -lc 'export PATH=/root/.cargo/bin:$PATH; rustup toolchain install stable'`);
+    execSyncPrint(`bash -lc 'export PATH=/root/.cargo/bin:$PATH; rustup default stable'`);
+    execSyncPrint(`bash -lc 'export PATH=/root/.cargo/bin:$PATH; rustc --version'`);
+    execSyncPrint(`bash -lc 'export PATH=/root/.cargo/bin:$PATH; cargo --version'`);
 }
 
 function getNtpConfigPath() {
@@ -144,7 +153,7 @@ function setInstalledLibrespotCommit(commit) {
 }
 
 if (!stopOnly) {
-    if (fs.existsSync("/usr/local/etc/smartsoundsyncconf.js")) { // move old style config to new style
+    if (fs.existsSync("/usr/local/etc/smartsoundsyncconf.js")) {
         console.log("found old style config.  Converting to new style at", configFilePath);
         execSync(`mkdir -p /usr/local/etc/smartsoundsync/`);
         execSync(`mv /usr/local/etc/smartsoundsyncconf.js ${configFilePath}`);
@@ -165,7 +174,6 @@ if (!stopOnly) {
     let settings = require(configFilePath);
 
     let dependencies = ["ntp"];
-
     let dependenciesSpotify = ["build-essential"];
 
     let dependenciesshairport = [
@@ -326,7 +334,7 @@ if (!stopOnly) {
             execSyncPrint(`cd /tmp/ && cp -v -a librespot-new/librespot-dev/. librespot`);
             execSyncPrint(`cd /tmp/ && rm -f librespot.zip`);
             execSyncPrint(`cd /tmp/ && rm -rf librespot-new`);
-            execSyncPrint(`bash -lc 'source "$HOME/.cargo/env"; cd /tmp/librespot && cargo build --locked --no-default-features --release'`);
+            execSyncPrint(`bash -lc 'export PATH=/root/.cargo/bin:$PATH; cd /tmp/librespot && cargo build --locked --no-default-features --release'`);
             execSyncPrint(`cp /tmp/librespot/target/release/librespot ${binLocation}/librespot`);
 
             setInstalledLibrespotCommit(latestCommit);
