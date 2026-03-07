@@ -195,27 +195,6 @@ if (!stopOnly) {
         }
     })
 
-    let npmDependencies = ['pad']
-
-    let npmUser = String(execSync('stat -c "%U" $PWD'))
-    npmUser = npmUser.replace(/(\r\n|\n|\r)/gm, "");
-
-    npmDependencies.forEach(function (value, index) {
-        let installed = ''
-        try {
-            installed = String(execSync(`npm list -g --depth=0 --loglevel=error`))
-        } catch (error) {
-            installed = ''
-        }
-
-        if (!installed.includes(value)) {
-            try {
-                execSyncPrint(`npm install -g ${value}`)
-            }
-            catch (error) { console.log('Error: could not install', value, error) }
-        }
-    })
-
     let ntpConfigTemplate
 
     if (settings.ntpServerHostname && settings.ntpServerHostname != os.hostname()) {

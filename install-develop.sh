@@ -53,4 +53,5 @@ rm -rf /usr/local/lib/smartsoundsync
 mkdir -p /usr/local/lib/smartsoundsync
 cp -v -a /tmp/smartsoundsync/smartsoundsync-new/smartsoundsync-develop/. /usr/local/lib/smartsoundsync/
 chown -R "$(stat -c "%U" "$PWD")" /usr/local/lib/smartsoundsync/
-cd /usr/local/lib/smartsoundsync/ && node install-setup.js
+cd /usr/local/lib/smartsoundsync && npm install
+cd /usr/local/lib/smartsoundsync && node install-setup.js
