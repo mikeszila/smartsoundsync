@@ -2,6 +2,8 @@
 # smartsoundsync installer
 # https://github.com/mikeszila/smartsoundsync
 
+set -e
+
 function isRoot() {
 	if [ "$EUID" -ne 0 ]; then
 		return 1
@@ -16,12 +18,18 @@ function initialCheck() {
 }
 
 function installStuff() {
-	if [[ ! -e /usr/bin/node ]]; then
-		echo "Installing nodejs"
-		#apt-get install -y nodejs
-		curl -fsSL https://deb.nodesource.com/setup_17.x | sudo -E bash -
-		sudo apt-get install -y nodejs
+	if [[ ! -e /usr/bin/curl ]]; then
+		echo "Installing curl"
+		apt-get update
+		apt-get install -y curl
+	else
+	    echo "curl already installed"
+	fi
 
+	if [[ ! -e /usr/bin/node ]]; then
+		echo "Installing latest Node.js"
+		curl -fsSL https://deb.nodesource.com/setup_current.x | bash -
+		apt-get install -y nodejs
 	else
 	    echo "nodejs already installed"
 	fi
@@ -37,13 +45,12 @@ function installStuff() {
 initialCheck
 installStuff
 
-rm -r /tmp/smartsoundsync
-mkdir /tmp/smartsoundsync
+rm -rf /tmp/smartsoundsync
+mkdir -p /tmp/smartsoundsync
 wget -q https://github.com/mikeszila/smartsoundsync/archive/develop.zip -O /tmp/smartsoundsync/develop.zip
 unzip -o /tmp/smartsoundsync/develop.zip -d /tmp/smartsoundsync/smartsoundsync-new
-rm -r /usr/local/lib/smartsoundsync/
+rm -rf /usr/local/lib/smartsoundsync
+mkdir -p /usr/local/lib/smartsoundsync
 cp -v -a /tmp/smartsoundsync/smartsoundsync-new/smartsoundsync-develop/. /usr/local/lib/smartsoundsync/
-sudo chown -R  $(stat -c "%U" $PWD) /usr/local/lib/smartsoundsync/  
+chown -R "$(stat -c "%U" "$PWD")" /usr/local/lib/smartsoundsync/
 cd /usr/local/lib/smartsoundsync/ && node install-setup.js
-
-
