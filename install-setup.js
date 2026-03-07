@@ -40,7 +40,7 @@ execSyncPrint(`chown -R ${installLocationUser} ${installLocation}`)
 let configFileDir = '/usr/local/etc/smartsoundsync/'
 let configFileName = 'config.js'
 let configFilePath = configFileDir.concat(configFileName)
-let binLocation = '/usr/local/bin/' 
+let binLocation = '/usr/local/bin/'
 
 let search = '/lib/systemd/system/'
 let replacer = new RegExp(search, 'g')
@@ -84,7 +84,7 @@ function execArgumentsParse(execArguments) {
 
 
 
-    
+
     return execArguments
 }
 
@@ -103,7 +103,7 @@ let ecasoundFilterFilePath = ecasoundChainSetupFileDir.concat(ecasoundFilterFile
 function makeEcasoundConfig() {
 
     execSync(`mkdir -p ${ecasoundChainSetupFileDir}`)
-    
+
     execSync(`cp ${installLocation}/config_examples/${ecasoundChainSetupFileName} ${ecasoundChainSetupFilePath}`)
     execSync(`cp ${installLocation}/config_examples/${ecasoundFilterFileName} ${ecasoundFilterFilePath}`)
     execSyncPrint(`chown -R ${installLocationUser} ${configFileDir}`)
@@ -126,7 +126,7 @@ if (!stopOnly) {
 
         makeEcasoundConfig()
         process.exit()
-    }  
+    }
 
 
 
@@ -141,7 +141,7 @@ if (!stopOnly) {
 
     let dependenciessink = ['alsa-utils', 'alsa-tools', 'libasound2-plugins', 'ecasound', 'cmt', 'swh-plugins', 'ladspa-sdk', 'libasound2-dev', 'cmake']
 
-    let dependenciesspdif = ['evtest', 'python3-pip', 'libxslt1-dev', 'libxml2-dev', 'zlib1g-dev', 'python3-lxml',  'libxml2-dev', 'libxslt1-dev', 'python2-dev', 'libasound2-dev']
+    let dependenciesspdif = ['evtest', 'python3-pip', 'libxslt1-dev', 'libxml2-dev', 'zlib1g-dev', 'python3-lxml', 'libxml2-dev', 'libxslt1-dev', 'python2-dev', 'libasound2-dev']
 
     if (settings.sink) {
         dependencies = dependencies.concat(dependenciessink)
@@ -150,7 +150,7 @@ if (!stopOnly) {
             console.log('config exists', ecasoundChainSetupFilePath)
         } else {
             console.log(`No ecasound config file found.  Created standard ecasound config file at ${ecasoundChainSetupFilePath}.  Please ensure config is correct for your setup and re-run this script.`)
-            
+
             makeEcasoundConfig()
             process.exit()
         }
@@ -187,7 +187,7 @@ if (!stopOnly) {
     }
 
     dependencies.forEach(function (value, index) {
-        try { let installed = execSync(`dpkg -s ${value}`)}
+        try { let installed = execSync(`dpkg -s ${value}`) }
 
         catch (error) {
             execSyncPrint(`apt install ${value} -y`)
@@ -201,9 +201,17 @@ if (!stopOnly) {
     npmUser = npmUser.replace(/(\r\n|\n|\r)/gm, "");
 
     npmDependencies.forEach(function (value, index) {
-        let installed = String(execSync(`npm list -g --depth=0 --loglevel=error`))
+        let installed = ''
+        try {
+            installed = String(execSync(`npm list -g --depth=0 --loglevel=error`))
+        } catch (error) {
+            installed = ''
+        }
+
         if (!installed.includes(value)) {
-            try { execSync(`runuser -l ${npmUser} -c 'npm install -g ${value} -y'`) }
+            try {
+                execSyncPrint(`npm install -g ${value}`)
+            }
             catch (error) { console.log('Error: could not install', value, error) }
         }
     })
@@ -216,15 +224,25 @@ if (!stopOnly) {
         ntpConfigTemplate = ntpConfigTemplate.replaceAll('settings.ntpServerHostname', settings.ntpServerHostname)
     } else {
         console.log('getting ntp server config')
-        ntpConfigTemplate = fs.readFileSync('./templates/ntp-server-template.conf', 'utf8')        
+        ntpConfigTemplate = fs.readFileSync('./templates/ntp-server-template.conf', 'utf8')
     }
 
-    let currentNTPconig = fs.readFileSync(`/etc/ntp.conf`, 'utf8')
+    let ntpConfigPath = '/etc/ntp.conf'
+    if (fs.existsSync('/etc/ntpsec/ntp.conf')) {
+        ntpConfigPath = '/etc/ntpsec/ntp.conf'
+    } else if (fs.existsSync('/etc/ntp.conf')) {
+        ntpConfigPath = '/etc/ntp.conf'
+    }
+
+    let currentNTPconig = ''
+    if (fs.existsSync(ntpConfigPath)) {
+        currentNTPconig = fs.readFileSync(ntpConfigPath, 'utf8')
+    }
 
     if (currentNTPconig != ntpConfigTemplate) {
-        console.log('ntp config different. Writing new config and restarting NTP')
-        fs.writeFileSync(`/etc/ntp.conf`, ntpConfigTemplate, 'utf8')
-        execSyncPrint(`systemctl restart ntp`)        
+        console.log(`ntp config different. Writing new config to ${ntpConfigPath} and restarting NTP`)
+        fs.writeFileSync(ntpConfigPath, ntpConfigTemplate, 'utf8')
+        execSyncPrint(`systemctl restart ntp`)
     } else {
         console.log('no changes to ntp config.  Not restarting NTP.')
     }
@@ -256,7 +274,7 @@ if (!stopOnly) {
             catch (error) { }
 
             execSyncPrint(`cd /tmp/ && wget -q https://github.com/mikeszila/librespot/archive/dev.zip -O ./librespot.zip`)
-            execSyncPrint(`cd /tmp/ && unzip -o librespot.zip -d librespot-new` )
+            execSyncPrint(`cd /tmp/ && unzip -o librespot.zip -d librespot-new`)
             execSyncPrint(`cd /tmp/ && cp -v -a librespot-new/librespot-dev/. librespot`)
 
             execSyncPrint(`cd /tmp/ && rm librespot.zip`)
@@ -289,7 +307,7 @@ if (!stopOnly) {
 
     if (hasSPDIF) {
 
-   
+
 
         if (fs.existsSync(`${installLocation}/pcmrecord`)) {
             console.log('pcmrecord exists, skipping')
@@ -301,11 +319,11 @@ if (!stopOnly) {
 
     if (false && hasHifiberryDacDSP) {
 
-        try {execSync('which dsptoolkit')}
-        catch(error) {
+        try { execSync('which dsptoolkit') }
+        catch (error) {
             execSyncPrint(`wget https://raw.githubusercontent.com/hifiberry/hifiberry-dsp/master/install-dsptoolkit -O - | sh`)
         }
-        
+
         let dspchecksum = String(execSync('dsptoolkit get-checksum'))
         if (dspchecksum.includes('7B03B17AD5B6B1A0E0DACB29BF31F024')) {
             console.log('correct dsp profile installed, skipping')
@@ -315,7 +333,7 @@ if (!stopOnly) {
             execSyncPrint('dsptoolkit write-reg 0xF146 0x0004')
             execSyncPrint('dsptoolkit write-reg 0xF195 0x0000')
             execSyncPrint('dsptoolkit write-reg 0xF194 0x0033')
-            execSyncPrint('dsptoolkit write-reg 0xF21C 0x6C40')            
+            execSyncPrint('dsptoolkit write-reg 0xF21C 0x6C40')
         }
     }
 
@@ -329,12 +347,12 @@ if (!stopOnly) {
 
 
 
-        execArguments = ''
+    execArguments = ''
 
 
-        //control
+    //control
 
-        serviceTemplate = `[Unit]
+    serviceTemplate = `[Unit]
 Description=Audio local smartsoundsync
 After=network-online.target sound.target
 Requires=network-online.target
@@ -352,12 +370,12 @@ RestartSec=5s
 [Install]
 WantedBy=multi-user.target
 `
-        serviceName = `smartsoundsynccommon.service`
+    serviceName = `smartsoundsynccommon.service`
 
-        writeServiceFile(serviceName, serviceTemplate)
-        servicesToStart.push(serviceName)
+    writeServiceFile(serviceName, serviceTemplate)
+    servicesToStart.push(serviceName)
 
-    
+
 
 
 
@@ -401,7 +419,7 @@ WantedBy=multi-user.target
 
     if (settings.sink) {
 
-        
+
 
 
 
@@ -446,7 +464,7 @@ WantedBy=multi-user.target
         serviceName = `smartsoundsyncsink.service`
 
         writeServiceFile(serviceName, serviceTemplate)
-        if (!hasHifiberryDacDSP) {servicesToStart.push(serviceName)}
+        if (!hasHifiberryDacDSP) { servicesToStart.push(serviceName) }
 
     }
 
@@ -456,7 +474,7 @@ WantedBy=multi-user.target
             //librespot
 
             let sourceSettings = value
-            
+
             if (!sourceSettings.audioSourceDisplayName && sourceSettings.audioSourceClients) {
                 if (sourceSettings.audioSourceClients.length > 1) {
                     sourceSettings.audioSourceDisplayName = ''
@@ -491,7 +509,7 @@ WantedBy=multi-user.target
                 if (os.hostname() == sourceSettings.audioSourceDisplayName) {
                     serviceName = `smartsoundsyncspdif.service`
                 } else {
-                    serviceName = `smartsoundsyncspdif${sourceSettings.audioSourceDisplayName}.service`                
+                    serviceName = `smartsoundsyncspdif${sourceSettings.audioSourceDisplayName}.service`
                 }
 
                 writeServiceFile(serviceName, serviceTemplate)
@@ -524,7 +542,7 @@ WantedBy=multi-user.target
                 if (os.hostname() == sourceSettings.audioSourceDisplayName) {
                     serviceName = `smartsoundsyncspotify.service`
                 } else {
-                    serviceName = `smartsoundsyncspotify${sourceSettings.audioSourceDisplayName}.service`                
+                    serviceName = `smartsoundsyncspotify${sourceSettings.audioSourceDisplayName}.service`
                 }
 
 
@@ -562,7 +580,7 @@ WantedBy=multi-user.target
                 if (os.hostname() == sourceSettings.audioSourceDisplayName) {
                     serviceName = `smartsoundsyncairplay.service`
                 } else {
-                    serviceName = `smartsoundsyncairplay${sourceSettings.audioSourceDisplayName}.service`                
+                    serviceName = `smartsoundsyncairplay${sourceSettings.audioSourceDisplayName}.service`
                 }
 
                 writeServiceFile(serviceName, serviceTemplate)
