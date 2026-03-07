@@ -112,7 +112,9 @@ function ensureRustToolchain() {
 
     if (!hasRustup) {
         console.log("Installing rustup and stable Rust toolchain");
-        execSyncPrint(`bash -lc 'curl https://sh.rustup.rs -sSf | sh -s -- -y'`);
+        execSyncPrint(`rm -f /tmp/rustup-init.sh`);
+        execSyncPrint(`wget -q https://sh.rustup.rs -O /tmp/rustup-init.sh`);
+        execSyncPrint(`bash /tmp/rustup-init.sh -y`);
     }
 
     execSyncPrint(`bash -lc 'export PATH=/root/.cargo/bin:$PATH; rustup toolchain install stable'`);
