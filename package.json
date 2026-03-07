@@ -1,0 +1,9 @@
+{
+  "name": "smartsoundsync",
+  "version": "1.0.0",
+  "license": "ISC",
+  "private": true,
+  "dependencies": {
+    "pad": "^3.3.0"
+  }
+}
