@@ -1,25 +1,20 @@
 "use strict";
 const { exec, spawn, execSync } = require('child_process');
 
-
-global.npmGlobal = String(execSync('npm root --quiet -g'))
-npmGlobal = npmGlobal.replace(/(\r\n|\n|\r)/gm, "");
-
 global.process = require("process");
-global.pad = require(`${npmGlobal}/pad`)
-global.dgram = require('dgram')
-global.os = require('os')
+global.pad = require('pad');
+global.dgram = require('dgram');
+global.os = require('os');
 global.fs = require('fs');
 
-console.log('pid:', process.pid)
+console.log('pid:', process.pid);
 
-global.hostname = os.hostname()
+global.hostname = os.hostname();
 
-global.messageTypeAudio = Buffer.from(pad('audio', 10, ' '))
-global.messageTypeAudioAck = Buffer.from(pad('audioack', 10, ' '))
-global.messageTypeJSON = Buffer.from(pad('JSON', 10, ' '))
-global.messageHostname = Buffer.from(pad(hostname, 20, ' '))
-
+global.messageTypeAudio = Buffer.from(pad('audio', 10, ' '));
+global.messageTypeAudioAck = Buffer.from(pad('audioack', 10, ' '));
+global.messageTypeJSON = Buffer.from(pad('JSON', 10, ' '));
+global.messageHostname = Buffer.from(pad(hostname, 20, ' '));
 
 global.settings = {  //basic settings for running outside systemd and other common settings. 
     audioSourceDisplayName: hostname,
@@ -40,68 +35,55 @@ global.settings = {  //basic settings for running outside systemd and other comm
     verbose: false,
     sourceSampleAdjust: 0,
     additional_requested_latency: 0
-}
+};
 
-global.volumeOut = settings.initialVolume
+global.volumeOut = settings.initialVolume;
 
-global.hwCaptureState = 'idle'
-global.captureState = 'idle'
+global.hwCaptureState = 'idle';
+global.captureState = 'idle';
 
-global.ntpCorrection = 1
+global.ntpCorrection = 1;
 
-let usePriority = false
+let usePriority = false;
 
 function execSyncPrint(command) {
-    let returnData
-    console.log(command)
-    try { returnData = execSync(command, { stdio: 'inherit' }) }
-    catch (error) { console.log('could not execute', command) }
-    //console.log(String(returnData))
-    return returnData
+    let returnData;
+    console.log(command);
+    try { returnData = execSync(command, { stdio: 'inherit' }); }
+    catch (error) { console.log('could not execute', command); }
+    return returnData;
 }
 
 function readNTP() {
     try {
-
-        fs.statSync('/var/lib/ntp/ntp.drift')
-        let data = Number(execSync(`cat /var/lib/ntp/ntp.drift`))
-        //console.log(Number(data))
-
-        ntpCorrection = 1 + (1 / (1000000 / Number(data)))
-        //console.log(ntpCorrection)
+        fs.statSync('/var/lib/ntp/ntp.drift');
+        let data = Number(execSync(`cat /var/lib/ntp/ntp.drift`));
+        ntpCorrection = 1 + (1 / (1000000 / Number(data)));
     }
     catch (error) {
-        ntpCorrection = 1
+        ntpCorrection = 1;
     }
 }
 
-setInterval(readNTP, 1000)
+setInterval(readNTP, 1000);
 
 function tryExec(commands) {
-    //try { execSyncPrint(commands) }
-    //catch (error) {
-    //    console.log('could not execute', commands)
-    //}
-    execSyncPrint(commands)
+    execSyncPrint(commands);
 }
 
 function setPriority(pid, priority) {
-
-    console.log("//////////////////////////////////////////////////////////////////////////Set Priority Used!!!")
+    console.log("//////////////////////////////////////////////////////////////////////////Set Priority Used!!!");
     exec(`chrt -p ${priority} ${pid}`, (err, stdout, stderr) => {
         if (err) {
-            // node couldn't execute the command
             return;
         }
     });
 }
 
 function setPriorityFast(pid) {
-
     if (usePriority) {
         exec(`chrt -p 50 ${pid}`, (err, stdout, stderr) => {
             if (err) {
-                // node couldn't execute the command
                 return;
             }
         });
@@ -109,11 +91,9 @@ function setPriorityFast(pid) {
 }
 
 function setPrioritySlow(pid, priority) {
-
     if (usePriority) {
         exec(`chrt -o -p 0 ${pid}`, (err, stdout, stderr) => {
             if (err) {
-                // node couldn't execute the command
                 return;
             }
         });
@@ -126,4 +106,4 @@ module.exports = {
     setPrioritySlow,
     execSyncPrint,
     tryExec
-}
+};
