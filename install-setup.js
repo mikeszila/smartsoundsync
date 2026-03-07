@@ -254,14 +254,22 @@ if (!stopOnly) {
             execSyncPrint(`gcc pcmblock.c -o /usr/local/bin/pcm -lasound`)
         }
 
+        const rtPluginsSourceDir = `${installLocation}/third_party/rt-plugins-0.0.6`
+        const rtPluginsBuildDir = `/tmp/rt-plugins-0.0.6`
+
         if (fs.existsSync(`/usr/local/lib/ladspa/RTlowshelf.so`)) {
             console.log('rtaylor filters exist, skipping')
         } else {
-            execSyncPrint(`wget -q https://faculty.tru.ca/rtaylor/rt-plugins/rt-plugins-0.0.6.tar.gz -O /tmp/rt-plugins-0.0.6.tar.gz `)
-            execSyncPrint(`cd /tmp/ && tar xfz rt-plugins-0.0.6.tar.gz`)
-            execSyncPrint(`cd /tmp/rt-plugins-0.0.6/build && cmake ..`)
-            execSyncPrint(`cd /tmp/rt-plugins-0.0.6/build && make `)
-            execSyncPrint(`cd /tmp/rt-plugins-0.0.6/build && make install `)
+            if (!fs.existsSync(rtPluginsSourceDir)) {
+                throw new Error(`Missing required rt-plugins source at ${rtPluginsSourceDir}`)
+            }
+
+            execSyncPrint(`rm -rf ${rtPluginsBuildDir}`)
+            execSyncPrint(`cp -a ${rtPluginsSourceDir} ${rtPluginsBuildDir}`)
+            execSyncPrint(`mkdir -p ${rtPluginsBuildDir}/build`)
+            execSyncPrint(`cd ${rtPluginsBuildDir}/build && cmake ..`)
+            execSyncPrint(`cd ${rtPluginsBuildDir}/build && make`)
+            execSyncPrint(`cd ${rtPluginsBuildDir}/build && make install`)
         }
     }
 
