@@ -78,13 +78,13 @@ function librespotCheck() {
         console.log('captureState is now ', captureState)
         common.setPrioritySlow(process.pid)
         common.setPrioritySlow(librespot.pid)
-        
+
         buffertoudp.sendStatusUpdatetoControl()
         if (readFuncIntervalPointer) {
             clearInterval(readFuncIntervalPointer)
             readFuncIntervalPointer = false
         }
-        
+
 
     }
 
@@ -115,7 +115,22 @@ function spawnlibrespot() {
     try { execSync(` rm ${cachefolder}/credentials.json`) }
     catch (error) { }
 
-    librespot = spawn(`/usr/local/bin/librespot`, ['-v', '-n', settings.audioSourceDisplayName, '-b', '320', '-c', `${cachefolder}`, '--enable-volume-normalisation', '--backend', 'pipe', '--device', `${audiofifopath}`]);
+    librespot = spawn(
+        `/usr/local/bin/librespot`,
+        [
+            '-v',
+            '-n', settings.audioSourceDisplayName,
+            '-b', '320',
+            '-c', `${cachefolder}`,
+            '--enable-volume-normalisation',
+            '--backend', 'pipe',
+            '--device', `${audiofifopath}`,
+            '--mixer', 'observablefixed'
+        ],
+        {
+            env: { ...process.env, RUST_LOG: 'debug' }
+        }
+    );
     librespot.stdout.on('data', (data) => {
         console.log('librespot', String(data))
     });
@@ -123,29 +138,43 @@ function spawnlibrespot() {
         console.error('librespot', String(data))
         message = String(data)
 
-        if (message.includes('spotify volume:')) {
-            let librespot_volume = message.slice(message.lastIndexOf('spotify volume:') + 15, message.lastIndexOf('\n') + 1)
-            librespot_volume = librespot_volume.slice(0, librespot_volume.indexOf('\n'))
-            librespot_volume = Number(librespot_volume)
-            let librespot_percent = (librespot_volume - settings.volume_librespot_min) / (settings.volume_librespot_max - settings.volume_librespot_min)
-            let l2 = ((1 - librespot_percent) ** settings.volume_shape)
-            let librespot_adjusted_percent = 1 - l2
-            let librespot_db_volume = (settings.volume_db_max - settings.volume_db_min) * librespot_adjusted_percent + settings.volume_db_min
+        if (message.includes('observablefixed requested volume=')) {
+            let match = message.match(/observablefixed requested volume=(\d+)/)
+            if (match) {
+                let librespot_volume = Number(match[1])
 
-            //let librespot_db_volume = (settings.volume_db_min - settings.volume_db_max) / (settings.volume_librespot_min - settings.volume_librespot_max) * (librespot_volume - settings.volume_librespot_min) + settings.volume_db_min
+                let librespot_percent =
+                    (librespot_volume - settings.volume_librespot_min) /
+                    (settings.volume_librespot_max - settings.volume_librespot_min)
 
-            console.log('Librespot Volume ///////////////////////////', settings.volume_shape, librespot_percent, l2, librespot_adjusted_percent, librespot_volume, librespot_db_volume)
+                let l2 = ((1 - librespot_percent) ** settings.volume_shape)
+                let librespot_adjusted_percent = 1 - l2
+                let librespot_db_volume =
+                    (settings.volume_db_max - settings.volume_db_min) * librespot_adjusted_percent +
+                    settings.volume_db_min
 
-            if (highVolumeLimit) {
-                if (librespot_db_volume <= -20) {
-                    highVolumeLimit = false
-                } else {
-                    librespot_db_volume = -20
-                    console.log('Volume Override', librespot_db_volume)
+                console.log(
+                    'Librespot Volume ///////////////////////////',
+                    settings.volume_shape,
+                    librespot_percent,
+                    l2,
+                    librespot_adjusted_percent,
+                    librespot_volume,
+                    librespot_db_volume
+                )
+
+                if (highVolumeLimit) {
+                    if (librespot_db_volume <= -20) {
+                        highVolumeLimit = false
+                    } else {
+                        librespot_db_volume = -20
+                        console.log('Volume Override', librespot_db_volume)
+                    }
                 }
+
+                volumeOut = librespot_db_volume
+                buffertoudp.sendStatusUpdatetoSink()
             }
-            volumeOut = librespot_db_volume
-            buffertoudp.sendStatusUpdatetoSink()
         }
 
         if (message.includes('Shutting down player thread')) {
