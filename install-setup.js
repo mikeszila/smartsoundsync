@@ -252,23 +252,52 @@ if (!stopOnly) {
         }
     }
 
+    const librespotRepoZip = 'https://github.com/mikeszila/librespot/archive/dev.zip';
+    const librespotCommitApi = 'https://api.github.com/repos/mikeszila/librespot/commits/dev';
+    const librespotCommitFile = '/usr/local/etc/smartsoundsync/librespot.commit';
+    const librespotBuildDir = '/tmp/librespot';
+    const librespotBin = `${binLocation}/librespot`;
+
+    function getLatestLibrespotCommit() {
+        const json = String(execSync(`curl -fsSL ${librespotCommitApi}`));
+        const data = JSON.parse(json);
+        return data.sha;
+    }
+
+    function getInstalledLibrespotCommit() {
+        if (fs.existsSync(librespotCommitFile)) {
+            return fs.readFileSync(librespotCommitFile, 'utf8').trim();
+        }
+        return '';
+    }
+
+    function setInstalledLibrespotCommit(commit) {
+        fs.writeFileSync(librespotCommitFile, `${commit}\n`, 'utf8');
+    }
+
     if (hasSpotify) {
-        if (fs.existsSync(`${binLocation}/librespot`)) {
-            console.log('librespot exists, skipping')
+        const latestCommit = getLatestLibrespotCommit();
+        const installedCommit = getInstalledLibrespotCommit();
+
+        if (fs.existsSync(librespotBin) && installedCommit === latestCommit) {
+            console.log(`librespot already built at ${latestCommit}, skipping`);
         } else {
-            console.log('compiling librespot')
-            try { execSync(`rm -r /tmp/librespot`) }
-            catch (error) { }
+            console.log(`compiling librespot ${latestCommit}`);
 
-            execSyncPrint(`cd /tmp/ && wget -q https://github.com/mikeszila/librespot/archive/dev.zip -O ./librespot.zip`)
-            execSyncPrint(`cd /tmp/ && unzip -o librespot.zip -d librespot-new`)
-            execSyncPrint(`cd /tmp/ && cp -v -a librespot-new/librespot-dev/. librespot`)
+            try { execSync(`rm -rf ${librespotBuildDir}`) } catch (error) { }
+            try { execSync(`rm -rf /tmp/librespot-new`) } catch (error) { }
+            try { execSync(`rm -f /tmp/librespot.zip`) } catch (error) { }
 
-            execSyncPrint(`cd /tmp/ && rm librespot.zip`)
-            execSyncPrint(`cd /tmp/ && rm -r librespot-new`)
-            //execSyncPrint(`curl https://sh.rustup.rs -sSf | sh -s -- -y`)
-            execSyncPrint(`cd /tmp/librespot && cargo build --no-default-features --release`)
-            execSyncPrint(`cp /tmp/librespot/target/release/librespot ${binLocation}/librespot`)
+            execSyncPrint(`cd /tmp/ && wget -q ${librespotRepoZip} -O ./librespot.zip`);
+            execSyncPrint(`cd /tmp/ && unzip -o librespot.zip -d librespot-new`);
+            execSyncPrint(`cd /tmp/ && cp -v -a librespot-new/librespot-dev/. librespot`);
+            execSyncPrint(`cd /tmp/ && rm -f librespot.zip`);
+            execSyncPrint(`cd /tmp/ && rm -rf librespot-new`);
+            execSyncPrint(`cd ${librespotBuildDir} && cargo build --locked --no-default-features --release`);
+            execSyncPrint(`cp ${librespotBuildDir}/target/release/librespot ${librespotBin}`);
+
+            execSync(`mkdir -p ${configFileDir}`);
+            setInstalledLibrespotCommit(latestCommit);
         }
     }
 
