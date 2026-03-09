@@ -190,7 +190,7 @@ function spawnlibrespot() {
 }
 
 
-var readStream = fs.createReadStream(`${audiofifopath}`);
+//var readStream = fs.createReadStream(`${audiofifopath}`);
 var sendTime = 0
 var sendTimeAdjust = 0
 var sampleIndex = 0
@@ -204,6 +204,24 @@ let sourceErrorAdjust = 0
 let sinkErrorAdjustReport = 0
 
 let sourceErrorAdjustReport = 0
+
+function openReadStream() {
+    readStream = fs.createReadStream(`${audiofifopath}`);
+
+    readStream.on('close', function () {
+        console.log("STREAM CLOSED");
+        setTimeout(openReadStream, 50);
+    });
+
+    readStream.on('error', function (err) {
+        console.log("STREAM ERROR", err);
+        setTimeout(openReadStream, 50);
+    });
+}
+
+openReadStream();
+
+
 
 function readFunc() {
 
