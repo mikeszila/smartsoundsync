@@ -183,13 +183,8 @@ function spawnlibrespot() {
         }
     });
     librespot.on('close', (code) => {
-        console.log('librespot', 'close', String(code))
-        console.log('hello exit start')
-        console.log('process.pid', process.pid)
-        execSync(`sudo systemctl restart smartsoundsyncspotify${settings.audioSourceDisplayName}.service`)
-        //process.exit()
-        console.log('hello after exit start')
-        //setTimeout(spawnlibrespot, 2000)
+        console.log('librespot close', code);
+        process.exit(code ?? 1);
     });
 
 }
