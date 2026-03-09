@@ -519,11 +519,11 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 `;
-                if (os.hostname() === sourceSettings.audioSourceDisplayName) {
-                    serviceName = `smartsoundsyncspdif.service`;
-                } else {
+            //    if (os.hostname() === sourceSettings.audioSourceDisplayName) {
+           //         serviceName = `smartsoundsyncspdif.service`;
+           //     } else {
                     serviceName = `smartsoundsyncspdif${sourceSettings.audioSourceDisplayName}.service`;
-                }
+           //     }
 
                 writeServiceFile(serviceName, serviceTemplate);
                 servicesToStart.push(serviceName);
@@ -548,11 +548,11 @@ RestartSec=5s
 [Install]
 WantedBy=multi-user.target
 `;
-                if (os.hostname() === sourceSettings.audioSourceDisplayName) {
-                    serviceName = `smartsoundsyncspotify.service`;
-                } else {
+               // if (os.hostname() === sourceSettings.audioSourceDisplayName) {
+              //      serviceName = `smartsoundsyncspotify.service`;
+             //   } else {
                     serviceName = `smartsoundsyncspotify${sourceSettings.audioSourceDisplayName}.service`;
-                }
+            //    }
 
                 writeServiceFile(serviceName, serviceTemplate);
                 servicesToStart.push(serviceName);
@@ -580,11 +580,11 @@ RestartSec=5s
 [Install]
 WantedBy=multi-user.target
 `;
-                if (os.hostname() === sourceSettings.audioSourceDisplayName) {
-                    serviceName = `smartsoundsyncairplay.service`;
-                } else {
+           //     if (os.hostname() === sourceSettings.audioSourceDisplayName) {
+           //         serviceName = `smartsoundsyncairplay.service`;
+            //    } else {
                     serviceName = `smartsoundsyncairplay${sourceSettings.audioSourceDisplayName}.service`;
-                }
+           //     }
 
                 writeServiceFile(serviceName, serviceTemplate);
                 servicesToStart.push(serviceName);
