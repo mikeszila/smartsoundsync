@@ -336,7 +336,8 @@ if (!stopOnly) {
             execSyncPrint(`cd /tmp/ && cp -v -a librespot-new/librespot-dev/. librespot`);
             execSyncPrint(`cd /tmp/ && rm -f librespot.zip`);
             execSyncPrint(`cd /tmp/ && rm -rf librespot-new`);
-            execSyncPrint(`bash -lc 'export PATH=/root/.cargo/bin:$PATH; cd /tmp/librespot && cargo build --locked --no-default-features --features "rustls-tls-native-roots with-libmdns" --release'`);
+            execSyncPrint(`bash -lc 'export PATH=/root/.cargo/bin:$PATH; cd /tmp/librespot && cargo build --locked --no-default-features --features "rustls-tls-native-roots with-libmdns alsa-backend" --release'`);
+           
             execSyncPrint(`cp /tmp/librespot/target/release/librespot ${binLocation}/librespot`);
 
             setInstalledLibrespotCommit(latestCommit);
