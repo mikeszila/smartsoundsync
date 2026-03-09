@@ -124,10 +124,12 @@ function ensureRustToolchain() {
 }
 
 function getNtpConfigPath() {
-    if (fs.existsSync("/etc/ntpsec/ntp.conf")) {
+    try {
+        execSync(`dpkg -s ntpsec >/dev/null 2>&1`);
         return "/etc/ntpsec/ntp.conf";
+    } catch (error) {
+        return "/etc/ntp.conf";
     }
-    return "/etc/ntp.conf";
 }
 
 const librespotRepoZip = "https://github.com/mikeszila/librespot/archive/dev.zip";
@@ -288,7 +290,7 @@ if (!stopOnly) {
         execSyncPrint(`systemctl restart ntp`);
     } else {
         console.log("no changes to ntp config.  Not restarting NTP.");
-    }
+    }    
 
     if (settings.sink) {
         if (fs.existsSync(`${installLocation}/pcm`)) {

@@ -206,15 +206,20 @@ let sinkErrorAdjustReport = 0
 let sourceErrorAdjustReport = 0
 
 function openReadStream() {
-    readStream = fs.createReadStream(`${audiofifopath}`);
+    readStream = fs.createReadStream(audiofifopath);
 
     readStream.on('close', function () {
-        console.log("STREAM CLOSED");
+        console.log('STREAM CLOSED');
+        setTimeout(openReadStream, 50);
+    });
+
+    readStream.on('end', function () {
+        console.log('STREAM ENDED');
         setTimeout(openReadStream, 50);
     });
 
     readStream.on('error', function (err) {
-        console.log("STREAM ERROR", err);
+        console.log('STREAM ERROR', err);
         setTimeout(openReadStream, 50);
     });
 }
