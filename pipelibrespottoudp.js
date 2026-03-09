@@ -184,7 +184,11 @@ function spawnlibrespot() {
     });
     librespot.on('close', (code) => {
         console.log('librespot close', code);
-        process.exit(code ?? 1);
+        if (code !== null && code !== undefined) {
+            process.exit(code);
+        } else {
+            process.exit(1);
+        }
     });
 
 }
