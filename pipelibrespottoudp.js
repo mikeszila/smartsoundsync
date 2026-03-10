@@ -45,13 +45,17 @@ let sampleTimeMS = 1 / reported_exact_rate * 1000
 
 let highVolumeLimit = true
 
-let cachefolder = `/tmp/librespotcache`
+function cacheSafeName(name) {
+    return String(name || 'default').replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
+let cachefolder = `/var/cache/smartsoundsync/librespot_${cacheSafeName(settings.audioSourceDisplayName)}`
 
 if (fs.existsSync(cachefolder)) {
     console.log('dir exists', cachefolder)
 } else {
     console.log('dir does not exist', cachefolder)
-    execSync(`mkdir ${cachefolder}`)
+    execSync(`mkdir -p ${cachefolder}`)
 }
 
 let audiofifopath = `/tmp/audiofifo_librespot_${settings.audioSourceDisplayName}`
@@ -112,8 +116,6 @@ function librespotCheck() {
 function spawnlibrespot() {
 
     console.log('starting librespot')
-    try { execSync(` rm ${cachefolder}/credentials.json`) }
-    catch (error) { }
 
     librespot = spawn(
         `/usr/local/bin/librespot`,

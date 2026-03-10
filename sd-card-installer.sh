@@ -22,9 +22,11 @@ SSH_KEY_FILE="$3"
 USER_NAME="michael"
 PASS_HASH='$5$uh6Ct0Igle$oqLcV/s6x48ZUhQhw8qUGgbXM2B/pVm3NJlFOW8Kuq0'
 
-OS_URL="https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2024-07-04/2024-07-04-raspios-bookworm-arm64-lite.img.xz"
-OS_FILE_XZ="2024-07-04-raspios-bookworm-arm64-lite.img.xz"
-OS_FILE="2024-07-04-raspios-bookworm-arm64-lite.img"
+RPI_DL_ROOT="https://downloads.raspberrypi.org"
+LTS_SERIES="raspios_oldstable_lite_arm64"
+OS_URL=""
+OS_FILE_XZ=""
+OS_FILE=""
 
 BOOT_MNT="/mnt/boot"
 ROOT_MNT="/mnt/root"
@@ -176,7 +178,6 @@ write_nm_connection() {
 id=${id}
 uuid=$(uuidgen)
 type=wifi
-interface-name=wlan0
 autoconnect=true
 
 [wifi]
@@ -198,7 +199,100 @@ NMEOF
     chmod 600 "$out_file"
 }
 
+set_wifi_country() {
+    local country="$1"
+    local crda_file="$ROOT_MNT/etc/default/crda"
+
+    mkdir -p "$ROOT_MNT/etc/default"
+    cat >"$crda_file" <<EOF
+REGDOMAIN=${country}
+EOF
+}
+
+set_cmdline_regdomain() {
+    local country="$1"
+    local cmdline_file="$BOOT_MNT/cmdline.txt"
+
+    if [ ! -f "$cmdline_file" ]; then
+        echo "Warning: $cmdline_file not found; skipping Wi-Fi country kernel arg."
+        return
+    fi
+
+    sed -i \
+        -e 's/[[:space:]]*cfg80211\.ieee80211_regdom=[^[:space:]]*//g' \
+        -e "s/\(.*\)/\1 cfg80211.ieee80211_regdom=${country}/" \
+        "$cmdline_file"
+}
+
+ensure_nm_wifi_enabled() {
+    local nm_state="$ROOT_MNT/var/lib/NetworkManager/NetworkManager.state"
+    local rfkill_dir="$ROOT_MNT/var/lib/systemd/rfkill"
+    local f
+
+    if [ -f "$nm_state" ]; then
+        if grep -q '^WirelessEnabled=' "$nm_state"; then
+            sed -i 's/^WirelessEnabled=.*/WirelessEnabled=true/' "$nm_state"
+        else
+            printf '\nWirelessEnabled=true\n' >> "$nm_state"
+        fi
+    fi
+
+    if [ -d "$rfkill_dir" ]; then
+        for f in "$rfkill_dir"/*; do
+            [ -f "$f" ] || continue
+            echo 0 > "$f"
+        done
+    fi
+}
+
+resolve_latest_lite_lts_image() {
+    local images_url listing latest_dir dir_listing
+
+    images_url="${RPI_DL_ROOT}/${LTS_SERIES}/images/"
+    echo "Discovering latest Raspberry Pi OS Lite LTS image..."
+
+    listing="$(wget -qO- "$images_url")" || {
+        echo "Failed to fetch image index: $images_url"
+        exit 1
+    }
+
+    latest_dir="$(printf '%s\n' "$listing" \
+        | grep -oE "${LTS_SERIES}-[0-9]{4}-[0-9]{2}-[0-9]{2}/" \
+        | tr -d '/' \
+        | sort -u \
+        | sort -V \
+        | tail -n1)"
+
+    if [ -z "$latest_dir" ]; then
+        echo "Could not find a dated LTS release directory under $images_url"
+        exit 1
+    fi
+
+    dir_listing="$(wget -qO- "${images_url}${latest_dir}/")" || {
+        echo "Failed to fetch release directory: ${images_url}${latest_dir}/"
+        exit 1
+    }
+
+    OS_FILE_XZ="$(printf '%s\n' "$dir_listing" \
+        | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}-raspios-[^"/]*-arm64-lite\.img\.xz' \
+        | sort -u \
+        | sort -V \
+        | tail -n1)"
+
+    if [ -z "$OS_FILE_XZ" ]; then
+        echo "Could not find an arm64 Lite image in ${images_url}${latest_dir}/"
+        exit 1
+    fi
+
+    OS_FILE="${OS_FILE_XZ%.xz}"
+    OS_URL="${images_url}${latest_dir}/${OS_FILE_XZ}"
+
+    echo "Selected LTS image: $OS_FILE_XZ"
+}
+
 # Step 1: Check for OS image, download if missing
+resolve_latest_lite_lts_image
+
 if [ -f "$OS_FILE" ]; then
     echo "OS image ($OS_FILE) already exists, skipping download."
 elif [ -f "$OS_FILE_XZ" ]; then
@@ -323,6 +417,10 @@ dtoverlay=${DAC_TYPE}
 force_eeprom_read=0
 EOF2
 
+# Set WLAN regulatory domain so dual-band Wi-Fi is usable on first boot
+set_cmdline_regdomain "US"
+set_wifi_country "US"
+
 # Step 6: Configure root filesystem
 echo "Configuring root filesystem..."
 
@@ -392,15 +490,12 @@ chmod 440 "$ROOT_MNT/etc/sudoers.d/010_michael-nopasswd"
 sed -i '/^#PasswordAuthentication yes/s/^#//' "$ROOT_MNT/etc/ssh/sshd_config"
 sed -i '/^PasswordAuthentication yes/s/yes/no/' "$ROOT_MNT/etc/ssh/sshd_config"
 
-# Disable first-boot service
-ln -sf /dev/null "$ROOT_MNT/etc/systemd/system/raspberrypi-sys-mods.service"
-
-# Configure Wi-Fi with NetworkManager
+# Configure Wi-Fi with NetworkManager (Raspberry Pi OS Bookworm)
 echo "Configuring Wi-Fi with NetworkManager..."
 mkdir -p "$ROOT_MNT/etc/NetworkManager/system-connections"
-
 write_nm_connection "mikeszila5G" "mikeszila5G" "youhavetobuyadrinkfirst" "true"
 write_nm_connection "MikeszilaPhone" "MikeszilaPhone" "Sebastian" "false"
+ensure_nm_wifi_enabled
 
 # Set timezone
 rm -f "$ROOT_MNT/etc/localtime"
