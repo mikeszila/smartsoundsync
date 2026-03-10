@@ -1,0 +1,425 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Check for root privileges
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run as root (sudo)"
+    exit 1
+fi
+
+# Check arguments
+if [ $# -ne 3 ]; then
+    echo "Usage: $0 <sd-device> <hostname> <ssh-key-file>"
+    echo "Example: $0 /dev/mmcblk0 Livingroom /home/michael/.ssh/id_ed25519.pub"
+    exit 1
+fi
+
+SD_DEVICE="$1"
+HOSTNAME="$2"
+SSH_KEY_FILE="$3"
+
+USER_NAME="michael"
+PASS_HASH='$5$uh6Ct0Igle$oqLcV/s6x48ZUhQhw8qUGgbXM2B/pVm3NJlFOW8Kuq0'
+
+OS_URL="https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2024-07-04/2024-07-04-raspios-bookworm-arm64-lite.img.xz"
+OS_FILE_XZ="2024-07-04-raspios-bookworm-arm64-lite.img.xz"
+OS_FILE="2024-07-04-raspios-bookworm-arm64-lite.img"
+
+BOOT_MNT="/mnt/boot"
+ROOT_MNT="/mnt/root"
+
+# Validate SSH key file
+if [ ! -f "$SSH_KEY_FILE" ]; then
+    echo "Error: $SSH_KEY_FILE not found"
+    exit 1
+fi
+SSH_KEY="$(cat "$SSH_KEY_FILE")"
+
+# Validate SD device
+if [ ! -b "$SD_DEVICE" ]; then
+    echo "Error: $SD_DEVICE is not a block device. Check with 'lsblk'."
+    exit 1
+fi
+
+cleanup() {
+    set +e
+    sync
+    mountpoint -q "$BOOT_MNT" && umount -l "$BOOT_MNT"
+    mountpoint -q "$ROOT_MNT" && umount -l "$ROOT_MNT"
+    [ -d "$BOOT_MNT" ] && rmdir "$BOOT_MNT" 2>/dev/null
+    [ -d "$ROOT_MNT" ] && rmdir "$ROOT_MNT" 2>/dev/null
+}
+trap cleanup EXIT
+
+get_part() {
+    local dev="$1"
+    local num="$2"
+    if [[ "$dev" =~ (mmcblk|nvme) ]]; then
+        echo "${dev}p${num}"
+    else
+        echo "${dev}${num}"
+    fi
+}
+
+version_ge() {
+    # returns success if $1 >= $2
+    [ "$(printf '%s\n' "$2" "$1" | sort -V | tail -n1)" = "$1" ]
+}
+
+detect_image_kernel() {
+    local kver
+    kver="$(ls -1 "$ROOT_MNT/lib/modules" | sort -V | tail -n1)"
+    if [ -z "$kver" ]; then
+        echo "Could not detect kernel version from image" >&2
+        exit 1
+    fi
+    echo "$kver"
+}
+
+overlay_for_board() {
+    local board="$1"
+    local kernel="$2"
+
+    case "$board" in
+        dac)
+            echo "hifiberry-dac"
+            ;;
+        dac8x)
+            echo "hifiberry-dac8x"
+            ;;
+        dacplus-standard|amp2|amp4)
+            if version_ge "$kernel" "6.1.77"; then
+                echo "hifiberry-dacplus-std"
+            else
+                echo "hifiberry-dacplus"
+            fi
+            ;;
+        dacplus-pro|dac2-pro)
+            if version_ge "$kernel" "6.1.77"; then
+                echo "hifiberry-dacplus-pro"
+            else
+                echo "hifiberry-dacplus"
+            fi
+            ;;
+        dacplusdsp)
+            echo "hifiberry-dacplusdsp"
+            ;;
+        dac2-hd)
+            echo "hifiberry-dacplushd"
+            ;;
+        dacplusadc)
+            echo "hifiberry-dacplusadc"
+            ;;
+        dacplusadcpro|dac2-adc-pro)
+            echo "hifiberry-dacplusadcpro"
+            ;;
+        digi|digi2-standard)
+            echo "hifiberry-digi"
+            ;;
+        digi-pro|digi2-pro)
+            echo "hifiberry-digi-pro"
+            ;;
+        amp)
+            echo "hifiberry-amp"
+            ;;
+        amp3)
+            echo "hifiberry-amp3"
+            ;;
+        amp4pro)
+            echo "hifiberry-amp4pro"
+            ;;
+        *)
+            echo "Unknown board model: $board" >&2
+            exit 1
+            ;;
+    esac
+}
+
+ensure_group_member() {
+    local group_name="$1"
+    local member="$2"
+    local group_file="$3"
+
+    awk -F: -v grp="$group_name" -v usr="$member" '
+    BEGIN { OFS=FS }
+    {
+        if ($1 == grp) {
+            found = 0
+            if ($4 == "") {
+                $4 = usr
+            } else {
+                n = split($4, a, ",")
+                for (i = 1; i <= n; i++) {
+                    if (a[i] == usr) {
+                        found = 1
+                    }
+                }
+                if (!found) {
+                    $4 = $4 "," usr
+                }
+            }
+        }
+        print
+    }' "$group_file" > "${group_file}.tmp" && mv "${group_file}.tmp" "$group_file"
+}
+
+write_nm_connection() {
+    local id="$1"
+    local ssid="$2"
+    local psk="$3"
+    local hidden="${4:-false}"
+    local out_file="$ROOT_MNT/etc/NetworkManager/system-connections/${id}.nmconnection"
+
+    cat >"$out_file" <<NMEOF
+[connection]
+id=${id}
+uuid=$(uuidgen)
+type=wifi
+interface-name=wlan0
+autoconnect=true
+
+[wifi]
+ssid=${ssid}
+mode=infrastructure
+hidden=${hidden}
+
+[wifi-security]
+key-mgmt=wpa-psk
+psk=${psk}
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=auto
+NMEOF
+
+    chmod 600 "$out_file"
+}
+
+# Step 1: Check for OS image, download if missing
+if [ -f "$OS_FILE" ]; then
+    echo "OS image ($OS_FILE) already exists, skipping download."
+elif [ -f "$OS_FILE_XZ" ]; then
+    echo "Compressed OS image ($OS_FILE_XZ) found, extracting..."
+    xz -d "$OS_FILE_XZ" || { echo "Extraction failed"; exit 1; }
+else
+    echo "Downloading Raspberry Pi OS Lite..."
+    wget -O "$OS_FILE_XZ" "$OS_URL" || { echo "Download failed"; exit 1; }
+    echo "Extracting image..."
+    xz -d "$OS_FILE_XZ" || { echo "Extraction failed"; exit 1; }
+fi
+
+# Step 2: Prompt for HiFiBerry board model
+echo "Select HiFiBerry board model:"
+echo " 1) DAC / DAC+ Light / DAC Zero / MiniAmp / Beocreate / DAC+ DSP / DAC+ RTC"
+echo " 2) DAC8x"
+echo " 3) DAC+ Standard"
+echo " 4) DAC+ Pro"
+echo " 5) DAC2 Pro"
+echo " 6) DAC+ ADC"
+echo " 7) DAC+ ADC Pro"
+echo " 8) DAC2 ADC Pro"
+echo " 9) DAC2 HD"
+echo "10) Digi+ / Digi 2 Standard"
+echo "11) Digi+ Pro / Digi 2 Pro"
+echo "12) Amp+ (not Amp2)"
+echo "13) Amp2"
+echo "14) Amp3"
+echo "15) Amp4"
+echo "16) Amp4 Pro"
+
+read -r -p "Enter number (1-16): " BOARD_CHOICE
+
+case "$BOARD_CHOICE" in
+    1) BOARD_MODEL="dac" ;;
+    2) BOARD_MODEL="dac8x" ;;
+    3) BOARD_MODEL="dacplus-standard" ;;
+    4) BOARD_MODEL="dacplus-pro" ;;
+    5) BOARD_MODEL="dac2-pro" ;;
+    6) BOARD_MODEL="dacplusadc" ;;
+    7) BOARD_MODEL="dacplusadcpro" ;;
+    8) BOARD_MODEL="dac2-adc-pro" ;;
+    9) BOARD_MODEL="dac2-hd" ;;
+    10) BOARD_MODEL="digi" ;;
+    11) BOARD_MODEL="digi-pro" ;;
+    12) BOARD_MODEL="amp" ;;
+    13) BOARD_MODEL="amp2" ;;
+    14) BOARD_MODEL="amp3" ;;
+    15) BOARD_MODEL="amp4" ;;
+    16) BOARD_MODEL="amp4pro" ;;
+    *) echo "Invalid choice."; exit 1 ;;
+esac
+
+echo "Selected board model: $BOARD_MODEL"
+
+# Step 3: Write image to SD card
+echo "Writing image to $SD_DEVICE (this will erase all data)..."
+read -r -p "Are you sure? (y/N) " -n 1 REPLY
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Aborted by user."
+    exit 1
+fi
+
+umount "$(get_part "$SD_DEVICE" 1)" "$(get_part "$SD_DEVICE" 2)" 2>/dev/null || true
+dd if="$OS_FILE" of="$SD_DEVICE" bs=4M status=progress oflag=sync conv=fsync || { echo "Write failed"; exit 1; }
+sync
+partprobe "$SD_DEVICE" || true
+udevadm settle
+sleep 2
+
+# Step 4: Mount partitions
+echo "Mounting partitions..."
+mkdir -p "$BOOT_MNT" "$ROOT_MNT"
+
+BOOT_PART="$(get_part "$SD_DEVICE" 1)"
+ROOT_PART="$(get_part "$SD_DEVICE" 2)"
+
+mount "$BOOT_PART" "$BOOT_MNT" || { echo "Failed to mount $BOOT_PART"; exit 1; }
+mount "$ROOT_PART" "$ROOT_MNT" || { echo "Failed to mount $ROOT_PART"; exit 1; }
+
+# Detect kernel version from the image and select overlay
+IMAGE_KERNEL="$(detect_image_kernel)"
+DAC_TYPE="$(overlay_for_board "$BOARD_MODEL" "$IMAGE_KERNEL")"
+
+echo "Detected image kernel: $IMAGE_KERNEL"
+echo "Using HiFiBerry overlay: $DAC_TYPE"
+
+# Step 5: Configure boot partition
+echo "Configuring boot partition..."
+touch "$BOOT_MNT/ssh"
+rm -f "$BOOT_MNT/firstrun.sh"
+echo "${USER_NAME}:${PASS_HASH}" > "$BOOT_MNT/userconf.txt"
+
+# Remove/replace settings we manage
+sed -i '/^dtparam=audio=on$/d' "$BOOT_MNT/config.txt"
+sed -i '/^#dtparam=audio=on$/d' "$BOOT_MNT/config.txt"
+sed -i '/^dtoverlay=vc4-kms-v3d$/d' "$BOOT_MNT/config.txt"
+sed -i '/^dtoverlay=vc4-kms-v3d,noaudio$/d' "$BOOT_MNT/config.txt"
+sed -i '/^dtoverlay=vc4-fkms-v3d$/d' "$BOOT_MNT/config.txt"
+sed -i '/^dtoverlay=vc4-fkms-v3d,audio=off$/d' "$BOOT_MNT/config.txt"
+sed -i '/^dtoverlay=gpio-ir,gpio_pin=5$/d' "$BOOT_MNT/config.txt"
+sed -i '/^dtoverlay=hifiberry-/d' "$BOOT_MNT/config.txt"
+sed -i '/^force_eeprom_read=0$/d' "$BOOT_MNT/config.txt"
+
+# Ensure SPI is enabled if present as commented line
+sed -i 's/^#dtparam=spi=on/dtparam=spi=on/' "$BOOT_MNT/config.txt"
+
+# Apply current HiFiBerry recommendations
+cat >>"$BOOT_MNT/config.txt" <<EOF2
+
+# Enable DRM VC4 V3D driver without onboard audio
+dtoverlay=vc4-kms-v3d,noaudio
+
+# Enable IR on pins the HiFiBerry doesn't use
+dtoverlay=gpio-ir,gpio_pin=5
+
+# HiFiBerry overlay selected from board model + image kernel
+dtoverlay=${DAC_TYPE}
+
+# Recommended fallback for some boards on newer kernels
+force_eeprom_read=0
+EOF2
+
+# Step 6: Configure root filesystem
+echo "Configuring root filesystem..."
+
+# Set hostname
+echo "$HOSTNAME" > "$ROOT_MNT/etc/hostname"
+sed -i "s/raspberrypi/$HOSTNAME/g" "$ROOT_MNT/etc/hosts" 2>/dev/null || true
+
+# Rename 'pi' user/group to 'michael' to preserve default Raspberry Pi OS setup
+if grep -q '^pi:' "$ROOT_MNT/etc/passwd"; then
+    # passwd: rename user and home path
+    sed -i \
+        -e "s/^pi:/${USER_NAME}:/" \
+        -e "s#:/home/pi:#:/home/${USER_NAME}:#" \
+        "$ROOT_MNT/etc/passwd"
+
+    # shadow: rename user and replace password hash
+    sed -i \
+        -e "s/^pi:/${USER_NAME}:/" \
+        -e "s#^${USER_NAME}:[^:]*:#${USER_NAME}:${PASS_HASH}:#" \
+        "$ROOT_MNT/etc/shadow"
+
+    # group: rename primary group
+    sed -i "s/^pi:/${USER_NAME}:/" "$ROOT_MNT/etc/group"
+
+    # Update supplemental group memberships from pi -> michael
+    awk -F: -v old="pi" -v new="$USER_NAME" '
+    BEGIN { OFS=FS }
+    {
+        if ($4 != "") {
+            n = split($4, a, ",")
+            for (i = 1; i <= n; i++) {
+                if (a[i] == old) a[i] = new
+            }
+            $4 = a[1]
+            for (i = 2; i <= n; i++) $4 = $4 "," a[i]
+        }
+        print
+    }' "$ROOT_MNT/etc/group" > "$ROOT_MNT/etc/group.tmp" && mv "$ROOT_MNT/etc/group.tmp" "$ROOT_MNT/etc/group"
+
+    # Rename home directory if present
+    if [ -d "$ROOT_MNT/home/pi" ]; then
+        mv "$ROOT_MNT/home/pi" "$ROOT_MNT/home/$USER_NAME"
+    fi
+else
+    # Fallback if future image no longer has pi
+    echo "${USER_NAME}:x:1000:1000:${USER_NAME},,,:/home/${USER_NAME}:/bin/bash" >> "$ROOT_MNT/etc/passwd"
+    echo "${USER_NAME}:x:1000:" >> "$ROOT_MNT/etc/group"
+    echo "${USER_NAME}:${PASS_HASH}:19255:0:99999:7:::" >> "$ROOT_MNT/etc/shadow"
+    mkdir -p "$ROOT_MNT/home/${USER_NAME}"
+fi
+
+# Ensure home and SSH key
+mkdir -p "$ROOT_MNT/home/$USER_NAME/.ssh"
+echo "$SSH_KEY" > "$ROOT_MNT/home/$USER_NAME/.ssh/authorized_keys"
+chmod 700 "$ROOT_MNT/home/$USER_NAME/.ssh"
+chmod 600 "$ROOT_MNT/home/$USER_NAME/.ssh/authorized_keys"
+chown -R 1000:1000 "$ROOT_MNT/home/$USER_NAME"
+
+# Ensure michael is in audio group
+ensure_group_member "audio" "$USER_NAME" "$ROOT_MNT/etc/group"
+
+# Passwordless sudo
+echo "$USER_NAME ALL=(ALL) NOPASSWD: ALL" > "$ROOT_MNT/etc/sudoers.d/010_michael-nopasswd"
+chmod 440 "$ROOT_MNT/etc/sudoers.d/010_michael-nopasswd"
+
+# Disable password auth for SSH (key-only)
+sed -i '/^#PasswordAuthentication yes/s/^#//' "$ROOT_MNT/etc/ssh/sshd_config"
+sed -i '/^PasswordAuthentication yes/s/yes/no/' "$ROOT_MNT/etc/ssh/sshd_config"
+
+# Disable first-boot service
+ln -sf /dev/null "$ROOT_MNT/etc/systemd/system/raspberrypi-sys-mods.service"
+
+# Configure Wi-Fi with NetworkManager
+echo "Configuring Wi-Fi with NetworkManager..."
+mkdir -p "$ROOT_MNT/etc/NetworkManager/system-connections"
+
+write_nm_connection "mikeszila5G" "mikeszila5G" "youhavetobuyadrinkfirst" "true"
+write_nm_connection "MikeszilaPhone" "MikeszilaPhone" "Sebastian" "false"
+
+# Set timezone
+rm -f "$ROOT_MNT/etc/localtime"
+ln -sf /usr/share/zoneinfo/America/New_York "$ROOT_MNT/etc/localtime"
+echo "America/New_York" > "$ROOT_MNT/etc/timezone"
+
+# Set keyboard
+cat >"$ROOT_MNT/etc/default/keyboard" <<'KBEOF'
+XKBMODEL="pc105"
+XKBLAYOUT="us"
+XKBVARIANT=""
+XKBOPTIONS=""
+KBEOF
+
+# Step 7: Unmount
+echo "Unmounting partitions..."
+umount -l "$BOOT_MNT" "$ROOT_MNT"
+rmdir "$BOOT_MNT" "$ROOT_MNT"
+sync
+
+trap - EXIT
+echo "SD card ready! Insert into RPi and boot."
