@@ -535,13 +535,13 @@ WantedBy=multi-user.target
             if (sourceSettings.audioSourceType === "Spotify") {
                 serviceTemplate = `[Unit]
 Description=${sourceSettings.audioSourceDisplayName} Pipe Librespot to UDP
-After=network-online.target sound.target
-Requires=network-online.target
-Wants=avahi-daemon.service
+After=network-online.target sound.target avahi-daemon.service
+Requires=network-online.target avahi-daemon.service
 
 [Service]
 Type=simple
 WorkingDirectory=${installLocation}
+ExecStartPre=/bin/sleep 5
 ExecStart=/usr/bin/node ${installLocation}/pipelibrespottoudp.js "${execArgumentsParse(sourceSettings)}" 
 TimeoutStopSec=5
 

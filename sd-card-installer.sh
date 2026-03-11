@@ -494,7 +494,7 @@ sed -i '/^PasswordAuthentication yes/s/yes/no/' "$ROOT_MNT/etc/ssh/sshd_config"
 echo "Configuring Wi-Fi with NetworkManager..."
 mkdir -p "$ROOT_MNT/etc/NetworkManager/system-connections"
 write_nm_connection "mikeszila5G" "mikeszila5G" "youhavetobuyadrinkfirst" "true"
-write_nm_connection "MikeszilaPhone" "MikeszilaPhone" "Sebastian" "false"
+#write_nm_connection "HonestControls" "HonestControls" "hchello123" "false"
 ensure_nm_wifi_enabled
 
 # Set timezone
