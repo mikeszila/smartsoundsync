@@ -27,8 +27,15 @@ function execSyncPrint(command) {
 
 function packageIsInstalled(packageName) {
     try {
-        execSync(`dpkg -s ${packageName} >/dev/null 2>&1`);
-        return true;
+        const status = String(
+            execSync(`dpkg-query -W -f='${"${db:Status-Status}"}' ${packageName} 2>/dev/null`)
+        ).trim();
+
+        if (status === "installed") {
+            return true;
+        } else {
+            return false;
+        }
     } catch (error) {
         return false;
     }
