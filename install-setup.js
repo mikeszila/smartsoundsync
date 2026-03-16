@@ -25,6 +25,15 @@ function execSyncPrint(command) {
     return returnData;
 }
 
+function packageIsInstalled(packageName) {
+    try {
+        execSync(`dpkg -s ${packageName} >/dev/null 2>&1`);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
 let installLocation = process.cwd();
 
 console.log("install location:", installLocation);
@@ -48,30 +57,50 @@ existingServices = existingServices.split(/\r?\n/);
 
 existingServices.forEach(function (value, index) {
     if (value.length > 0) {
-        try { execSyncPrint(`systemctl stop ${value}`); }
-        catch (error) { console.log("Error: could not stop", value, error); }
-        try { execSyncPrint(`systemctl disable ${value}`); }
-        catch (error) { console.log("Error: could not disable", value, error); }
-        try { execSyncPrint(`rm /lib/systemd/system/${value}`); }
-        catch (error) { console.log("Error: could not remove", value, error); }
+        try {
+            execSyncPrint(`systemctl stop ${value}`);
+        } catch (error) {
+            console.log("Error: could not stop", value, error);
+        }
+
+        try {
+            execSyncPrint(`systemctl disable ${value}`);
+        } catch (error) {
+            console.log("Error: could not disable", value, error);
+        }
+
+        try {
+            execSyncPrint(`rm /lib/systemd/system/${value}`);
+        } catch (error) {
+            console.log("Error: could not remove", value, error);
+        }
     }
 });
 
 function writeServiceFile(serviceName, serviceTemplate) {
     console.log(`writing service file ${serviceName}`);
     fs.writeFileSync(`${installLocation}/${serviceName}`, serviceTemplate, "utf8");
-    try { execSyncPrint(`mv ${installLocation}/${serviceName} /lib/systemd/system/${serviceName}`); }
-    catch (error) {
+
+    try {
+        execSyncPrint(`mv ${installLocation}/${serviceName} /lib/systemd/system/${serviceName}`);
+    } catch (error) {
         console.log(`Error: error moving service file to systemd. deleting template ${serviceName}`, error);
         execSyncPrint(`rm ${installLocation}/${serviceName}`);
     }
 }
 
 function serviceStart(serviceName) {
-    try { execSyncPrint(`systemctl enable ${serviceName}`); }
-    catch (error) { console.log("Error: could not enable", serviceName, error); }
-    try { execSyncPrint(`systemctl start ${serviceName}`); }
-    catch (error) { console.log("Error: could not start", serviceName, error); }
+    try {
+        execSyncPrint(`systemctl enable ${serviceName}`);
+    } catch (error) {
+        console.log("Error: could not enable", serviceName, error);
+    }
+
+    try {
+        execSyncPrint(`systemctl start ${serviceName}`);
+    } catch (error) {
+        console.log("Error: could not start", serviceName, error);
+    }
 }
 
 function execArgumentsParse(execArguments) {
@@ -123,13 +152,34 @@ function ensureRustToolchain() {
     execSyncPrint(`bash -lc 'export PATH=/root/.cargo/bin:$PATH; cargo --version'`);
 }
 
-function getNtpConfigPath() {
-    try {
-        execSync(`dpkg -s ntpsec >/dev/null 2>&1`);
-        return "/etc/ntpsec/ntp.conf";
-    } catch (error) {
-        return "/etc/ntp.conf";
+function getNtpConfigDetails() {
+    if (packageIsInstalled("ntpsec")) {
+        return {
+            ntpConfigPath: "/etc/ntpsec/ntp.conf",
+            driftFilePath: "/var/lib/ntpsec/ntp.drift",
+            serviceName: "ntpsec",
+            packageName: "ntpsec",
+            isInstalled: true
+        };
     }
+
+    if (packageIsInstalled("ntp")) {
+        return {
+            ntpConfigPath: "/etc/ntp.conf",
+            driftFilePath: "/var/lib/ntp/ntp.drift",
+            serviceName: "ntp",
+            packageName: "ntp",
+            isInstalled: true
+        };
+    }
+
+    return {
+        ntpConfigPath: "/etc/ntpsec/ntp.conf",
+        driftFilePath: "/var/lib/ntpsec/ntp.drift",
+        serviceName: "ntpsec",
+        packageName: "ntpsec",
+        isInstalled: false
+    };
 }
 
 const librespotRepoZip = "https://github.com/mikeszila/librespot/archive/dev.zip";
@@ -148,6 +198,7 @@ function getInstalledLibrespotCommit() {
     if (fs.existsSync(librespotCommitFile)) {
         return fs.readFileSync(librespotCommitFile, "utf8").trim();
     }
+
     return "";
 }
 
@@ -176,8 +227,13 @@ if (!stopOnly) {
     }
 
     let settings = require(configFilePath);
+    let ntpConfigDetails = getNtpConfigDetails();
 
-    let dependencies = ["ntp"];
+    let dependencies = [];
+    if (!ntpConfigDetails.isInstalled) {
+        dependencies.push(ntpConfigDetails.packageName);
+    }
+
     let dependenciesSpotify = ["build-essential"];
 
     let dependenciesshairport = [
@@ -206,10 +262,10 @@ if (!stopOnly) {
         "cmake"
     ];
 
-let dependenciesspdif = [
-    "evtest",
-    "libasound2-dev"
-];
+    let dependenciesspdif = [
+        "evtest",
+        "libasound2-dev"
+    ];
 
     if (settings.sink) {
         dependencies = dependencies.concat(dependenciessink);
@@ -228,12 +284,15 @@ let dependenciesspdif = [
             if (value.audioSourceType === "Spotify") {
                 hasSpotify = true;
             }
+
             if (value.audioSourceType === "Airplay") {
                 hasAirplay = true;
             }
+
             if (value.audioSourceType === "SPDIF") {
                 hasSPDIF = true;
             }
+
             if (value.hasOwnProperty("HifiberryDacDSP") && value.HifiberryDacDSP === true) {
                 hasHifiberryDacDSP = true;
             }
@@ -253,11 +312,16 @@ let dependenciesspdif = [
     }
 
     dependencies.forEach(function (value, index) {
-        try { execSync(`dpkg -s ${value}`); }
-        catch (error) {
+        try {
+            execSync(`dpkg -s ${value}`);
+        } catch (error) {
             execSyncPrint(`apt install ${value} -y`);
         }
     });
+
+    if (!ntpConfigDetails.isInstalled) {
+        ntpConfigDetails = getNtpConfigDetails();
+    }
 
     let ntpConfigTemplate;
 
@@ -265,22 +329,24 @@ let dependenciesspdif = [
         console.log("getting ntp client config");
         ntpConfigTemplate = fs.readFileSync("./templates/ntp-client-template.conf", "utf8");
         ntpConfigTemplate = ntpConfigTemplate.replaceAll("settings.ntpServerHostname", settings.ntpServerHostname);
+        ntpConfigTemplate = ntpConfigTemplate.replaceAll("DRIFTFILE_PATH", ntpConfigDetails.driftFilePath);
     } else {
         console.log("getting ntp server config");
         ntpConfigTemplate = fs.readFileSync("./templates/ntp-server-template.conf", "utf8");
+        ntpConfigTemplate = ntpConfigTemplate.replaceAll("DRIFTFILE_PATH", ntpConfigDetails.driftFilePath);
     }
 
-    let ntpConfigPath = getNtpConfigPath();
-    let currentNTPconig = "";
+    let ntpConfigPath = ntpConfigDetails.ntpConfigPath;
+    let currentNtpConfig = "";
 
     if (fs.existsSync(ntpConfigPath)) {
-        currentNTPconig = fs.readFileSync(ntpConfigPath, "utf8");
+        currentNtpConfig = fs.readFileSync(ntpConfigPath, "utf8");
     }
 
-    if (currentNTPconig !== ntpConfigTemplate) {
-        console.log(`ntp config different. Writing new config to ${ntpConfigPath} and restarting NTP`);
+    if (currentNtpConfig !== ntpConfigTemplate) {
+        console.log(`ntp config different. Writing new config to ${ntpConfigPath} and restarting ${ntpConfigDetails.serviceName}`);
         fs.writeFileSync(ntpConfigPath, ntpConfigTemplate, "utf8");
-        execSyncPrint(`systemctl restart ntp`);
+        execSyncPrint(`systemctl restart ${ntpConfigDetails.serviceName}`);
     } else {
         console.log("no changes to ntp config.  Not restarting NTP.");
     }
@@ -322,9 +388,20 @@ let dependenciesspdif = [
         } else {
             console.log(`compiling librespot ${latestCommit}`);
 
-            try { execSync(`rm -rf ${librespotBuildDir}`); } catch (error) { }
-            try { execSync(`rm -rf /tmp/librespot-new`); } catch (error) { }
-            try { execSync(`rm -f /tmp/librespot.zip`); } catch (error) { }
+            try {
+                execSync(`rm -rf ${librespotBuildDir}`);
+            } catch (error) {
+            }
+
+            try {
+                execSync(`rm -rf /tmp/librespot-new`);
+            } catch (error) {
+            }
+
+            try {
+                execSync(`rm -f /tmp/librespot.zip`);
+            } catch (error) {
+            }
 
             execSyncPrint(`cd /tmp/ && wget -q ${librespotRepoZip} -O ./librespot.zip`);
             execSyncPrint(`cd /tmp/ && unzip -o librespot.zip -d librespot-new`);
@@ -344,8 +421,11 @@ let dependenciesspdif = [
             console.log("shairport exists, skipping");
         } else {
             console.log("compiling shairport");
-            try { execSync(`rm -r /tmp/shairport-sync`); }
-            catch (error) { }
+
+            try {
+                execSync(`rm -r /tmp/shairport-sync`);
+            } catch (error) {
+            }
 
             execSyncPrint(`cd /tmp/ && wget -q https://github.com/mikeszila/shairport-sync/archive/master.zip -O ./shairport-sync.zip`);
             execSyncPrint(`cd /tmp/ && unzip -o shairport-sync.zip -d shairport-sync-new`);
@@ -480,6 +560,7 @@ WantedBy=multi-user.target
 
     if (settings.controller) {
         execArguments = "";
+
         if (settings.controller.length) {
             console.log("control array no code for this yet");
         } else {
@@ -512,6 +593,7 @@ WantedBy=multi-user.target
 
     if (settings.sink) {
         execArguments = "";
+
         if (settings.sink.length) {
             console.log("sink array no code for this yet");
         } else {
@@ -540,7 +622,10 @@ WantedBy=multi-user.target
         serviceName = `smartsoundsyncsink.service`;
 
         writeServiceFile(serviceName, serviceTemplate);
-        if (!hasHifiberryDacDSP) { servicesToStart.push(serviceName); }
+
+        if (!hasHifiberryDacDSP) {
+            servicesToStart.push(serviceName);
+        }
     }
 
     if (settings.sources) {
@@ -550,7 +635,7 @@ WantedBy=multi-user.target
             if (!sourceSettings.audioSourceDisplayName && sourceSettings.audioSourceClients) {
                 if (sourceSettings.audioSourceClients.length > 1) {
                     sourceSettings.audioSourceDisplayName = "";
-                    sourceSettings.audioSourceClients.forEach(function (value2, index) {
+                    sourceSettings.audioSourceClients.forEach(function (value2, index2) {
                         sourceSettings.audioSourceDisplayName = sourceSettings.audioSourceDisplayName.concat(value2.slice(0, 3));
                     });
                 } else {
@@ -576,11 +661,7 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 `;
-                //    if (os.hostname() === sourceSettings.audioSourceDisplayName) {
-                //         serviceName = `smartsoundsyncspdif.service`;
-                //     } else {
                 serviceName = `smartsoundsyncspdif${sourceSettings.audioSourceDisplayName}.service`;
-                //     }
 
                 writeServiceFile(serviceName, serviceTemplate);
                 servicesToStart.push(serviceName);
@@ -605,11 +686,7 @@ RestartSec=5s
 [Install]
 WantedBy=multi-user.target
 `;
-                // if (os.hostname() === sourceSettings.audioSourceDisplayName) {
-                //      serviceName = `smartsoundsyncspotify.service`;
-                //   } else {
                 serviceName = `smartsoundsyncspotify${sourceSettings.audioSourceDisplayName}.service`;
-                //    }
 
                 writeServiceFile(serviceName, serviceTemplate);
                 servicesToStart.push(serviceName);
@@ -637,11 +714,7 @@ RestartSec=5s
 [Install]
 WantedBy=multi-user.target
 `;
-                //     if (os.hostname() === sourceSettings.audioSourceDisplayName) {
-                //         serviceName = `smartsoundsyncairplay.service`;
-                //    } else {
                 serviceName = `smartsoundsyncairplay${sourceSettings.audioSourceDisplayName}.service`;
-                //     }
 
                 writeServiceFile(serviceName, serviceTemplate);
                 servicesToStart.push(serviceName);
