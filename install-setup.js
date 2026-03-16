@@ -206,17 +206,10 @@ if (!stopOnly) {
         "cmake"
     ];
 
-    let dependenciesspdif = [
-        "evtest",
-        "python3-pip",
-        "libxslt1-dev",
-        "libxml2-dev",
-        "zlib1g-dev",
-        "python3-lxml",
-        "libxml2-dev",
-        "libxslt1-dev",
-        "libasound2-dev"
-    ];
+let dependenciesspdif = [
+    "evtest",
+    "libasound2-dev"
+];
 
     if (settings.sink) {
         dependencies = dependencies.concat(dependenciessink);
@@ -290,7 +283,7 @@ if (!stopOnly) {
         execSyncPrint(`systemctl restart ntp`);
     } else {
         console.log("no changes to ntp config.  Not restarting NTP.");
-    }    
+    }
 
     if (settings.sink) {
         if (fs.existsSync(`${installLocation}/pcm`)) {
@@ -329,9 +322,9 @@ if (!stopOnly) {
         } else {
             console.log(`compiling librespot ${latestCommit}`);
 
-            try { execSync(`rm -rf ${librespotBuildDir}`); } catch (error) {}
-            try { execSync(`rm -rf /tmp/librespot-new`); } catch (error) {}
-            try { execSync(`rm -f /tmp/librespot.zip`); } catch (error) {}
+            try { execSync(`rm -rf ${librespotBuildDir}`); } catch (error) { }
+            try { execSync(`rm -rf /tmp/librespot-new`); } catch (error) { }
+            try { execSync(`rm -f /tmp/librespot.zip`); } catch (error) { }
 
             execSyncPrint(`cd /tmp/ && wget -q ${librespotRepoZip} -O ./librespot.zip`);
             execSyncPrint(`cd /tmp/ && unzip -o librespot.zip -d librespot-new`);
@@ -339,7 +332,7 @@ if (!stopOnly) {
             execSyncPrint(`cd /tmp/ && rm -f librespot.zip`);
             execSyncPrint(`cd /tmp/ && rm -rf librespot-new`);
             execSyncPrint(`bash -lc 'export PATH=/root/.cargo/bin:$PATH; cd /tmp/librespot && cargo build --locked --no-default-features --features "rustls-tls-native-roots with-libmdns alsa-backend" --release'`);
-           
+
             execSyncPrint(`cp /tmp/librespot/target/release/librespot ${binLocation}/librespot`);
 
             setInstalledLibrespotCommit(latestCommit);
@@ -352,7 +345,7 @@ if (!stopOnly) {
         } else {
             console.log("compiling shairport");
             try { execSync(`rm -r /tmp/shairport-sync`); }
-            catch (error) {}
+            catch (error) { }
 
             execSyncPrint(`cd /tmp/ && wget -q https://github.com/mikeszila/shairport-sync/archive/master.zip -O ./shairport-sync.zip`);
             execSyncPrint(`cd /tmp/ && unzip -o shairport-sync.zip -d shairport-sync-new`);
@@ -374,17 +367,78 @@ if (!stopOnly) {
         }
     }
 
-    if (false && hasHifiberryDacDSP) {
-        try { execSync("which dsptoolkit"); }
-        catch (error) {
-            execSyncPrint(`wget https://raw.githubusercontent.com/hifiberry/hifiberry-dsp/master/install-dsptoolkit -O - | sh`);
+    if (hasHifiberryDacDSP) {
+        let hifiberryRepoListPath = "/etc/apt/sources.list.d/hifiberry.list";
+        let hifiberryRepoConfigured = false;
+
+        if (fs.existsSync(hifiberryRepoListPath)) {
+            let hifiberryRepoList = fs.readFileSync(hifiberryRepoListPath, "utf8");
+
+            if (hifiberryRepoList.includes("debianrepo.hifiberry.com")) {
+                hifiberryRepoConfigured = true;
+            }
         }
 
-        let dspchecksum = String(execSync("dsptoolkit get-checksum"));
+        if (hifiberryRepoConfigured) {
+            console.log("HiFiBerry repository already configured, skipping");
+        } else {
+            execSyncPrint(`curl -Ls https://tinyurl.com/hbosrepo | bash`);
+            execSyncPrint(`apt update`);
+        }
+
+        try {
+            execSync(`dpkg -s hifiberry-dsp >/dev/null 2>&1`);
+            console.log("hifiberry-dsp already installed, skipping");
+        } catch (error) {
+            execSyncPrint(`apt install hifiberry-dsp -y`);
+        }
+
+        let sigmatcpDefaultsPath = "/etc/default/sigmatcpserver";
+        let sigmatcpDefaults = "";
+
+        if (fs.existsSync(sigmatcpDefaultsPath)) {
+            sigmatcpDefaults = fs.readFileSync(sigmatcpDefaultsPath, "utf8");
+        }
+
+        if (sigmatcpDefaults.includes('EXTRA_OPTIONS="--alsa"')) {
+            console.log("sigmatcpserver ALSA option already configured, skipping");
+        } else {
+            if (sigmatcpDefaults.match(/^#EXTRA_OPTIONS=.*$/m)) {
+                sigmatcpDefaults = sigmatcpDefaults.replace(/^#EXTRA_OPTIONS=.*$/m, 'EXTRA_OPTIONS="--alsa"');
+            } else if (sigmatcpDefaults.match(/^EXTRA_OPTIONS=.*$/m)) {
+                sigmatcpDefaults = sigmatcpDefaults.replace(/^EXTRA_OPTIONS=.*$/m, 'EXTRA_OPTIONS="--alsa"');
+            } else {
+                if (sigmatcpDefaults.length > 0 && !sigmatcpDefaults.endsWith("\n")) {
+                    sigmatcpDefaults = sigmatcpDefaults.concat("\n");
+                }
+
+                sigmatcpDefaults = sigmatcpDefaults.concat('EXTRA_OPTIONS="--alsa"\n');
+            }
+
+            fs.writeFileSync(sigmatcpDefaultsPath, sigmatcpDefaults, "utf8");
+        }
+
+        execSyncPrint(`systemctl enable sigmatcpserver`);
+        execSyncPrint(`systemctl restart sigmatcpserver`);
+
+        try {
+            execSync(`which dsptoolkit >/dev/null 2>&1`);
+        } catch (error) {
+            throw new Error("hifiberry-dsp installed but dsptoolkit was not found in PATH");
+        }
+
+        let dspProfilePath = `${installLocation}/dacdspprofile.xml`;
+
+        if (!fs.existsSync(dspProfilePath)) {
+            throw new Error(`Missing required DSP profile at ${dspProfilePath}`);
+        }
+
+        let dspchecksum = String(execSync("dsptoolkit get-checksum")).trim();
+
         if (dspchecksum.includes("7B03B17AD5B6B1A0E0DACB29BF31F024")) {
             console.log("correct dsp profile installed, skipping");
         } else {
-            execSyncPrint("dsptoolkit install-profile https://raw.githubusercontent.com/hifiberry/hifiberry-os/master/buildroot/package/dspprofiles/dspdac-12.xml");
+            execSyncPrint(`dsptoolkit install-profile "${dspProfilePath}"`);
             execSyncPrint("dsptoolkit write-reg 0xF106 0x0003");
             execSyncPrint("dsptoolkit write-reg 0xF146 0x0004");
             execSyncPrint("dsptoolkit write-reg 0xF195 0x0000");
@@ -522,11 +576,11 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 `;
-            //    if (os.hostname() === sourceSettings.audioSourceDisplayName) {
-           //         serviceName = `smartsoundsyncspdif.service`;
-           //     } else {
-                    serviceName = `smartsoundsyncspdif${sourceSettings.audioSourceDisplayName}.service`;
-           //     }
+                //    if (os.hostname() === sourceSettings.audioSourceDisplayName) {
+                //         serviceName = `smartsoundsyncspdif.service`;
+                //     } else {
+                serviceName = `smartsoundsyncspdif${sourceSettings.audioSourceDisplayName}.service`;
+                //     }
 
                 writeServiceFile(serviceName, serviceTemplate);
                 servicesToStart.push(serviceName);
@@ -551,11 +605,11 @@ RestartSec=5s
 [Install]
 WantedBy=multi-user.target
 `;
-               // if (os.hostname() === sourceSettings.audioSourceDisplayName) {
-              //      serviceName = `smartsoundsyncspotify.service`;
-             //   } else {
-                    serviceName = `smartsoundsyncspotify${sourceSettings.audioSourceDisplayName}.service`;
-            //    }
+                // if (os.hostname() === sourceSettings.audioSourceDisplayName) {
+                //      serviceName = `smartsoundsyncspotify.service`;
+                //   } else {
+                serviceName = `smartsoundsyncspotify${sourceSettings.audioSourceDisplayName}.service`;
+                //    }
 
                 writeServiceFile(serviceName, serviceTemplate);
                 servicesToStart.push(serviceName);
@@ -583,11 +637,11 @@ RestartSec=5s
 [Install]
 WantedBy=multi-user.target
 `;
-           //     if (os.hostname() === sourceSettings.audioSourceDisplayName) {
-           //         serviceName = `smartsoundsyncairplay.service`;
-            //    } else {
-                    serviceName = `smartsoundsyncairplay${sourceSettings.audioSourceDisplayName}.service`;
-           //     }
+                //     if (os.hostname() === sourceSettings.audioSourceDisplayName) {
+                //         serviceName = `smartsoundsyncairplay.service`;
+                //    } else {
+                serviceName = `smartsoundsyncairplay${sourceSettings.audioSourceDisplayName}.service`;
+                //     }
 
                 writeServiceFile(serviceName, serviceTemplate);
                 servicesToStart.push(serviceName);
