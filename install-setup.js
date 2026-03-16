@@ -34,6 +34,47 @@ function packageIsInstalled(packageName) {
     }
 }
 
+function serviceUnitExists(serviceName) {
+    try {
+        execSync(`systemctl cat ${serviceName} >/dev/null 2>&1`);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+function stopDisableServiceIfExists(serviceName) {
+    if (!serviceUnitExists(serviceName)) {
+        console.log(`service ${serviceName} does not exist, skipping disable`);
+        return;
+    }
+
+    try {
+        execSyncPrint(`systemctl disable --now ${serviceName}`);
+    } catch (error) {
+        console.log(`Error: could not disable/stop ${serviceName}`, error);
+    }
+}
+
+function unmaskEnableServiceIfExists(serviceName) {
+    if (!serviceUnitExists(serviceName)) {
+        console.log(`service ${serviceName} does not exist, skipping enable`);
+        return;
+    }
+
+    try {
+        execSyncPrint(`systemctl unmask ${serviceName}`);
+    } catch (error) {
+        console.log(`Error: could not unmask ${serviceName}`, error);
+    }
+
+    try {
+        execSyncPrint(`systemctl enable ${serviceName}`);
+    } catch (error) {
+        console.log(`Error: could not enable ${serviceName}`, error);
+    }
+}
+
 let installLocation = process.cwd();
 
 console.log("install location:", installLocation);
@@ -153,33 +194,48 @@ function ensureRustToolchain() {
 }
 
 function getNtpConfigDetails() {
-    if (packageIsInstalled("ntpsec")) {
-        return {
-            ntpConfigPath: "/etc/ntpsec/ntp.conf",
-            driftFilePath: "/var/lib/ntpsec/ntp.drift",
-            serviceName: "ntpsec",
-            packageName: "ntpsec",
-            isInstalled: true
-        };
-    }
-
-    if (packageIsInstalled("ntp")) {
-        return {
-            ntpConfigPath: "/etc/ntp.conf",
-            driftFilePath: "/var/lib/ntp/ntp.drift",
-            serviceName: "ntp",
-            packageName: "ntp",
-            isInstalled: true
-        };
-    }
-
     return {
         ntpConfigPath: "/etc/ntpsec/ntp.conf",
         driftFilePath: "/var/lib/ntpsec/ntp.drift",
         serviceName: "ntpsec",
-        packageName: "ntpsec",
-        isInstalled: false
+        packageName: "ntpsec"
     };
+}
+
+function standardizeOnNtpsec() {
+    if (!packageIsInstalled("ntpsec")) {
+        execSyncPrint(`apt install ntpsec -y`);
+    } else {
+        console.log("ntpsec already installed");
+    }
+
+    stopDisableServiceIfExists("systemd-timesyncd");
+    stopDisableServiceIfExists("chrony");
+    stopDisableServiceIfExists("ntp");
+
+    if (packageIsInstalled("ntp")) {
+        try {
+            execSyncPrint(`apt purge ntp -y`);
+        } catch (error) {
+            console.log("Error: could not purge ntp", error);
+        }
+    }
+
+    if (packageIsInstalled("chrony")) {
+        try {
+            execSyncPrint(`apt purge chrony -y`);
+        } catch (error) {
+            console.log("Error: could not purge chrony", error);
+        }
+    }
+
+    try {
+        execSyncPrint(`apt autoremove -y`);
+    } catch (error) {
+        console.log("Error: could not run apt autoremove", error);
+    }
+
+    unmaskEnableServiceIfExists("ntpsec");
 }
 
 const librespotRepoZip = "https://github.com/mikeszila/librespot/archive/dev.zip";
@@ -230,10 +286,6 @@ if (!stopOnly) {
     let ntpConfigDetails = getNtpConfigDetails();
 
     let dependencies = [];
-    if (!ntpConfigDetails.isInstalled) {
-        dependencies.push(ntpConfigDetails.packageName);
-    }
-
     let dependenciesSpotify = ["build-essential"];
 
     let dependenciesshairport = [
@@ -319,9 +371,7 @@ if (!stopOnly) {
         }
     });
 
-    if (!ntpConfigDetails.isInstalled) {
-        ntpConfigDetails = getNtpConfigDetails();
-    }
+    standardizeOnNtpsec();
 
     let ntpConfigTemplate;
 
@@ -344,12 +394,14 @@ if (!stopOnly) {
     }
 
     if (currentNtpConfig !== ntpConfigTemplate) {
-        console.log(`ntp config different. Writing new config to ${ntpConfigPath} and restarting ${ntpConfigDetails.serviceName}`);
+        console.log(`ntp config different. Writing new config to ${ntpConfigPath}`);
         fs.writeFileSync(ntpConfigPath, ntpConfigTemplate, "utf8");
-        execSyncPrint(`systemctl restart ${ntpConfigDetails.serviceName}`);
     } else {
-        console.log("no changes to ntp config.  Not restarting NTP.");
+        console.log("no changes to ntp config.");
     }
+
+    unmaskEnableServiceIfExists(ntpConfigDetails.serviceName);
+    execSyncPrint(`systemctl restart ${ntpConfigDetails.serviceName}`);
 
     if (settings.sink) {
         if (fs.existsSync(`${installLocation}/pcm`)) {
