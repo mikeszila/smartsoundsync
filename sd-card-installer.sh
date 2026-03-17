@@ -30,6 +30,7 @@ OS_FILE=""
 
 BOOT_MNT="/mnt/boot"
 ROOT_MNT="/mnt/root"
+CONFIG_TXT=""
 
 # Validate SSH key file
 if [ ! -f "$SSH_KEY_FILE" ]; then
@@ -307,42 +308,44 @@ fi
 
 # Step 2: Prompt for HiFiBerry board model
 echo "Select HiFiBerry board model:"
-echo " 1) DAC / DAC+ Light / DAC Zero / MiniAmp / Beocreate / DAC+ DSP / DAC+ RTC"
-echo " 2) DAC8x"
-echo " 3) DAC+ Standard"
-echo " 4) DAC+ Pro"
-echo " 5) DAC2 Pro"
-echo " 6) DAC+ ADC"
-echo " 7) DAC+ ADC Pro"
-echo " 8) DAC2 ADC Pro"
-echo " 9) DAC2 HD"
-echo "10) Digi+ / Digi 2 Standard"
-echo "11) Digi+ Pro / Digi 2 Pro"
-echo "12) Amp+ (not Amp2)"
-echo "13) Amp2"
-echo "14) Amp3"
-echo "15) Amp4"
-echo "16) Amp4 Pro"
+echo " 1) DAC / DAC+ Light / DAC Zero / MiniAmp / Beocreate / DAC+ RTC"
+echo " 2) DAC+ DSP"
+echo " 3) DAC8x"
+echo " 4) DAC+ Standard"
+echo " 5) DAC+ Pro"
+echo " 6) DAC2 Pro"
+echo " 7) DAC+ ADC"
+echo " 8) DAC+ ADC Pro"
+echo " 9) DAC2 ADC Pro"
+echo "10) DAC2 HD"
+echo "11) Digi+ / Digi 2 Standard"
+echo "12) Digi+ Pro / Digi 2 Pro"
+echo "13) Amp+ (not Amp2)"
+echo "14) Amp2"
+echo "15) Amp3"
+echo "16) Amp4"
+echo "17) Amp4 Pro"
 
-read -r -p "Enter number (1-16): " BOARD_CHOICE
+read -r -p "Enter number (1-17): " BOARD_CHOICE
 
 case "$BOARD_CHOICE" in
     1) BOARD_MODEL="dac" ;;
-    2) BOARD_MODEL="dac8x" ;;
-    3) BOARD_MODEL="dacplus-standard" ;;
-    4) BOARD_MODEL="dacplus-pro" ;;
-    5) BOARD_MODEL="dac2-pro" ;;
-    6) BOARD_MODEL="dacplusadc" ;;
-    7) BOARD_MODEL="dacplusadcpro" ;;
-    8) BOARD_MODEL="dac2-adc-pro" ;;
-    9) BOARD_MODEL="dac2-hd" ;;
-    10) BOARD_MODEL="digi" ;;
-    11) BOARD_MODEL="digi-pro" ;;
-    12) BOARD_MODEL="amp" ;;
-    13) BOARD_MODEL="amp2" ;;
-    14) BOARD_MODEL="amp3" ;;
-    15) BOARD_MODEL="amp4" ;;
-    16) BOARD_MODEL="amp4pro" ;;
+    2) BOARD_MODEL="dacplusdsp" ;;
+    3) BOARD_MODEL="dac8x" ;;
+    4) BOARD_MODEL="dacplus-standard" ;;
+    5) BOARD_MODEL="dacplus-pro" ;;
+    6) BOARD_MODEL="dac2-pro" ;;
+    7) BOARD_MODEL="dacplusadc" ;;
+    8) BOARD_MODEL="dacplusadcpro" ;;
+    9) BOARD_MODEL="dac2-adc-pro" ;;
+    10) BOARD_MODEL="dac2-hd" ;;
+    11) BOARD_MODEL="digi" ;;
+    12) BOARD_MODEL="digi-pro" ;;
+    13) BOARD_MODEL="amp" ;;
+    14) BOARD_MODEL="amp2" ;;
+    15) BOARD_MODEL="amp3" ;;
+    16) BOARD_MODEL="amp4" ;;
+    17) BOARD_MODEL="amp4pro" ;;
     *) echo "Invalid choice."; exit 1 ;;
 esac
 
@@ -374,6 +377,14 @@ ROOT_PART="$(get_part "$SD_DEVICE" 2)"
 mount "$BOOT_PART" "$BOOT_MNT" || { echo "Failed to mount $BOOT_PART"; exit 1; }
 mount "$ROOT_PART" "$ROOT_MNT" || { echo "Failed to mount $ROOT_PART"; exit 1; }
 
+# On current Raspberry Pi OS, the boot partition is mounted at /boot/firmware
+# after first boot. While imaging offline, we edit that same partition directly.
+CONFIG_TXT="$BOOT_MNT/config.txt"
+if [ ! -f "$CONFIG_TXT" ]; then
+    echo "Failed to locate config.txt on boot partition at $CONFIG_TXT"
+    exit 1
+fi
+
 # Detect kernel version from the image and select overlay
 IMAGE_KERNEL="$(detect_image_kernel)"
 DAC_TYPE="$(overlay_for_board "$BOARD_MODEL" "$IMAGE_KERNEL")"
@@ -388,21 +399,20 @@ rm -f "$BOOT_MNT/firstrun.sh"
 echo "${USER_NAME}:${PASS_HASH}" > "$BOOT_MNT/userconf.txt"
 
 # Remove/replace settings we manage
-sed -i '/^dtparam=audio=on$/d' "$BOOT_MNT/config.txt"
-sed -i '/^#dtparam=audio=on$/d' "$BOOT_MNT/config.txt"
-sed -i '/^dtoverlay=vc4-kms-v3d$/d' "$BOOT_MNT/config.txt"
-sed -i '/^dtoverlay=vc4-kms-v3d,noaudio$/d' "$BOOT_MNT/config.txt"
-sed -i '/^dtoverlay=vc4-fkms-v3d$/d' "$BOOT_MNT/config.txt"
-sed -i '/^dtoverlay=vc4-fkms-v3d,audio=off$/d' "$BOOT_MNT/config.txt"
-sed -i '/^dtoverlay=gpio-ir,gpio_pin=5$/d' "$BOOT_MNT/config.txt"
-sed -i '/^dtoverlay=hifiberry-/d' "$BOOT_MNT/config.txt"
-sed -i '/^force_eeprom_read=0$/d' "$BOOT_MNT/config.txt"
+sed -i '/^dtparam=audio=on$/d' "$CONFIG_TXT"
+sed -i '/^#dtparam=audio=on$/d' "$CONFIG_TXT"
+sed -i '/^dtoverlay=vc4-kms-v3d$/d' "$CONFIG_TXT"
+sed -i '/^dtoverlay=vc4-kms-v3d,noaudio$/d' "$CONFIG_TXT"
+sed -i '/^dtoverlay=vc4-fkms-v3d$/d' "$CONFIG_TXT"
+sed -i '/^dtoverlay=vc4-fkms-v3d,audio=off$/d' "$CONFIG_TXT"
+sed -i '/^dtoverlay=gpio-ir,gpio_pin=5$/d' "$CONFIG_TXT"
+sed -i '/^dtoverlay=hifiberry-/d' "$CONFIG_TXT"
 
 # Ensure SPI is enabled if present as commented line
-sed -i 's/^#dtparam=spi=on/dtparam=spi=on/' "$BOOT_MNT/config.txt"
+sed -i 's/^#dtparam=spi=on/dtparam=spi=on/' "$CONFIG_TXT"
 
 # Apply current HiFiBerry recommendations
-cat >>"$BOOT_MNT/config.txt" <<EOF2
+cat >>"$CONFIG_TXT" <<EOF2
 
 # Enable DRM VC4 V3D driver without onboard audio
 dtoverlay=vc4-kms-v3d,noaudio
@@ -412,9 +422,6 @@ dtoverlay=gpio-ir,gpio_pin=5
 
 # HiFiBerry overlay selected from board model + image kernel
 dtoverlay=${DAC_TYPE}
-
-# Recommended fallback for some boards on newer kernels
-force_eeprom_read=0
 EOF2
 
 # Set WLAN regulatory domain so dual-band Wi-Fi is usable on first boot
