@@ -209,6 +209,80 @@ function getNtpConfigDetails() {
     };
 }
 
+function buildNtpCommonConfigLines(driftFilePath) {
+    return [
+        `driftfile ${driftFilePath}`,
+        "",
+        "# Leap seconds definition provided by tzdata",
+        "leapfile /usr/share/zoneinfo/leap-seconds.list",
+        "",
+        "# Enable this if you want statistics to be logged.",
+        "statsdir /var/log/ntpstats/",
+        "",
+        "statistics loopstats peerstats clockstats",
+        "filegen loopstats file loopstats type day enable",
+        "filegen peerstats file peerstats type day enable",
+        "filegen clockstats file clockstats type day enable",
+        "",
+        "# Access control configuration; see ntp.conf(5) for details.",
+        "restrict -4 default kod notrap nomodify nopeer noquery limited",
+        "restrict -6 default kod notrap nomodify nopeer noquery limited",
+        "",
+        "# Local users may interrogate the ntp server more closely.",
+        "restrict 127.0.0.1",
+        "restrict ::1",
+        "",
+        "# Needed for adding pool entries",
+        "restrict source notrap nomodify noquery"
+    ];
+}
+
+function buildNtpClientConfig(ntpServerHostname, driftFilePath) {
+    let lines = [
+        "# /etc/ntpsec/ntp.conf",
+        ""
+    ];
+
+    lines = lines.concat(buildNtpCommonConfigLines(driftFilePath));
+
+    lines = lines.concat([
+        "",
+        "# Prefer the local Smartsoundsync NTP server while on the home network.",
+        `server ${ntpServerHostname} prefer iburst minpoll 1 maxpoll 3`,
+        "",
+        "# Fallback to public pool servers when the local NTP server is unavailable.",
+        "pool 0.us.pool.ntp.org iburst",
+        "pool 1.us.pool.ntp.org iburst",
+        "pool 2.us.pool.ntp.org iburst",
+        "pool 3.us.pool.ntp.org iburst"
+    ]);
+
+    return lines.join("\n").concat("\n");
+}
+
+function buildNtpServerConfig(driftFilePath) {
+    let lines = [
+        "# /etc/ntpsec/ntp.conf",
+        ""
+    ];
+
+    lines = lines.concat(buildNtpCommonConfigLines(driftFilePath));
+
+    lines = lines.concat([
+        "",
+        "# Sync the local NTP server from the public pool.",
+        "pool 0.us.pool.ntp.org iburst",
+        "pool 1.us.pool.ntp.org iburst",
+        "pool 2.us.pool.ntp.org iburst",
+        "pool 3.us.pool.ntp.org iburst",
+        "",
+        "# Require a reasonable number of good sources before considering the clock sane.",
+        "tos minclock 4 minsane 3"
+    ]);
+
+    return lines.join("\n").concat("\n");
+}
+
 function standardizeOnNtpsec() {
     if (!packageIsInstalled("ntpsec")) {
         execSyncPrint(`apt install ntpsec -y`);
@@ -384,13 +458,13 @@ if (!stopOnly) {
 
     if (settings.ntpServerHostname && settings.ntpServerHostname !== os.hostname()) {
         console.log("getting ntp client config");
-        ntpConfigTemplate = fs.readFileSync("./templates/ntp-client-template.conf", "utf8");
-        ntpConfigTemplate = ntpConfigTemplate.replaceAll("settings.ntpServerHostname", settings.ntpServerHostname);
-        ntpConfigTemplate = ntpConfigTemplate.replaceAll("DRIFTFILE_PATH", ntpConfigDetails.driftFilePath);
+        ntpConfigTemplate = buildNtpClientConfig(
+            settings.ntpServerHostname,
+            ntpConfigDetails.driftFilePath
+        );
     } else {
         console.log("getting ntp server config");
-        ntpConfigTemplate = fs.readFileSync("./templates/ntp-server-template.conf", "utf8");
-        ntpConfigTemplate = ntpConfigTemplate.replaceAll("DRIFTFILE_PATH", ntpConfigDetails.driftFilePath);
+        ntpConfigTemplate = buildNtpServerConfig(ntpConfigDetails.driftFilePath);
     }
 
     let ntpConfigPath = ntpConfigDetails.ntpConfigPath;
