@@ -237,7 +237,48 @@ function buildNtpCommonConfigLines(driftFilePath) {
     ];
 }
 
-function buildNtpClientConfig(ntpServerHostname, driftFilePath) {
+function getUpstreamControllerHostname(settings) {
+    let upstreamControllerHostname = false;
+
+    if (settings.controller && settings.controller.remoteControllerHostname) {
+        upstreamControllerHostname = settings.controller.remoteControllerHostname;
+    } else if (settings.sink && settings.sink.controllerHostname) {
+        upstreamControllerHostname = settings.sink.controllerHostname;
+    } else if (settings.remoteControllerHostname) {
+        upstreamControllerHostname = settings.remoteControllerHostname;
+    } else if (settings.sources && settings.sources.length) {
+        let sourceControllerHostnameList = [];
+
+        settings.sources.forEach(function (sourceSettings) {
+            let sourceControllerHostname = sourceSettings.controllerHostname || sourceSettings.ControllerHostname;
+
+            if (
+                sourceControllerHostname &&
+                !sourceControllerHostnameList.includes(sourceControllerHostname)
+            ) {
+                sourceControllerHostnameList.push(sourceControllerHostname);
+            }
+        });
+
+        if (sourceControllerHostnameList.length === 1) {
+            upstreamControllerHostname = sourceControllerHostnameList[0];
+        }
+    }
+
+    if (upstreamControllerHostname === os.hostname()) {
+        upstreamControllerHostname = false;
+    }
+
+    return upstreamControllerHostname;
+}
+
+function buildNtpClientConfig(settings, ntpServerHostname, driftFilePath) {
+    let secondaryServerHostname = getUpstreamControllerHostname(settings);
+
+    if (secondaryServerHostname === ntpServerHostname) {
+        secondaryServerHostname = false;
+    }
+
     let lines = [
         "# /etc/ntpsec/ntp.conf",
         ""
@@ -249,6 +290,17 @@ function buildNtpClientConfig(ntpServerHostname, driftFilePath) {
         "",
         "# Prefer the local Smartsoundsync NTP server while on the home network.",
         `server ${ntpServerHostname} prefer iburst minpoll 1 maxpoll 3`,
+    ]);
+
+    if (secondaryServerHostname) {
+        lines = lines.concat([
+            "",
+            "# Use the upstream room controller as a secondary local fallback when it is distinct.",
+            `server ${secondaryServerHostname} iburst minpoll 2 maxpoll 4`
+        ]);
+    }
+
+    lines = lines.concat([
         "",
         "# Fallback to public pool servers when the local NTP server is unavailable.",
         "pool 0.us.pool.ntp.org iburst",
@@ -281,6 +333,17 @@ function buildNtpServerConfig(driftFilePath) {
     ]);
 
     return lines.join("\n").concat("\n");
+}
+
+function getNtpStatusServiceSettings(settings) {
+    let ntpStatusSettings = {
+        ntpServerHostname: settings.ntpServerHostname || os.hostname(),
+        ntpStatusPort: 5657
+    };
+
+    ntpStatusSettings.remoteNtpStatusHostname = getUpstreamControllerHostname(settings);
+
+    return ntpStatusSettings;
 }
 
 function standardizeOnNtpsec() {
@@ -459,6 +522,7 @@ if (!stopOnly) {
     if (settings.ntpServerHostname && settings.ntpServerHostname !== os.hostname()) {
         console.log("getting ntp client config");
         ntpConfigTemplate = buildNtpClientConfig(
+            settings,
             settings.ntpServerHostname,
             ntpConfigDetails.driftFilePath
         );
@@ -666,6 +730,8 @@ if (!stopOnly) {
     let execArguments = "";
     let priority = 1;
 
+    let ntpStatusSettings = getNtpStatusServiceSettings(settings);
+
     execArguments = "";
 
     serviceTemplate = `[Unit]
@@ -687,6 +753,30 @@ RestartSec=5s
 WantedBy=multi-user.target
 `;
     serviceName = `smartsoundsynccommon.service`;
+
+    writeServiceFile(serviceName, serviceTemplate);
+    servicesToStart.push(serviceName);
+
+    execArguments = `"${execArgumentsParse(ntpStatusSettings)}"`;
+
+    serviceTemplate = `[Unit]
+Description=Audio local NTP status
+After=network-online.target
+Requires=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=${installLocation}
+ExecStart=/usr/bin/node ${installLocation}/ntp.js ${execArguments}
+TimeoutStopSec=5
+
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+`;
+    serviceName = `smartsoundsyncntp.service`;
 
     writeServiceFile(serviceName, serviceTemplate);
     servicesToStart.push(serviceName);
