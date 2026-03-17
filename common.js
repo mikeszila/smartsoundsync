@@ -44,6 +44,11 @@ global.captureState = 'idle';
 
 global.ntpCorrection = 1;
 
+const ntpDriftPaths = [
+    '/var/lib/ntpsec/ntp.drift',
+    '/var/lib/ntp/ntp.drift'
+];
+
 let usePriority = false;
 
 function execSyncPrint(command) {
@@ -56,8 +61,15 @@ function execSyncPrint(command) {
 
 function readNTP() {
     try {
-        fs.statSync('/var/lib/ntp/ntp.drift');
-        let data = Number(execSync(`cat /var/lib/ntp/ntp.drift`));
+        let driftPath = ntpDriftPaths.find(function (value) {
+            return fs.existsSync(value);
+        });
+
+        if (!driftPath) {
+            throw new Error('No NTP drift file found');
+        }
+
+        let data = Number(execSync(`cat ${driftPath}`));
         ntpCorrection = 1 + (1 / (1000000 / Number(data)));
     }
     catch (error) {

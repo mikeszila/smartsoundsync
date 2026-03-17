@@ -10,18 +10,16 @@ function ntpXFACCheck() {
     //console.log(ntpData)
 
     if (ntpData.includes('.XFAC.')) {
-        console.log('.XFAC. found, restarting NTP')
-        execSync('systemctl restart ntp')
+        console.log('.XFAC. found, not restarting NTP automatically')
     }
     if (ntpData.includes('.INIT.')) {
-        console.log('.INIT. found, restarting NTP')
-        execSync('systemctl restart ntp')
+        console.log('.INIT. found, not restarting NTP automatically')
     }
 
 
 }
 
-console.log('smartsoundsync ntp XFAC reset logic')
+console.log('smartsoundsync ntp XFAC monitor logic')
 ntpXFACCheck()
 setInterval(ntpXFACCheck, 60000)
 
