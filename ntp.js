@@ -29,6 +29,7 @@ const aggregateStatusJsonPath = "/tmp/smartsoundsync-ntp-clients.json";
 
 let latestLocalStatus = false;
 let aggregateStatuses = {};
+let resolvedHosts = {};
 
 const socketNtpStatus = dgram.createSocket({ type: "udp4", reuseAddr: true });
 
@@ -111,13 +112,73 @@ function parsePeerLine(peerLine) {
     };
 }
 
+function resolveHostname(hostnameToResolve) {
+    if (!hostnameToResolve) {
+        return [];
+    }
+
+    if (resolvedHosts[hostnameToResolve]) {
+        return resolvedHosts[hostnameToResolve];
+    }
+
+    let resolvedAddressList = [hostnameToResolve];
+
+    try {
+        let lookupOutput = String(execSync(`getent ahostsv4 ${hostnameToResolve}`, { stdio: ["ignore", "pipe", "pipe"] }));
+        let outputLines = lookupOutput.split(/\r?\n/);
+
+        outputLines.forEach(function (line) {
+            let parts = line.trim().split(/\s+/);
+
+            if (parts[0] && !resolvedAddressList.includes(parts[0])) {
+                resolvedAddressList.push(parts[0]);
+            }
+        });
+    } catch (error) {
+    }
+
+    resolvedHosts[hostnameToResolve] = resolvedAddressList;
+
+    return resolvedAddressList;
+}
+
+function peerMatchesHost(peerRemote, hostnameToMatch) {
+    if (!peerRemote || !hostnameToMatch) {
+        return false;
+    }
+
+    let matchValues = resolveHostname(hostnameToMatch);
+    return matchValues.includes(peerRemote);
+}
+
+function getSecondaryNtpHostname() {
+    if (
+        settings.remoteNtpStatusHostname &&
+        settings.remoteNtpStatusHostname !== hostname &&
+        settings.remoteNtpStatusHostname !== settings.ntpServerHostname
+    ) {
+        return settings.remoteNtpStatusHostname;
+    }
+
+    return false;
+}
+
 function getStateFromOutput(ntpqOutput, selectedPeer) {
     if (selectedPeer) {
-        if (selectedPeer.remote === settings.ntpServerHostname) {
-            return "synced";
+        if (hostname === settings.ntpServerHostname) {
+            return "server_upstream";
         }
 
-        return "fallback";
+        if (peerMatchesHost(selectedPeer.remote, settings.ntpServerHostname)) {
+            return "synced_primary";
+        }
+
+        let secondaryNtpHostname = getSecondaryNtpHostname();
+        if (secondaryNtpHostname && peerMatchesHost(selectedPeer.remote, secondaryNtpHostname)) {
+            return "synced_secondary";
+        }
+
+        return "fallback_pool";
     }
 
     if (ntpqOutput.includes(".XFAC.")) {
@@ -157,6 +218,7 @@ function readLocalNtpStatus() {
             timestamp: new Date().toISOString(),
             state: "error",
             ntpServerHostname: settings.ntpServerHostname,
+            secondaryNtpHostname: getSecondaryNtpHostname(),
             selectedPeer: false,
             offset: false,
             jitter: false,
@@ -180,6 +242,7 @@ function readLocalNtpStatus() {
         timestamp: new Date().toISOString(),
         state: getStateFromOutput(ntpqOutput, selectedPeer),
         ntpServerHostname: settings.ntpServerHostname,
+        secondaryNtpHostname: getSecondaryNtpHostname(),
         selectedPeer: selectedPeer,
         offset: selectedPeer ? selectedPeer.offset : false,
         jitter: selectedPeer ? selectedPeer.jitter : false,
