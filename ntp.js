@@ -24,12 +24,16 @@ if (cmdSettingsJSON != 0) {
 
 const localStatusTextPath = "/tmp/smartsoundsync-ntp-status.txt";
 const localStatusJsonPath = "/tmp/smartsoundsync-ntp-status.json";
+const localHistoryPath = "/tmp/smartsoundsync-ntp-history.jsonl";
 const aggregateStatusTextPath = "/tmp/smartsoundsync-ntp-clients.txt";
 const aggregateStatusJsonPath = "/tmp/smartsoundsync-ntp-clients.json";
+const aggregateHistoryPath = "/tmp/smartsoundsync-ntp-clients-history.jsonl";
 
 let latestLocalStatus = false;
 let aggregateStatuses = {};
 let resolvedHosts = {};
+let historyByHostname = {};
+const historyLimitPerHost = 240;
 
 const socketNtpStatus = dgram.createSocket({ type: "udp4", reuseAddr: true });
 
@@ -52,8 +56,11 @@ socketNtpStatus.on("message", (message, remote) => {
 
         let status = messageObj.status;
         status.reportedBy = messageObj.reportedBy || remote.address;
+        enrichStatusWithHistory(status);
+        status.summaryLine = buildSummaryLine(status);
         aggregateStatuses[status.hostname] = status;
 
+        appendHistoryLine(aggregateHistoryPath, buildHistoryEntry(status));
         writeAggregateStatusFiles();
         forwardStatusUpstream(status);
     } catch (error) {
@@ -71,12 +78,64 @@ function writeFile(path, data) {
     }
 }
 
+function appendHistoryLine(path, dataObject) {
+    try {
+        fs.appendFileSync(path, JSON.stringify(dataObject).concat("\n"), "utf8");
+    } catch (error) {
+        console.log("Error appending", path, error);
+    }
+}
+
 function safeNumber(value, decimals) {
     if (typeof value !== "number" || Number.isNaN(value)) {
         return "n/a";
     }
 
     return value.toFixed(decimals);
+}
+
+function getHistoryList(hostnameToFind) {
+    if (!historyByHostname[hostnameToFind]) {
+        historyByHostname[hostnameToFind] = [];
+    }
+
+    return historyByHostname[hostnameToFind];
+}
+
+function loadHistoryFile(path) {
+    if (!fs.existsSync(path)) {
+        return;
+    }
+
+    try {
+        let fileData = fs.readFileSync(path, "utf8");
+        let lines = fileData.split(/\r?\n/);
+
+        lines.forEach(function (line) {
+            if (!line.trim()) {
+                return;
+            }
+
+            let entry = JSON.parse(line);
+            let historyList = getHistoryList(entry.hostname);
+            historyList.push(entry);
+
+            if (historyList.length > historyLimitPerHost) {
+                historyList.splice(0, historyList.length - historyLimitPerHost);
+            }
+        });
+    } catch (error) {
+        console.log("Error loading history file", path, error);
+    }
+}
+
+function getAgeSeconds(timestamp) {
+    if (!timestamp) {
+        return false;
+    }
+
+    let ageMS = Date.now() - new Date(timestamp).getTime();
+    return ageMS / 1000;
 }
 
 function extractSelectedPeerLine(ntpqOutput) {
@@ -192,10 +251,74 @@ function getStateFromOutput(ntpqOutput, selectedPeer) {
     return "unknown";
 }
 
+function buildHistoryEntry(status) {
+    return {
+        hostname: status.hostname,
+        timestamp: status.timestamp,
+        state: status.state,
+        selectedPeerRemote: status.selectedPeer ? status.selectedPeer.remote : false,
+        offset: status.offset,
+        jitter: status.jitter,
+        delay: status.delay,
+        poll: status.poll,
+        reach: status.reach,
+        reportedBy: status.reportedBy || status.hostname
+    };
+}
+
+function enrichStatusWithHistory(status) {
+    let historyList = getHistoryList(status.hostname);
+    let previousStatus = false;
+
+    if (historyList.length > 0) {
+        previousStatus = historyList[historyList.length - 1];
+    }
+
+    status.ageSeconds = getAgeSeconds(status.timestamp);
+    status.offsetDelta = false;
+    status.peerChanged = false;
+    status.stateChanged = false;
+    status.stepChange = false;
+    status.largeStepChange = false;
+
+    if (previousStatus) {
+        if (typeof previousStatus.offset === "number" && typeof status.offset === "number") {
+            status.offsetDelta = status.offset - previousStatus.offset;
+            status.stepChange = Math.abs(status.offsetDelta) >= 0.25;
+            status.largeStepChange = Math.abs(status.offsetDelta) >= 0.5;
+        }
+
+        status.peerChanged = previousStatus.selectedPeerRemote !== (status.selectedPeer ? status.selectedPeer.remote : false);
+        status.stateChanged = previousStatus.state !== status.state;
+    }
+
+    let historyEntry = buildHistoryEntry(status);
+    historyList.push(historyEntry);
+
+    if (historyList.length > historyLimitPerHost) {
+        historyList.splice(0, historyList.length - historyLimitPerHost);
+    }
+
+    let maxOffsetJump = 0;
+    for (let index = 1; index < historyList.length; index = index + 1) {
+        let previousEntry = historyList[index - 1];
+        let currentEntry = historyList[index];
+
+        if (typeof previousEntry.offset === "number" && typeof currentEntry.offset === "number") {
+            let jump = Math.abs(currentEntry.offset - previousEntry.offset);
+            if (jump > maxOffsetJump) {
+                maxOffsetJump = jump;
+            }
+        }
+    }
+
+    status.maxOffsetJump = maxOffsetJump;
+}
+
 function buildSummaryLine(status) {
     let source = status.selectedPeer ? status.selectedPeer.remote : "none";
 
-    return [
+    let summaryParts = [
         status.hostname,
         "state=" + status.state,
         "source=" + source,
@@ -203,7 +326,35 @@ function buildSummaryLine(status) {
         "jitter=" + safeNumber(status.jitter, 3) + " ms",
         "reach=" + (status.reach || "n/a"),
         "poll=" + (status.poll || "n/a")
-    ].join("  ");
+    ];
+
+    if (typeof status.ageSeconds === "number") {
+        summaryParts.push("age=" + safeNumber(status.ageSeconds, 0) + " s");
+    }
+
+    if (typeof status.offsetDelta === "number") {
+        summaryParts.push("delta=" + safeNumber(status.offsetDelta, 3) + " ms");
+    }
+
+    if (typeof status.maxOffsetJump === "number") {
+        summaryParts.push("maxJump=" + safeNumber(status.maxOffsetJump, 3) + " ms");
+    }
+
+    if (status.peerChanged) {
+        summaryParts.push("peerChange=yes");
+    }
+
+    if (status.stateChanged) {
+        summaryParts.push("stateChange=yes");
+    }
+
+    if (status.largeStepChange) {
+        summaryParts.push("step=large");
+    } else if (status.stepChange) {
+        summaryParts.push("step=yes");
+    }
+
+    return summaryParts.join("  ");
 }
 
 function readLocalNtpStatus() {
@@ -252,6 +403,7 @@ function readLocalNtpStatus() {
         rawNtpq: ntpqOutput.trim()
     };
 
+    enrichStatusWithHistory(status);
     status.summaryLine = buildSummaryLine(status);
 
     return status;
@@ -342,10 +494,13 @@ function forwardStatusUpstream(status) {
 function collectAndPublishLocalStatus() {
     latestLocalStatus = readLocalNtpStatus();
     aggregateStatuses[latestLocalStatus.hostname] = latestLocalStatus;
+    appendHistoryLine(localHistoryPath, buildHistoryEntry(latestLocalStatus));
+    appendHistoryLine(aggregateHistoryPath, buildHistoryEntry(latestLocalStatus));
     writeLocalStatusFiles(latestLocalStatus);
     writeAggregateStatusFiles();
     sendStatusToHost(latestLocalStatus, settings.remoteNtpStatusHostname);
 }
 
+loadHistoryFile(aggregateHistoryPath);
 collectAndPublishLocalStatus();
 setInterval(collectAndPublishLocalStatus, settings.statusIntervalMs);
