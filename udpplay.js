@@ -68,7 +68,7 @@ var localSettings = {
     outputChannels: 2,
     playback_buffer_periods: 4,
     mono: false,
-    sinkErrorSamplesAverageSeconds: 0.05
+    sinkErrorSamplesAverageSeconds: 0.5
 }
 
 settings = { ...settings, ...localSettings }
