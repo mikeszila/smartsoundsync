@@ -513,11 +513,11 @@ async function spawnaplay() {
 
     console.log(sourceObj)
 
-    console.log('Playback Setup Data', settings.cardName, sourceObj.reported_exact_rate, settings.outputChannels, sourceObj.playback_period_size, sourceObj.playback_buffer_size)
+    console.log('Playback Setup Data', settings.cardName, sourceObj.reported_exact_rate, settings.outputChannels, fixed_playback_period_size, sourceObj.playback_buffer_size)
     console.log(process.cwd(), '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11111111')
 
 
-    let teststr = `stdbuf -i0 -o0 -e0 /usr/local/bin/pcm ${settings.cardName} ${sourceObj.reported_exact_rate} ${settings.outputChannels} ${sourceObj.playback_period_size} ${sourceObj.playback_buffer_size}`
+    let teststr = `stdbuf -i0 -o0 -e0 /usr/local/bin/pcm ${settings.cardName} ${sourceObj.reported_exact_rate} ${settings.outputChannels} ${fixed_playback_period_size} ${sourceObj.playback_buffer_size}`
 
     aplay = spawn("/bin/sh", ["-c", teststr])
 
@@ -568,15 +568,16 @@ var sampleAdjustSinkTotalRing = 0
 var sampleAdjustSinkRingLast = 0
 var sampleTotal = 0
 let audiobuffferTime = 0
+let fixed_playback_period_size = 128
 
 let syncErrorMS = 0
 let sinkErrorSamples = 0
 var sinkErrorSamplesAverage = 0
 var sinkErrorSamplesArray = []
-var sinkErrorSamplesArrayLengthSetpoint = Math.round(44100 / 128 * settings.sinkErrorSamplesAverageSeconds)
+var sinkErrorSamplesArrayLengthSetpoint = Math.round(44100 / fixed_playback_period_size * settings.sinkErrorSamplesAverageSeconds)
 
 var sampleAdjustSinkStartSeconds = 2
-var sampleAdjustSinkStartSecondsSetpoint = Math.round(44100 / 128 * sampleAdjustSinkStartSeconds)
+var sampleAdjustSinkStartSecondsSetpoint = Math.round(44100 / fixed_playback_period_size * sampleAdjustSinkStartSeconds)
 
 let sampleAdjustSource = 0
 let sampleAdjustSourceSend = 0
@@ -585,17 +586,17 @@ var sourceErrorSamplesAverage = 0
 var sourceErrorSamplesArray = []
 let sourceCorrectionsPerSecond = 20
 var sourceErrorSamplesAverageSeconds = settings.sinkErrorSamplesAverageSeconds // 1
-var sourceErrorSamplesArrayLengthSetpoint = Math.round(44100 / 128 * sourceErrorSamplesAverageSeconds)
+var sourceErrorSamplesArrayLengthSetpoint = Math.round(44100 / fixed_playback_period_size * sourceErrorSamplesAverageSeconds)
 
 var sampleAdjustSourceStartSeconds = 2
-var sampleAdjustSourceStartSecondsSetpoint = Math.round(44100 / 128 * sampleAdjustSourceStartSeconds)
+var sampleAdjustSourceStartSecondsSetpoint = Math.round(44100 / fixed_playback_period_size * sampleAdjustSourceStartSeconds)
 
 /* var syncErrorMSamplesAverage = 0
 var syncErrorMSamplesArray = []
 
 var syncErrorMSamplesAverageSeconds =  2
 
-var syncErrorMSamplesArrayLengthSetpoint = Math.round(44100 / 128 * syncErrorMSamplesAverageSeconds)
+var syncErrorMSamplesArrayLengthSetpoint = Math.round(44100 / fixed_playback_period_size * syncErrorMSamplesAverageSeconds)
 
 */
 
@@ -709,7 +710,7 @@ function sendData() {
         sinkErrorSamplesAverage = average(sinkErrorSamplesArray)
 
         sampleAdjustSink = 0
-        if (sampleTotal / 128 >= sampleAdjustSinkStartSecondsSetpoint) {
+        if (sampleTotal / fixed_playback_period_size >= sampleAdjustSinkStartSecondsSetpoint) {
             sampleAdjustSink = Math.floor(Math.abs(sinkErrorSamplesAverage))
 
             //if (sinkErrorSamplesAverage < -0.2 && sinkErrorSamplesAverage > -1) {sampleAdjustSink = 1}
@@ -758,7 +759,7 @@ function sendData() {
             sourceErrorSamplesAverage = average(sourceErrorSamplesArray)
 
             sampleAdjustSource = 0
-            if (sampleTotal / 128 >= sampleAdjustSourceStartSecondsSetpoint) {
+            if (sampleTotal / fixed_playback_period_size >= sampleAdjustSourceStartSecondsSetpoint) {
                 sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage) / sampleAdjustSourceScaler) * sampleAdjustSourceScaler
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
 
