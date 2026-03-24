@@ -568,7 +568,7 @@ var sampleAdjustSinkTotalRing = 0
 var sampleAdjustSinkRingLast = 0
 var sampleTotal = 0
 let audiobuffferTime = 0
-let fixed_playback_period_size = 512
+let fixed_playback_period_size = 2205
 
 let syncErrorMS = 0
 let sinkErrorSamples = 0
