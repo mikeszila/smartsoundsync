@@ -334,7 +334,9 @@ socketAudio.on('message', function (message, remote) {
                         sourceObjLast.rate != sourceObj.rate ||
                         sourceObjLast.period_size != sourceObj.period_size ||
                         sourceObjLast.channels != sourceObj.channels ||
-                        sourceObjLast.buffer_size != sourceObj.buffer_size
+                        sourceObjLast.buffer_size != sourceObj.buffer_size ||
+                        sourceObjLast.playback_period_size != sourceObj.playback_period_size ||
+                        sourceObjLast.playback_buffer_size != sourceObj.playback_buffer_size
                     )
                 ) {
                     console.log('setup data changed restarting UDPplay')
@@ -342,6 +344,53 @@ socketAudio.on('message', function (message, remote) {
                 }
 
                 if (!sourceObjLast) {
+
+                    var sampleAdjustSinkTotal = 0
+
+                    let syncIndex = 0
+                    let sampleAdjustSink = 0
+                    let sampleAdjustSinkSend = 0
+                    var sampleAdjustSinkTotalABS = 0
+                    var sampleAdjustSinkTotalRing = 0
+                    var sampleAdjustSinkRingLast = 0
+                    var sampleTotal = 0
+                    let audiobuffferTime = 0
+
+
+                    let syncErrorMS = 0
+                    let sinkErrorSamples = 0
+                    var sinkErrorSamplesAverage = 0
+                    var sinkErrorSamplesArray = []
+                    var sinkErrorSamplesArrayLengthSetpoint = Math.round(44100 / sourceObj.playback_period_size * settings.sinkErrorSamplesAverageSeconds)
+
+                    var sampleAdjustSinkStartSeconds = 2
+                    var sampleAdjustSinkStartSecondsSetpoint = Math.round(44100 / sourceObj.playback_period_size * sampleAdjustSinkStartSeconds)
+
+                    let sampleAdjustSource = 0
+                    let sampleAdjustSourceSend = 0
+                    let sourceErrorSamples = 0
+                    var sourceErrorSamplesAverage = 0
+                    var sourceErrorSamplesArray = []
+                    let sourceCorrectionsPerSecond = 20
+                    var sourceErrorSamplesAverageSeconds = settings.sinkErrorSamplesAverageSeconds // 1
+                    var sourceErrorSamplesArrayLengthSetpoint = Math.round(44100 / sourceObj.playback_period_size * sourceErrorSamplesAverageSeconds)
+
+                    var sampleAdjustSourceStartSeconds = 2
+                    var sampleAdjustSourceStartSecondsSetpoint = Math.round(44100 / sourceObj.playback_period_size * sampleAdjustSourceStartSeconds)
+
+                    /* var syncErrorMSamplesAverage = 0
+                    var syncErrorMSamplesArray = []
+                    
+                    var syncErrorMSamplesAverageSeconds =  2
+                    
+                    var syncErrorMSamplesArrayLengthSetpoint = Math.round(44100 / sourceObj.playback_period_size * syncErrorMSamplesAverageSeconds)
+                    
+                    */
+
+
+
+
+
                     spawnecasound()
                 }
 
@@ -513,11 +562,11 @@ async function spawnaplay() {
 
     console.log(sourceObj)
 
-    console.log('Playback Setup Data', settings.cardName, sourceObj.reported_exact_rate, settings.outputChannels, fixed_playback_period_size, sourceObj.playback_buffer_size)
+    console.log('Playback Setup Data', settings.cardName, sourceObj.reported_exact_rate, settings.outputChannels, sourceObj.playback_period_size, sourceObj.playback_buffer_size)
     console.log(process.cwd(), '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11111111')
 
 
-    let teststr = `stdbuf -i0 -o0 -e0 /usr/local/bin/pcm ${settings.cardName} ${sourceObj.reported_exact_rate} ${settings.outputChannels} ${fixed_playback_period_size} ${sourceObj.playback_buffer_size}`
+    let teststr = `stdbuf -i0 -o0 -e0 /usr/local/bin/pcm ${settings.cardName} ${sourceObj.reported_exact_rate} ${settings.outputChannels} ${sourceObj.playback_period_size} ${sourceObj.playback_buffer_size}`
 
     aplay = spawn("/bin/sh", ["-c", teststr])
 
@@ -553,52 +602,12 @@ function pcmPIDCheck() {
 
     console.log('pcmPID:', pcmPID)
 
-    common.setPriority(pcmPID,50)
+    common.setPriority(pcmPID, 50)
 }
 
 
 
-var sampleAdjustSinkTotal = 0
 
-let syncIndex = 0
-let sampleAdjustSink = 0
-let sampleAdjustSinkSend = 0
-var sampleAdjustSinkTotalABS = 0
-var sampleAdjustSinkTotalRing = 0
-var sampleAdjustSinkRingLast = 0
-var sampleTotal = 0
-let audiobuffferTime = 0
-let fixed_playback_period_size = 512
-
-let syncErrorMS = 0
-let sinkErrorSamples = 0
-var sinkErrorSamplesAverage = 0
-var sinkErrorSamplesArray = []
-var sinkErrorSamplesArrayLengthSetpoint = Math.round(44100 / fixed_playback_period_size * settings.sinkErrorSamplesAverageSeconds)
-
-var sampleAdjustSinkStartSeconds = 2
-var sampleAdjustSinkStartSecondsSetpoint = Math.round(44100 / fixed_playback_period_size * sampleAdjustSinkStartSeconds)
-
-let sampleAdjustSource = 0
-let sampleAdjustSourceSend = 0
-let sourceErrorSamples = 0
-var sourceErrorSamplesAverage = 0
-var sourceErrorSamplesArray = []
-let sourceCorrectionsPerSecond = 20
-var sourceErrorSamplesAverageSeconds = settings.sinkErrorSamplesAverageSeconds // 1
-var sourceErrorSamplesArrayLengthSetpoint = Math.round(44100 / fixed_playback_period_size * sourceErrorSamplesAverageSeconds)
-
-var sampleAdjustSourceStartSeconds = 2
-var sampleAdjustSourceStartSecondsSetpoint = Math.round(44100 / fixed_playback_period_size * sampleAdjustSourceStartSeconds)
-
-/* var syncErrorMSamplesAverage = 0
-var syncErrorMSamplesArray = []
-
-var syncErrorMSamplesAverageSeconds =  2
-
-var syncErrorMSamplesArrayLengthSetpoint = Math.round(44100 / fixed_playback_period_size * syncErrorMSamplesAverageSeconds)
-
-*/
 
 function syncErrorresetAverage() {
     sinkErrorSamplesArray = []
@@ -710,7 +719,7 @@ function sendData() {
         sinkErrorSamplesAverage = average(sinkErrorSamplesArray)
 
         sampleAdjustSink = 0
-        if (sampleTotal / fixed_playback_period_size >= sampleAdjustSinkStartSecondsSetpoint) {
+        if (sampleTotal / sourceObj.playback_period_size >= sampleAdjustSinkStartSecondsSetpoint) {
             sampleAdjustSink = Math.floor(Math.abs(sinkErrorSamplesAverage))
 
             //if (sinkErrorSamplesAverage < -0.2 && sinkErrorSamplesAverage > -1) {sampleAdjustSink = 1}
@@ -736,9 +745,9 @@ function sendData() {
             })
             sinkErrorSamplesAverage = average(sinkErrorSamplesArray)
 
-          //  sourceErrorSamplesArray.forEach(function (value, index) {
-          //      sourceErrorSamplesArray[index] = sourceErrorSamplesArray[index] + sampleAdjustSink
-          //  })
+            //  sourceErrorSamplesArray.forEach(function (value, index) {
+            //      sourceErrorSamplesArray[index] = sourceErrorSamplesArray[index] + sampleAdjustSink
+            //  })
 
 
 
@@ -759,7 +768,7 @@ function sendData() {
             sourceErrorSamplesAverage = average(sourceErrorSamplesArray)
 
             sampleAdjustSource = 0
-            if (sampleTotal / fixed_playback_period_size >= sampleAdjustSourceStartSecondsSetpoint) {
+            if (sampleTotal / sourceObj.playback_period_size >= sampleAdjustSourceStartSecondsSetpoint) {
                 sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage) / sampleAdjustSourceScaler) * sampleAdjustSourceScaler
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
 
@@ -1023,7 +1032,7 @@ function ecasoundPIDCheck() {
     ecasoundPID = Number(execSync(`pidof ecasound`))
 
     console.log('ecasoundPID:', ecasoundPID)
-    common.setPriority(ecasoundPID.pid,50)
+    common.setPriority(ecasoundPID.pid, 50)
 }
 
 
