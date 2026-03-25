@@ -336,7 +336,8 @@ socketAudio.on('message', function (message, remote) {
                         sourceObjLast.channels != sourceObj.channels ||
                         sourceObjLast.buffer_size != sourceObj.buffer_size ||
                         sourceObjLast.playback_period_size != sourceObj.playback_period_size ||
-                        sourceObj.playback_buffer_size != sourceObj.playback_buffer_size
+                        sourceObjLast.playback_buffer_size != sourceObj.playback_buffer_size ||
+                        sourceObjLast.reported_period_size != sourceObj.reported_period_size
                     )
                 ) {
                     console.log('setup data changed restarting UDPplay')
@@ -345,10 +346,10 @@ socketAudio.on('message', function (message, remote) {
 
                 if (!sourceObjLast) {
 
-                    sinkErrorSamplesArrayLengthSetpoint = Math.round(44100 / sourceobj.playback_period_size * settings.sinkErrorSamplesAverageSeconds)
-                    sampleAdjustSinkStartSecondsSetpoint = Math.round(44100 / sourceobj.playback_period_size * sampleAdjustSinkStartSeconds)
-                    sourceErrorSamplesArrayLengthSetpoint = Math.round(44100 / sourceobj.playback_period_size * sourceErrorSamplesAverageSeconds)
-                    sampleAdjustSourceStartSecondsSetpoint = Math.round(44100 / sourceobj.playback_period_size * sampleAdjustSourceStartSeconds)
+                    sinkErrorSamplesArrayLengthSetpoint = Math.round(44100 / sourceObj.playback_period_size * settings.sinkErrorSamplesAverageSeconds)
+                    sampleAdjustSinkStartSecondsSetpoint = Math.round(44100 / sourceObj.playback_period_size * sampleAdjustSinkStartSeconds)
+                    sourceErrorSamplesArrayLengthSetpoint = Math.round(44100 / sourceObj.playback_period_size * sourceErrorSamplesAverageSeconds)
+                    sampleAdjustSourceStartSecondsSetpoint = Math.round(44100 / sourceObj.playback_period_size * sampleAdjustSourceStartSeconds)
 
                     spawnecasound()
                 }
@@ -521,11 +522,11 @@ async function spawnaplay() {
 
     console.log(sourceObj)
 
-    console.log('Playback Setup Data', settings.cardName, sourceObj.reported_exact_rate, settings.outputChannels, sourceobj.playback_period_size, sourceObj.playback_buffer_size)
+    console.log('Playback Setup Data', settings.cardName, sourceObj.reported_exact_rate, settings.outputChannels, sourceObj.playback_period_size, sourceObj.playback_buffer_size)
     console.log(process.cwd(), '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11111111')
 
 
-    let teststr = `stdbuf -i0 -o0 -e0 /usr/local/bin/pcm ${settings.cardName} ${sourceObj.reported_exact_rate} ${settings.outputChannels} ${sourceobj.playback_period_size} ${sourceObj.playback_buffer_size}`
+    let teststr = `stdbuf -i0 -o0 -e0 /usr/local/bin/pcm ${settings.cardName} ${sourceObj.reported_exact_rate} ${settings.outputChannels} ${sourceObj.playback_period_size} ${sourceObj.playback_buffer_size}`
 
     aplay = spawn("/bin/sh", ["-c", teststr])
 
@@ -600,7 +601,7 @@ var syncErrorMSamplesArray = []
 
 var syncErrorMSamplesAverageSeconds =  2
 
-var syncErrorMSamplesArrayLengthSetpoint = Math.round(44100 / sourceobj.playback_period_size * syncErrorMSamplesAverageSeconds)
+var syncErrorMSamplesArrayLengthSetpoint = Math.round(44100 / sourceObj.playback_period_size * syncErrorMSamplesAverageSeconds)
 
 */
 
@@ -714,7 +715,7 @@ function sendData() {
         sinkErrorSamplesAverage = average(sinkErrorSamplesArray)
 
         sampleAdjustSink = 0
-        if (sampleTotal / sourceobj.playback_period_size >= sampleAdjustSinkStartSecondsSetpoint) {
+        if (sampleTotal / sourceObj.playback_period_size >= sampleAdjustSinkStartSecondsSetpoint) {
             sampleAdjustSink = Math.floor(Math.abs(sinkErrorSamplesAverage))
 
             //if (sinkErrorSamplesAverage < -0.2 && sinkErrorSamplesAverage > -1) {sampleAdjustSink = 1}
@@ -763,7 +764,7 @@ function sendData() {
             sourceErrorSamplesAverage = average(sourceErrorSamplesArray)
 
             sampleAdjustSource = 0
-            if (sampleTotal / sourceobj.playback_period_size >= sampleAdjustSourceStartSecondsSetpoint) {
+            if (sampleTotal / sourceObj.playback_period_size >= sampleAdjustSourceStartSecondsSetpoint) {
                 sampleAdjustSource = Math.floor(Math.abs(sourceErrorSamplesAverage) / sampleAdjustSourceScaler) * sampleAdjustSourceScaler
                 if (sourceErrorSamplesAverage > 0) { sampleAdjustSource = sampleAdjustSource * -1 }
 
