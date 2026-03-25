@@ -68,7 +68,7 @@ var localSettings = {
     outputChannels: 2,
     playback_buffer_periods: 4,
     mono: false,
-    sinkErrorSamplesAverageSeconds: 0.5
+    sinkErrorSamplesAverageSeconds: 0.1
 }
 
 settings = { ...settings, ...localSettings }
@@ -341,6 +341,7 @@ socketAudio.on('message', function (message, remote) {
                     )
                 ) {
                     console.log('setup data changed restarting UDPplay')
+                    console.log(sourceObj, sourceObjLast)
                     killUDPPlay()
                 }
 
