@@ -20,8 +20,8 @@ function ntpXFACCheck() {
 }
 
 console.log('smartsoundsync ntp XFAC monitor logic')
-ntpXFACCheck()
-setInterval(ntpXFACCheck, 60000)
+//ntpXFACCheck()
+//setInterval(ntpXFACCheck, 60000)
 
 function execSyncPrint(command) {
     let returnData
