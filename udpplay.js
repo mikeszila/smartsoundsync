@@ -331,7 +331,7 @@ socketAudio.on('message', function (message, remote) {
 
                 if (sourceObjLast &&
                     (
-                        sourceObjLast.rate != sourceObj.reported_exact_rate ||
+                        sourceObjLast.reported_exact_rate != sourceObj.reported_exact_rate ||
                         sourceObjLast.period_size != sourceObj.period_size ||
                         sourceObjLast.channels != sourceObj.channels ||
                         sourceObjLast.buffer_size != sourceObj.buffer_size ||
@@ -341,7 +341,7 @@ socketAudio.on('message', function (message, remote) {
                     )
                 ) {
                     console.log('setup data changed restarting UDPplay')
-                    console.log(sourceObj, sourceObjLast)
+                   // console.log(sourceObj, sourceObjLast)
                     killUDPPlay()
                 }
 
