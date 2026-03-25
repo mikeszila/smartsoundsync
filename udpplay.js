@@ -331,7 +331,7 @@ socketAudio.on('message', function (message, remote) {
 
                 if (sourceObjLast &&
                     (
-                        sourceObjLast.rate != sourceObj.rate ||
+                        sourceObjLast.rate != sourceObj.reported_exact_rate ||
                         sourceObjLast.period_size != sourceObj.period_size ||
                         sourceObjLast.channels != sourceObj.channels ||
                         sourceObjLast.buffer_size != sourceObj.buffer_size ||
@@ -595,6 +595,12 @@ let sourceCorrectionsPerSecond = 20
 var sourceErrorSamplesAverageSeconds = settings.sinkErrorSamplesAverageSeconds // 1
 
 var sampleAdjustSourceStartSeconds = 2
+
+
+let sinkErrorSamplesArrayLengthSetpoint = 0
+let sampleAdjustSinkStartSecondsSetpoint = 0
+let sourceErrorSamplesArrayLengthSetpoint = 0
+let sampleAdjustSourceStartSecondsSetpoint = 0
 
 /* var syncErrorMSamplesAverage = 0
 var syncErrorMSamplesArray = []
