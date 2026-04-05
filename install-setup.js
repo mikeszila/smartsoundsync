@@ -50,6 +50,15 @@ function serviceUnitExists(serviceName) {
     }
 }
 
+function serviceIsActive(serviceName) {
+    try {
+        execSync(`systemctl is-active --quiet ${serviceName}`);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
 function stopDisableServiceIfExists(serviceName) {
     if (!serviceUnitExists(serviceName)) {
         console.log(`service ${serviceName} does not exist, skipping disable`);
@@ -538,7 +547,9 @@ if (!stopOnly) {
         currentNtpConfig = fs.readFileSync(ntpConfigPath, "utf8");
     }
 
-    if (currentNtpConfig !== ntpConfigTemplate) {
+    const ntpConfigChanged = currentNtpConfig !== ntpConfigTemplate;
+
+    if (ntpConfigChanged) {
         console.log(`ntp config different. Writing new config to ${ntpConfigPath}`);
         fs.writeFileSync(ntpConfigPath, ntpConfigTemplate, "utf8");
     } else {
@@ -546,7 +557,14 @@ if (!stopOnly) {
     }
 
     unmaskEnableServiceIfExists(ntpConfigDetails.serviceName);
-    execSyncPrint(`systemctl restart ${ntpConfigDetails.serviceName}`);
+    if (ntpConfigChanged) {
+        execSyncPrint(`systemctl restart ${ntpConfigDetails.serviceName}`);
+    } else if (!serviceIsActive(ntpConfigDetails.serviceName)) {
+        console.log(`${ntpConfigDetails.serviceName} is not active. Starting it without forcing a restart.`);
+        execSyncPrint(`systemctl start ${ntpConfigDetails.serviceName}`);
+    } else {
+        console.log(`${ntpConfigDetails.serviceName} already active and config unchanged. Skipping restart.`);
+    }
 
     if (settings.sink) {
         if (fs.existsSync(`${installLocation}/pcm`)) {
