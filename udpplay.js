@@ -276,12 +276,52 @@ function logExcursion(reason, extra) {
     }
 }
 
+function getExpectedSinkThresholdWindow() {
+    return {
+        stableThresholdSamples: settings.syncStableThresholdSamples,
+        stableThresholdMS: numberFormat(settings.syncStableThresholdSamples * sampleTimeMS),
+        debugThresholdSamples: settings.debugExcursionsThresholdSamples,
+        debugThresholdMS: numberFormat(settings.debugExcursionsThresholdSamples * sampleTimeMS),
+        postLockThresholdSamples: settings.postLockExcursionThresholdSamples,
+        postLockThresholdMS: numberFormat(settings.postLockExcursionThresholdSamples * sampleTimeMS),
+        stableAdjustThreshold: settings.syncStableThresholdAdjust,
+        postLockAdjustThreshold: settings.postLockExcursionThresholdAdjust,
+        sourceAdjustStepSamples: numberFormat(sampleAdjustSourceScaler),
+        sourceCorrectionMinSamples: numberFormat(sourceSamplePerCorrection)
+    }
+}
+
+function getExpectedSinkPlaybackWindow() {
+    if (!sourceObj) { return null }
+
+    const targetDelaySamples = sourceObj.playback_buffer_size - sourceObj.playback_period_size
+    const targetAvailSamples = sourceObj.playback_period_size
+
+    return {
+        playbackPeriodSize: sourceObj.playback_period_size,
+        playbackBufferSize: sourceObj.playback_buffer_size,
+        aplaySendPeriodSize: aplay_send_period_size,
+        targetDelaySamples: targetDelaySamples,
+        targetDelayMS: numberFormat(targetDelaySamples * sampleTimeMS),
+        targetAvailSamples: targetAvailSamples,
+        targetAvailMS: numberFormat(targetAvailSamples * sampleTimeMS)
+    }
+}
+
+function getExpectedSinkWindow() {
+    return {
+        thresholds: getExpectedSinkThresholdWindow(),
+        playback: getExpectedSinkPlaybackWindow()
+    }
+}
+
 function resetStableSyncTracking(reason) {
     if (syncStable) {
         logExcursion('syncStableLost', {
             lostReason: reason,
             stableForWindows: syncStableWindowCount,
-            stableSince: syncStableSince
+            stableSince: syncStableSince,
+            expectedSinkWindow: getExpectedSinkWindow()
         })
     }
 
@@ -761,9 +801,11 @@ function getData() {
                 }
             }
             if (syncErrorFind == 0) {
-                console.log("Sync not found !!!!!!!!!!!!!!!!1")
-                logExcursion('syncNotFound')
-            }
+            console.log("Sync not found !!!!!!!!!!!!!!!!1")
+            logExcursion('syncNotFound', {
+                expectedSinkWindow: getExpectedSinkWindow()
+            })
+        }
         }
 
         if (syncIndex != 0) {
@@ -786,14 +828,20 @@ function getData() {
                     syncLostLogged = false
                 } else {
                     console.log("ecasound data for ", syncIndex, "not found", 'ecasoundIndex', ecasoundIndex, 'lowestEccasound', lowestEccasoundlast)
-                    logExcursion('ecasoundChunkMissing', { missingSyncIndex: syncIndex })
+                    logExcursion('ecasoundChunkMissing', {
+                        missingSyncIndex: syncIndex,
+                        expectedSinkWindow: getExpectedSinkWindow()
+                    })
                     resetStableSyncTracking('ecasoundChunkMissing')
                     syncIndex = 0
                 }
 
             } else {
                 console.log("frame", syncIndex, "not found")
-                logExcursion('frameMissing', { missingSyncIndex: syncIndex })
+                logExcursion('frameMissing', {
+                    missingSyncIndex: syncIndex,
+                    expectedSinkWindow: getExpectedSinkWindow()
+                })
                 resetStableSyncTracking('frameMissing')
                 syncIndex = 0
             }
@@ -971,7 +1019,8 @@ function sendData() {
                 logExcursion('syncStable', {
                     stableWindowCount: syncStableWindowCount,
                     thresholdSamples: settings.syncStableThresholdSamples,
-                    thresholdAdjust: settings.syncStableThresholdAdjust
+                    thresholdAdjust: settings.syncStableThresholdAdjust,
+                    expectedSinkWindow: getExpectedSinkWindow()
                 })
             }
         } else if (!syncStable) {
@@ -990,7 +1039,8 @@ function sendData() {
                 stableSince: syncStableSince,
                 stableWindowCount: syncStableWindowCount,
                 thresholdSamples: settings.postLockExcursionThresholdSamples,
-                thresholdAdjust: settings.postLockExcursionThresholdAdjust
+                thresholdAdjust: settings.postLockExcursionThresholdAdjust,
+                expectedSinkWindow: getExpectedSinkWindow()
             })
         } else if (!postLockExcursion) {
             postLockExcursionActive = false
@@ -999,7 +1049,10 @@ function sendData() {
         const sinkExcursionThreshold = Math.abs(sinkErrorSamplesAverage) >= settings.debugExcursionsThresholdSamples
         if (sinkExcursionThreshold && !sinkExcursionActive) {
             sinkExcursionActive = true
-            logExcursion('sinkThresholdCross', { threshold: settings.debugExcursionsThresholdSamples })
+            logExcursion('sinkThresholdCross', {
+                threshold: settings.debugExcursionsThresholdSamples,
+                expectedSinkWindow: getExpectedSinkWindow()
+            })
         } else if (!sinkExcursionThreshold) {
             sinkExcursionActive = false
         }
@@ -1007,7 +1060,10 @@ function sendData() {
         const sourceExcursionThreshold = Math.abs(sourceErrorSamplesAverage) >= settings.debugExcursionsThresholdSamples
         if (sourceExcursionThreshold && !sourceExcursionActive) {
             sourceExcursionActive = true
-            logExcursion('sourceThresholdCross', { threshold: settings.debugExcursionsThresholdSamples })
+            logExcursion('sourceThresholdCross', {
+                threshold: settings.debugExcursionsThresholdSamples,
+                expectedSinkWindow: getExpectedSinkWindow()
+            })
         } else if (!sourceExcursionThreshold) {
             sourceExcursionActive = false
         }
@@ -1016,7 +1072,8 @@ function sendData() {
         if (previousSampleAdjustSinkSign !== 0 && currentSampleAdjustSinkSign !== 0 && previousSampleAdjustSinkSign !== currentSampleAdjustSinkSign) {
             logExcursion('sampleAdjustSinkSignFlip', {
                 previousSampleAdjustSinkSign: previousSampleAdjustSinkSign,
-                currentSampleAdjustSinkSign: currentSampleAdjustSinkSign
+                currentSampleAdjustSinkSign: currentSampleAdjustSinkSign,
+                expectedSinkWindow: getExpectedSinkWindow()
             })
         }
         if (currentSampleAdjustSinkSign !== 0) {
@@ -1027,7 +1084,8 @@ function sendData() {
         if (previousSampleAdjustSourceSign !== 0 && currentSampleAdjustSourceSign !== 0 && previousSampleAdjustSourceSign !== currentSampleAdjustSourceSign) {
             logExcursion('sampleAdjustSourceSignFlip', {
                 previousSampleAdjustSourceSign: previousSampleAdjustSourceSign,
-                currentSampleAdjustSourceSign: currentSampleAdjustSourceSign
+                currentSampleAdjustSourceSign: currentSampleAdjustSourceSign,
+                expectedSinkWindow: getExpectedSinkWindow()
             })
         }
         if (currentSampleAdjustSourceSign !== 0) {
@@ -1039,7 +1097,9 @@ function sendData() {
         sampleAdjustSink = 0
         syncErrorresetAverage()
         if (!syncLostLogged) {
-            logExcursion('syncIndexReset')
+            logExcursion('syncIndexReset', {
+                expectedSinkWindow: getExpectedSinkWindow()
+            })
             syncLostLogged = true
         }
         resetStableSyncTracking('syncIndexReset')
@@ -1050,7 +1110,10 @@ function sendData() {
 
     if (shortData > 0) {
         console.log('Inserting SILENCE samples:', shortData, 'audiobuffer', Math.floor(audiobuffer.length / outputbytesPerSample), 'avail', avail)
-        logExcursion('shortData', { shortData: shortData })
+        logExcursion('shortData', {
+            shortData: shortData,
+            expectedSinkWindow: getExpectedSinkWindow()
+        })
 
         let shortDataBuffer = Buffer.alloc(shortData * outputbytesPerSample);
         audiobuffer = Buffer.concat([audiobuffer, shortDataBuffer])
