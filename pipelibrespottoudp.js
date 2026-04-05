@@ -259,11 +259,6 @@ function readFunc() {
                 sinkErrorAdjustms = sinkErrorAdjust * sampleTimeMS
                 sendTime = sendTime - sinkErrorAdjustms
 
-                sourceErrorAdjust = sourceErrorSamples / errorDistrobutionMultiplier
-
-            } else {
-                sourceErrorAdjust = sourceErrorSamples
-
             }
 
             sourceErrorAdjust = sourceErrorSamples / errorDistrobutionMultiplier
