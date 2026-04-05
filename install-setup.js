@@ -4,6 +4,26 @@ const os = require("os");
 const fs = require("fs");
 const { execSync } = require("child_process");
 
+const installScriptStartMS = Date.now();
+const originalConsoleLog = console.log.bind(console);
+const originalConsoleError = console.error.bind(console);
+
+function formatElapsedMS(elapsedMS) {
+    return `+${(elapsedMS / 1000).toFixed(3)}s`;
+}
+
+function formatLogPrefix() {
+    return `${new Date().toISOString()} ${formatElapsedMS(Date.now() - installScriptStartMS)}`;
+}
+
+console.log = function (...args) {
+    originalConsoleLog(formatLogPrefix(), ...args);
+};
+
+console.error = function (...args) {
+    originalConsoleError(formatLogPrefix(), ...args);
+};
+
 String.prototype.replaceAll = function (search, replacement) {
     var target = this;
     return target.split(search).join(replacement);
@@ -20,9 +40,17 @@ process.argv.forEach(function (value, index) {
 });
 
 function execSyncPrint(command) {
-    console.log(command);
-    let returnData = execSync(command, { stdio: "inherit" });
-    return returnData;
+    const commandStartMS = Date.now();
+    console.log(`[exec start] ${command}`);
+
+    try {
+        let returnData = execSync(command, { stdio: "inherit" });
+        console.log(`[exec done ${formatElapsedMS(Date.now() - commandStartMS)}] ${command}`);
+        return returnData;
+    } catch (error) {
+        console.error(`[exec fail ${formatElapsedMS(Date.now() - commandStartMS)}] ${command}`);
+        throw error;
+    }
 }
 
 function packageIsInstalled(packageName) {
