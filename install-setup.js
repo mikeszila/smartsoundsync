@@ -31,11 +31,16 @@ String.prototype.replaceAll = function (search, replacement) {
 
 // remove existing services
 let stopOnly = false;
+let restartAllServices = false;
 
 process.argv.forEach(function (value, index) {
     console.log(value);
     if (value === "--stop") {
         stopOnly = true;
+    }
+
+    if (value === "--restart-all") {
+        restartAllServices = true;
     }
 });
 
@@ -234,7 +239,7 @@ function writeServiceFileIfChanged(serviceName, serviceTemplate) {
 function applyServiceState(serviceName, unitChanged) {
     enableServiceIfNeeded(serviceName);
 
-    if (unitChanged && serviceIsActive(serviceName)) {
+    if ((unitChanged || restartAllServices) && serviceIsActive(serviceName)) {
         try {
             execSyncPrint(`systemctl restart ${serviceName}`);
         } catch (error) {
