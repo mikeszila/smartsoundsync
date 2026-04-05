@@ -31,16 +31,11 @@ String.prototype.replaceAll = function (search, replacement) {
 
 // remove existing services
 let stopOnly = false;
-let restartAllServices = false;
 
 process.argv.forEach(function (value, index) {
     console.log(value);
     if (value === "--stop") {
         stopOnly = true;
-    }
-
-    if (value === "--restart-all") {
-        restartAllServices = true;
     }
 });
 
@@ -140,120 +135,56 @@ let binLocation = "/usr/local/bin/";
 
 let search = "/lib/systemd/system/";
 let replacer = new RegExp(search, "g");
-let systemdUnitDir = "/lib/systemd/system/";
 
 let existingServices = String(execSync(`find /lib/systemd/system -name 'smartsoundsync*'`));
 existingServices = existingServices.replace(replacer, "");
 existingServices = existingServices.split(/\r?\n/);
 
-function getServiceUnitPath(serviceName) {
-    return `${systemdUnitDir}${serviceName}`;
-}
+existingServices.forEach(function (value, index) {
+    if (value.length > 0) {
+        try {
+            execSyncPrint(`systemctl stop ${value}`);
+        } catch (error) {
+            console.log("Error: could not stop", value, error);
+        }
 
-function removeServiceUnitFile(serviceName) {
-    let serviceUnitPath = getServiceUnitPath(serviceName);
+        try {
+            execSyncPrint(`systemctl disable ${value}`);
+        } catch (error) {
+            console.log("Error: could not disable", value, error);
+        }
 
-    if (!fs.existsSync(serviceUnitPath)) {
-        return;
+        try {
+            execSyncPrint(`rm /lib/systemd/system/${value}`);
+        } catch (error) {
+            console.log("Error: could not remove", value, error);
+        }
     }
+});
 
-    execSyncPrint(`rm ${serviceUnitPath}`);
-}
-
-function stopServiceIfActive(serviceName) {
-    if (!serviceIsActive(serviceName)) {
-        return;
-    }
+function writeServiceFile(serviceName, serviceTemplate) {
+    console.log(`writing service file ${serviceName}`);
+    fs.writeFileSync(`${installLocation}/${serviceName}`, serviceTemplate, "utf8");
 
     try {
-        execSyncPrint(`systemctl stop ${serviceName}`);
+        execSyncPrint(`mv ${installLocation}/${serviceName} /lib/systemd/system/${serviceName}`);
     } catch (error) {
-        console.log("Error: could not stop", serviceName, error);
+        console.log(`Error: error moving service file to systemd. deleting template ${serviceName}`, error);
+        execSyncPrint(`rm ${installLocation}/${serviceName}`);
     }
 }
 
-function serviceIsEnabled(serviceName) {
-    try {
-        execSync(`systemctl is-enabled --quiet ${serviceName}`);
-        return true;
-    } catch (error) {
-        return false;
-    }
-}
-
-function disableServiceIfEnabled(serviceName) {
-    if (!serviceIsEnabled(serviceName)) {
-        return;
-    }
-
-    try {
-        execSyncPrint(`systemctl disable ${serviceName}`);
-    } catch (error) {
-        console.log("Error: could not disable", serviceName, error);
-    }
-}
-
-function unmaskServiceIfExists(serviceName) {
-    if (!serviceUnitExists(serviceName)) {
-        console.log(`service ${serviceName} does not exist, skipping unmask`);
-        return;
-    }
-
-    try {
-        execSyncPrint(`systemctl unmask ${serviceName}`);
-    } catch (error) {
-        console.log(`Error: could not unmask ${serviceName}`, error);
-    }
-}
-
-function enableServiceIfNeeded(serviceName) {
-    if (serviceIsEnabled(serviceName)) {
-        return;
-    }
-
+function serviceStart(serviceName) {
     try {
         execSyncPrint(`systemctl enable ${serviceName}`);
     } catch (error) {
         console.log("Error: could not enable", serviceName, error);
     }
-}
 
-function writeServiceFileIfChanged(serviceName, serviceTemplate) {
-    let serviceUnitPath = getServiceUnitPath(serviceName);
-    let existingTemplate = "";
-
-    if (fs.existsSync(serviceUnitPath)) {
-        existingTemplate = fs.readFileSync(serviceUnitPath, "utf8");
-    }
-
-    if (existingTemplate === serviceTemplate) {
-        console.log(`service file unchanged ${serviceName}`);
-        return false;
-    }
-
-    console.log(`writing service file ${serviceName}`);
-    fs.writeFileSync(serviceUnitPath, serviceTemplate, "utf8");
-    return true;
-}
-
-function applyServiceState(serviceName, unitChanged) {
-    enableServiceIfNeeded(serviceName);
-
-    if ((unitChanged || restartAllServices) && serviceIsActive(serviceName)) {
-        try {
-            execSyncPrint(`systemctl restart ${serviceName}`);
-        } catch (error) {
-            console.log("Error: could not restart", serviceName, error);
-        }
-        return;
-    }
-
-    if (!serviceIsActive(serviceName)) {
-        try {
-            execSyncPrint(`systemctl start ${serviceName}`);
-        } catch (error) {
-            console.log("Error: could not start", serviceName, error);
-        }
+    try {
+        execSyncPrint(`systemctl start ${serviceName}`);
+    } catch (error) {
+        console.log("Error: could not start", serviceName, error);
     }
 }
 
@@ -280,17 +211,6 @@ function makeEcasoundConfig() {
     execSync(`cp ${installLocation}/config_examples/${ecasoundChainSetupFileName} ${ecasoundChainSetupFilePath}`);
     execSync(`cp ${installLocation}/config_examples/${ecasoundFilterFileName} ${ecasoundFilterFilePath}`);
     execSyncPrint(`chown -R ${installLocationUser} ${configFileDir}`);
-}
-
-function stopOnlyCleanup() {
-    existingServices.forEach(function (serviceName) {
-        if (serviceName.length === 0) {
-            return;
-        }
-
-        stopServiceIfActive(serviceName);
-        disableServiceIfEnabled(serviceName);
-    });
 }
 
 function ensureRustToolchain() {
@@ -464,8 +384,6 @@ function getNtpStatusServiceSettings(settings) {
 }
 
 function standardizeOnNtpsec() {
-    let removedConflictingNtpPackages = false;
-
     if (!packageIsInstalled("ntpsec")) {
         execSyncPrint(`apt install ntpsec -y`);
     } else {
@@ -479,7 +397,6 @@ function standardizeOnNtpsec() {
     if (packageIsInstalled("ntp")) {
         try {
             execSyncPrint(`apt purge ntp -y`);
-            removedConflictingNtpPackages = true;
         } catch (error) {
             console.log("Error: could not purge ntp", error);
         }
@@ -488,21 +405,12 @@ function standardizeOnNtpsec() {
     if (packageIsInstalled("chrony")) {
         try {
             execSyncPrint(`apt purge chrony -y`);
-            removedConflictingNtpPackages = true;
         } catch (error) {
             console.log("Error: could not purge chrony", error);
         }
     }
 
-    if (removedConflictingNtpPackages) {
-        try {
-            execSyncPrint(`apt autoremove -y`);
-        } catch (error) {
-            console.log("Error: could not run apt autoremove", error);
-        }
-    } else {
-        console.log("no conflicting ntp packages removed. Skipping apt autoremove.");
-    }
+    unmaskEnableServiceIfExists("ntpsec");
 }
 
 const librespotRepoZip = "https://github.com/mikeszila/librespot/archive/dev.zip";
@@ -530,9 +438,7 @@ function setInstalledLibrespotCommit(commit) {
     fs.writeFileSync(librespotCommitFile, `${commit}\n`, "utf8");
 }
 
-if (stopOnly) {
-    stopOnlyCleanup();
-} else {
+if (!stopOnly) {
     if (fs.existsSync("/usr/local/etc/smartsoundsyncconf.js")) {
         console.log("found old style config.  Converting to new style at", configFilePath);
         execSync(`mkdir -p /usr/local/etc/smartsoundsync/`);
@@ -672,8 +578,6 @@ if (stopOnly) {
         console.log("no changes to ntp config.");
     }
 
-    unmaskServiceIfExists(ntpConfigDetails.serviceName);
-    enableServiceIfNeeded(ntpConfigDetails.serviceName);
     if (ntpConfigChanged) {
         execSyncPrint(`systemctl restart ${ntpConfigDetails.serviceName}`);
     } else if (!serviceIsActive(ntpConfigDetails.serviceName)) {
@@ -861,9 +765,7 @@ if (stopOnly) {
 
     let serviceName = "";
     let serviceTemplate = "";
-    let desiredServiceFiles = [];
-    let servicesToActivate = [];
-    let changedServices = [];
+    let servicesToStart = [];
     let execArguments = "";
     let priority = 1;
 
@@ -891,11 +793,8 @@ WantedBy=multi-user.target
 `;
     serviceName = `smartsoundsynccommon.service`;
 
-    if (writeServiceFileIfChanged(serviceName, serviceTemplate)) {
-        changedServices.push(serviceName);
-    }
-    desiredServiceFiles.push(serviceName);
-    servicesToActivate.push(serviceName);
+    writeServiceFile(serviceName, serviceTemplate);
+    servicesToStart.push(serviceName);
 
     execArguments = `"${execArgumentsParse(ntpStatusSettings)}"`;
 
@@ -918,11 +817,8 @@ WantedBy=multi-user.target
 `;
     serviceName = `smartsoundsyncntp.service`;
 
-    if (writeServiceFileIfChanged(serviceName, serviceTemplate)) {
-        changedServices.push(serviceName);
-    }
-    desiredServiceFiles.push(serviceName);
-    servicesToActivate.push(serviceName);
+    writeServiceFile(serviceName, serviceTemplate);
+    servicesToStart.push(serviceName);
 
     if (settings.controller) {
         execArguments = "";
@@ -953,11 +849,8 @@ WantedBy=multi-user.target
 `;
         serviceName = `smartsoundsynccontrol.service`;
 
-        if (writeServiceFileIfChanged(serviceName, serviceTemplate)) {
-            changedServices.push(serviceName);
-        }
-        desiredServiceFiles.push(serviceName);
-        servicesToActivate.push(serviceName);
+        writeServiceFile(serviceName, serviceTemplate);
+        servicesToStart.push(serviceName);
     }
 
     if (settings.sink) {
@@ -990,14 +883,10 @@ WantedBy=multi-user.target
 `;
         serviceName = `smartsoundsyncsink.service`;
 
-        if (writeServiceFileIfChanged(serviceName, serviceTemplate)) {
-            changedServices.push(serviceName);
-        }
-
-        desiredServiceFiles.push(serviceName);
+        writeServiceFile(serviceName, serviceTemplate);
 
         if (!hasHifiberryDacDSP) {
-            servicesToActivate.push(serviceName);
+            servicesToStart.push(serviceName);
         }
     }
 
@@ -1036,11 +925,8 @@ WantedBy=multi-user.target
 `;
                 serviceName = `smartsoundsyncspdif${sourceSettings.audioSourceDisplayName}.service`;
 
-                if (writeServiceFileIfChanged(serviceName, serviceTemplate)) {
-                    changedServices.push(serviceName);
-                }
-                desiredServiceFiles.push(serviceName);
-                servicesToActivate.push(serviceName);
+                writeServiceFile(serviceName, serviceTemplate);
+                servicesToStart.push(serviceName);
             }
 
             if (sourceSettings.audioSourceType === "Spotify") {
@@ -1063,11 +949,8 @@ WantedBy=multi-user.target
 `;
                 serviceName = `smartsoundsyncspotify${sourceSettings.audioSourceDisplayName}.service`;
 
-                if (writeServiceFileIfChanged(serviceName, serviceTemplate)) {
-                    changedServices.push(serviceName);
-                }
-                desiredServiceFiles.push(serviceName);
-                servicesToActivate.push(serviceName);
+                writeServiceFile(serviceName, serviceTemplate);
+                servicesToStart.push(serviceName);
             }
 
             if (sourceSettings.audioSourceType === "Airplay") {
@@ -1094,45 +977,18 @@ WantedBy=multi-user.target
 `;
                 serviceName = `smartsoundsyncairplay${sourceSettings.audioSourceDisplayName}.service`;
 
-                if (writeServiceFileIfChanged(serviceName, serviceTemplate)) {
-                    changedServices.push(serviceName);
-                }
-                desiredServiceFiles.push(serviceName);
-                servicesToActivate.push(serviceName);
+                writeServiceFile(serviceName, serviceTemplate);
+                servicesToStart.push(serviceName);
             }
         });
     }
 
-    let removedServices = [];
+    execSyncPrint(`systemctl daemon-reload`);
 
-    existingServices.forEach(function (serviceName) {
-        if (serviceName.length === 0) {
-            return;
-        }
-
-        if (desiredServiceFiles.includes(serviceName)) {
-            return;
-        }
-
-        console.log(`removing obsolete service ${serviceName}`);
-        stopServiceIfActive(serviceName);
-        disableServiceIfEnabled(serviceName);
-        removeServiceUnitFile(serviceName);
-        removedServices.push(serviceName);
-    });
-
-    if (changedServices.length > 0 || removedServices.length > 0) {
-        execSyncPrint(`systemctl daemon-reload`);
-    } else {
-        console.log("no service unit changes detected. Skipping systemctl daemon-reload.");
-    }
-
-    servicesToActivate.forEach(function (serviceName) {
-        applyServiceState(serviceName, changedServices.includes(serviceName));
+    servicesToStart.forEach(function (value, index) {
+        serviceStart(value);
     });
 }
 
-if (!stopOnly) {
-    execSyncPrint(`chown -R ${installLocationUser} ${installLocation}`);
-    execSyncPrint(`chown -R ${installLocationUser} ${configFileDir}`);
-}
+execSyncPrint(`chown -R ${installLocationUser} ${installLocation}`);
+execSyncPrint(`chown -R ${installLocationUser} ${configFileDir}`);
