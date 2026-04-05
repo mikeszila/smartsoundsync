@@ -47,6 +47,20 @@ let sampleTimeMS = 1 / reported_exact_rate * 1000
 
 let highVolumeLimit = true
 
+function getExpectedSendLeadWindow() {
+    const targetMinMS = source_buffer_time + reported_period_time
+    const targetMaxMS = targetMinMS + reported_period_time
+    const slackMS = Math.max(playback_period_time, settings.debugExcursionsThresholdSamples * sampleTimeMS)
+
+    return {
+        targetMinMS: targetMinMS,
+        targetMaxMS: targetMaxMS,
+        minMS: targetMinMS - slackMS,
+        maxMS: targetMaxMS + slackMS,
+        slackMS: slackMS
+    }
+}
+
 function cacheSafeName(name) {
     return String(name || 'default').replace(/[^a-zA-Z0-9._-]/g, '_');
 }
@@ -321,16 +335,26 @@ function readFunc() {
                 logSourceExcursion('sendTimeReset', {
                     dateNow: dateNow,
                     sendLeadMS: numberFormat(sendTime - dateNow, 3),
-                    reported_period_time: numberFormat(reported_period_time, 3)
+                    reported_period_time: numberFormat(reported_period_time, 3),
+                    expectedLeadWindow: getExpectedSendLeadWindow()
                 })
                 sendTime = dateNow + reported_period_time // reset sendTime if it get's too far behind, typically due to pause or first scan.  
             }
             const sendLeadMS = sendTime - dateNow
-            if (Math.abs(sendLeadMS) > (reported_period_time * 2)) {
+            const expectedSendLeadWindow = getExpectedSendLeadWindow()
+            if (sendLeadMS < expectedSendLeadWindow.minMS || sendLeadMS > expectedSendLeadWindow.maxMS) {
                 logSourceExcursion('sendLeadAnomaly', {
                     dateNow: dateNow,
                     sendLeadMS: numberFormat(sendLeadMS, 3),
-                    reported_period_time: numberFormat(reported_period_time, 3)
+                    reported_period_time: numberFormat(reported_period_time, 3),
+                    source_buffer_time: numberFormat(source_buffer_time, 3),
+                    expectedLeadWindow: {
+                        minMS: numberFormat(expectedSendLeadWindow.minMS, 3),
+                        maxMS: numberFormat(expectedSendLeadWindow.maxMS, 3),
+                        targetMinMS: numberFormat(expectedSendLeadWindow.targetMinMS, 3),
+                        targetMaxMS: numberFormat(expectedSendLeadWindow.targetMaxMS, 3),
+                        slackMS: numberFormat(expectedSendLeadWindow.slackMS, 3)
+                    }
                 })
             }
             if (captureState == 'active') { buffertoudp.sendAudioUDP(audioData, sendTime, sampleIndex) }
