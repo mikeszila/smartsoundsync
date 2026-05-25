@@ -70,15 +70,7 @@ var localSettings = {
     outputChannels: 2,
     playback_buffer_periods: 4,
     mono: false,
-    sinkErrorSamplesAverageSeconds: 0.5,
-    debugExcursions: true,
-    debugExcursionsThresholdSamples: 4,
-    debugExcursionsHistorySize: 48,
-    syncStableThresholdSamples: 1,
-    syncStableThresholdAdjust: 1,
-    syncStableRequiredWindows: 24,
-    postLockExcursionThresholdSamples: 6,
-    postLockExcursionThresholdAdjust: 3
+    sinkErrorSamplesAverageSeconds: 0.5
 }
 
 settings = { ...settings, ...localSettings }
@@ -196,141 +188,6 @@ socketAudio.on('listening', () => {
 
 let audioConnectRequestTimoutPointer = false
 
-let excursionHistory = []
-let sinkExcursionActive = false
-let sourceExcursionActive = false
-let previousSampleAdjustSinkSign = 0
-let previousSampleAdjustSourceSign = 0
-let syncLostLogged = false
-let syncStable = false
-let syncStableWindowCount = 0
-let postLockExcursionActive = false
-let syncStableSince = null
-
-function excursionSign(value) {
-    if (value > 0) { return 1 }
-    if (value < 0) { return -1 }
-    return 0
-}
-
-function pushExcursionHistory(reason) {
-    if (!settings.debugExcursions) { return }
-
-    excursionHistory.push({
-        ts: new Date().toISOString(),
-        reason: reason,
-        syncIndex: syncIndex,
-        syncIndexWritten: syncIndexWritten,
-        cardTimeht: numberFormat(cardTimeht),
-        audiobuffferTime: numberFormat(audiobuffferTime),
-        syncErrorMS: numberFormat(syncErrorMS),
-        sinkErrorSamples: numberFormat(sinkErrorSamples),
-        sinkErrorSamplesAverage: numberFormat(sinkErrorSamplesAverage),
-        sourceErrorSamples: numberFormat(sourceErrorSamples),
-        sourceErrorSamplesAverage: numberFormat(sourceErrorSamplesAverage),
-        sampleAdjustSink: numberFormat(sampleAdjustSink),
-        sampleAdjustSource: numberFormat(sampleAdjustSource),
-        avail: avail,
-        delay: delay,
-        bufferSamples: Math.floor(audiobuffer.length / outputbytesPerSample),
-        samplesSinceSink: samples_since_correct_sink,
-        samplesSinceSource: samples_since_correct_source
-    })
-
-    if (excursionHistory.length > settings.debugExcursionsHistorySize) {
-        excursionHistory.shift()
-    }
-}
-
-function logExcursion(reason, extra) {
-    if (!settings.debugExcursions) { return }
-
-    const snapshot = {
-        ts: new Date().toISOString(),
-        reason: reason,
-        syncIndex: syncIndex,
-        syncIndexWritten: syncIndexWritten,
-        cardTimeht: numberFormat(cardTimeht),
-        audiobuffferTime: numberFormat(audiobuffferTime),
-        syncErrorMS: numberFormat(syncErrorMS),
-        sinkErrorSamples: numberFormat(sinkErrorSamples),
-        sinkErrorSamplesAverage: numberFormat(sinkErrorSamplesAverage),
-        sourceErrorSamples: numberFormat(sourceErrorSamples),
-        sourceErrorSamplesAverage: numberFormat(sourceErrorSamplesAverage),
-        sampleAdjustSink: numberFormat(sampleAdjustSink),
-        sampleAdjustSource: numberFormat(sampleAdjustSource),
-        avail: avail,
-        delay: delay,
-        bufferSamples: Math.floor(audiobuffer.length / outputbytesPerSample),
-        samplesSinceSink: samples_since_correct_sink,
-        samplesSinceSource: samples_since_correct_source
-    }
-
-    if (extra) {
-        Object.assign(snapshot, extra)
-    }
-
-    console.log('EXCURSION', JSON.stringify(snapshot))
-    if (excursionHistory.length > 0) {
-        console.log('EXCURSION_HISTORY', JSON.stringify(excursionHistory))
-    }
-}
-
-function getExpectedSinkThresholdWindow() {
-    return {
-        stableThresholdSamples: settings.syncStableThresholdSamples,
-        stableThresholdMS: numberFormat(settings.syncStableThresholdSamples * sampleTimeMS),
-        debugThresholdSamples: settings.debugExcursionsThresholdSamples,
-        debugThresholdMS: numberFormat(settings.debugExcursionsThresholdSamples * sampleTimeMS),
-        postLockThresholdSamples: settings.postLockExcursionThresholdSamples,
-        postLockThresholdMS: numberFormat(settings.postLockExcursionThresholdSamples * sampleTimeMS),
-        stableAdjustThreshold: settings.syncStableThresholdAdjust,
-        postLockAdjustThreshold: settings.postLockExcursionThresholdAdjust,
-        sourceAdjustStepSamples: numberFormat(sampleAdjustSourceScaler),
-        sourceCorrectionMinSamples: numberFormat(sourceSamplePerCorrection)
-    }
-}
-
-function getExpectedSinkPlaybackWindow() {
-    if (!sourceObj) { return null }
-
-    const targetDelaySamples = sourceObj.playback_buffer_size - sourceObj.playback_period_size
-    const targetAvailSamples = sourceObj.playback_period_size
-
-    return {
-        playbackPeriodSize: sourceObj.playback_period_size,
-        playbackBufferSize: sourceObj.playback_buffer_size,
-        aplaySendPeriodSize: aplay_send_period_size,
-        targetDelaySamples: targetDelaySamples,
-        targetDelayMS: numberFormat(targetDelaySamples * sampleTimeMS),
-        targetAvailSamples: targetAvailSamples,
-        targetAvailMS: numberFormat(targetAvailSamples * sampleTimeMS)
-    }
-}
-
-function getExpectedSinkWindow() {
-    return {
-        thresholds: getExpectedSinkThresholdWindow(),
-        playback: getExpectedSinkPlaybackWindow()
-    }
-}
-
-function resetStableSyncTracking(reason) {
-    if (syncStable) {
-        logExcursion('syncStableLost', {
-            lostReason: reason,
-            stableForWindows: syncStableWindowCount,
-            stableSince: syncStableSince,
-            expectedSinkWindow: getExpectedSinkWindow()
-        })
-    }
-
-    syncStable = false
-    syncStableWindowCount = 0
-    postLockExcursionActive = false
-    syncStableSince = null
-}
-
 function audioConnectRequest() {
 
     if (selectedSource) {
@@ -341,15 +198,6 @@ function audioConnectRequest() {
             port: socketAudio.address().port,
             sampleAdjustSource: sampleAdjustSourceSend,
             sampleAdjustSink: sampleAdjustSinkSend
-        }
-
-        if (settings.debugExcursions && (connectObj.sampleAdjustSource !== 0 || connectObj.sampleAdjustSink !== 0)) {
-            logExcursion('audioConnectRequest', {
-                connectSampleAdjustSource: connectObj.sampleAdjustSource,
-                connectSampleAdjustSink: connectObj.sampleAdjustSink,
-                selectedSourceHost: selectedSource.hostname,
-                selectedSourcePort: selectedSource.audioPort
-            })
         }
 
         sampleAdjustSourceSend = 0
@@ -801,11 +649,8 @@ function getData() {
                 }
             }
             if (syncErrorFind == 0) {
-            console.log("Sync not found !!!!!!!!!!!!!!!!1")
-            logExcursion('syncNotFound', {
-                expectedSinkWindow: getExpectedSinkWindow()
-            })
-        }
+                console.log("Sync not found !!!!!!!!!!!!!!!!1")
+            }
         }
 
         if (syncIndex != 0) {
@@ -825,24 +670,13 @@ function getData() {
                     delete framesList[syncIndex.toString()]
                     syncIndexWritten = syncIndex
                     syncIndex = syncIndex + 1
-                    syncLostLogged = false
                 } else {
                     console.log("ecasound data for ", syncIndex, "not found", 'ecasoundIndex', ecasoundIndex, 'lowestEccasound', lowestEccasoundlast)
-                    logExcursion('ecasoundChunkMissing', {
-                        missingSyncIndex: syncIndex,
-                        expectedSinkWindow: getExpectedSinkWindow()
-                    })
-                    resetStableSyncTracking('ecasoundChunkMissing')
                     syncIndex = 0
                 }
 
             } else {
                 console.log("frame", syncIndex, "not found")
-                logExcursion('frameMissing', {
-                    missingSyncIndex: syncIndex,
-                    expectedSinkWindow: getExpectedSinkWindow()
-                })
-                resetStableSyncTracking('frameMissing')
                 syncIndex = 0
             }
         }
@@ -872,7 +706,6 @@ function sendData() {
 
     getData()
     syncErrorMS = cardTimeht - audiobuffferTime
-    pushExcursionHistory('sendData')
 
     if (syncIndex != 0) {
 
@@ -1004,105 +837,10 @@ function sendData() {
 
         getData()
 
-        const stableSinkError = Math.abs(sinkErrorSamplesAverage) <= settings.syncStableThresholdSamples
-        const stableSourceError = Math.abs(sourceErrorSamplesAverage) <= settings.syncStableThresholdSamples
-        const stableSinkAdjust = Math.abs(sampleAdjustSink) <= settings.syncStableThresholdAdjust
-        const stableSourceAdjust = Math.abs(sampleAdjustSource) <= settings.syncStableThresholdAdjust
-        const stableWindow = stableSinkError && stableSourceError && stableSinkAdjust && stableSourceAdjust
-
-        if (stableWindow) {
-            syncStableWindowCount = syncStableWindowCount + 1
-            if (!syncStable && syncStableWindowCount >= settings.syncStableRequiredWindows) {
-                syncStable = true
-                syncStableSince = new Date().toISOString()
-                postLockExcursionActive = false
-                logExcursion('syncStable', {
-                    stableWindowCount: syncStableWindowCount,
-                    thresholdSamples: settings.syncStableThresholdSamples,
-                    thresholdAdjust: settings.syncStableThresholdAdjust,
-                    expectedSinkWindow: getExpectedSinkWindow()
-                })
-            }
-        } else if (!syncStable) {
-            syncStableWindowCount = 0
-        }
-
-        const postLockSinkError = Math.abs(sinkErrorSamplesAverage) >= settings.postLockExcursionThresholdSamples
-        const postLockSourceError = Math.abs(sourceErrorSamplesAverage) >= settings.postLockExcursionThresholdSamples
-        const postLockSinkAdjust = Math.abs(sampleAdjustSink) >= settings.postLockExcursionThresholdAdjust
-        const postLockSourceAdjust = Math.abs(sampleAdjustSource) >= settings.postLockExcursionThresholdAdjust
-        const postLockExcursion = postLockSinkError || postLockSourceError || postLockSinkAdjust || postLockSourceAdjust
-
-        if (syncStable && postLockExcursion && !postLockExcursionActive) {
-            postLockExcursionActive = true
-            logExcursion('postLockExcursionStart', {
-                stableSince: syncStableSince,
-                stableWindowCount: syncStableWindowCount,
-                thresholdSamples: settings.postLockExcursionThresholdSamples,
-                thresholdAdjust: settings.postLockExcursionThresholdAdjust,
-                expectedSinkWindow: getExpectedSinkWindow()
-            })
-        } else if (!postLockExcursion) {
-            postLockExcursionActive = false
-        }
-
-        const sinkExcursionThreshold = Math.abs(sinkErrorSamplesAverage) >= settings.debugExcursionsThresholdSamples
-        if (sinkExcursionThreshold && !sinkExcursionActive) {
-            sinkExcursionActive = true
-            logExcursion('sinkThresholdCross', {
-                threshold: settings.debugExcursionsThresholdSamples,
-                expectedSinkWindow: getExpectedSinkWindow()
-            })
-        } else if (!sinkExcursionThreshold) {
-            sinkExcursionActive = false
-        }
-
-        const sourceExcursionThreshold = Math.abs(sourceErrorSamplesAverage) >= settings.debugExcursionsThresholdSamples
-        if (sourceExcursionThreshold && !sourceExcursionActive) {
-            sourceExcursionActive = true
-            logExcursion('sourceThresholdCross', {
-                threshold: settings.debugExcursionsThresholdSamples,
-                expectedSinkWindow: getExpectedSinkWindow()
-            })
-        } else if (!sourceExcursionThreshold) {
-            sourceExcursionActive = false
-        }
-
-        const currentSampleAdjustSinkSign = excursionSign(sampleAdjustSink)
-        if (previousSampleAdjustSinkSign !== 0 && currentSampleAdjustSinkSign !== 0 && previousSampleAdjustSinkSign !== currentSampleAdjustSinkSign) {
-            logExcursion('sampleAdjustSinkSignFlip', {
-                previousSampleAdjustSinkSign: previousSampleAdjustSinkSign,
-                currentSampleAdjustSinkSign: currentSampleAdjustSinkSign,
-                expectedSinkWindow: getExpectedSinkWindow()
-            })
-        }
-        if (currentSampleAdjustSinkSign !== 0) {
-            previousSampleAdjustSinkSign = currentSampleAdjustSinkSign
-        }
-
-        const currentSampleAdjustSourceSign = excursionSign(sampleAdjustSource)
-        if (previousSampleAdjustSourceSign !== 0 && currentSampleAdjustSourceSign !== 0 && previousSampleAdjustSourceSign !== currentSampleAdjustSourceSign) {
-            logExcursion('sampleAdjustSourceSignFlip', {
-                previousSampleAdjustSourceSign: previousSampleAdjustSourceSign,
-                currentSampleAdjustSourceSign: currentSampleAdjustSourceSign,
-                expectedSinkWindow: getExpectedSinkWindow()
-            })
-        }
-        if (currentSampleAdjustSourceSign !== 0) {
-            previousSampleAdjustSourceSign = currentSampleAdjustSourceSign
-        }
-
     } else {
 
         sampleAdjustSink = 0
         syncErrorresetAverage()
-        if (!syncLostLogged) {
-            logExcursion('syncIndexReset', {
-                expectedSinkWindow: getExpectedSinkWindow()
-            })
-            syncLostLogged = true
-        }
-        resetStableSyncTracking('syncIndexReset')
 
     }
 
@@ -1110,10 +848,6 @@ function sendData() {
 
     if (shortData > 0) {
         console.log('Inserting SILENCE samples:', shortData, 'audiobuffer', Math.floor(audiobuffer.length / outputbytesPerSample), 'avail', avail)
-        logExcursion('shortData', {
-            shortData: shortData,
-            expectedSinkWindow: getExpectedSinkWindow()
-        })
 
         let shortDataBuffer = Buffer.alloc(shortData * outputbytesPerSample);
         audiobuffer = Buffer.concat([audiobuffer, shortDataBuffer])

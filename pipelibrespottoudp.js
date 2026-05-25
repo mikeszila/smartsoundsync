@@ -14,9 +14,7 @@ var localSettings = {
     audioSourceType: 'Spotify',
     volume_librespot_max: 65535,
     volume_librespot_min: 0,
-    sourceSampleAdjust: 2,
-    debugExcursions: true,
-    debugExcursionsThresholdSamples: 4
+    sourceSampleAdjust: 2
 }
 
 settings = { ...settings, ...localSettings }
@@ -47,20 +45,6 @@ let sampleTimeMS = 1 / reported_exact_rate * 1000
 
 let highVolumeLimit = true
 
-function getExpectedSendLeadWindow() {
-    const targetMinMS = source_buffer_time + reported_period_time
-    const targetMaxMS = targetMinMS + reported_period_time
-    const slackMS = Math.max(playback_period_time, settings.debugExcursionsThresholdSamples * sampleTimeMS)
-
-    return {
-        targetMinMS: targetMinMS,
-        targetMaxMS: targetMaxMS,
-        minMS: targetMinMS - slackMS,
-        maxMS: targetMaxMS + slackMS,
-        slackMS: slackMS
-    }
-}
-
 function cacheSafeName(name) {
     return String(name || 'default').replace(/[^a-zA-Z0-9._-]/g, '_');
 }
@@ -86,31 +70,6 @@ if (fs.existsSync(audiofifopath)) {
 let readFuncIntervalPointer
 
 let sinkErrorReportGoCounter = 0
-
-function logSourceExcursion(reason, extra) {
-    if (!settings.debugExcursions) { return }
-
-    const snapshot = {
-        ts: new Date().toISOString(),
-        reason: reason,
-        sendTime: numberFormat(sendTime || 0, 3),
-        sampleIndex: sampleIndex,
-        sinkErrorSamples: numberFormat(sinkErrorSamples || 0, 3),
-        sourceErrorSamples: numberFormat(sourceErrorSamples || 0, 3),
-        sinkErrorAdjust: numberFormat(sinkErrorAdjust || 0, 3),
-        sourceErrorAdjust: numberFormat(sourceErrorAdjust || 0, 3),
-        sinkErrorAdjustReport: numberFormat(sinkErrorAdjustReport || 0, 3),
-        sourceErrorAdjustReport: numberFormat(sourceErrorAdjustReport || 0, 3),
-        sinkCount: buffertoudp.audioSinkList.length,
-        captureState: captureState
-    }
-
-    if (extra) {
-        Object.assign(snapshot, extra)
-    }
-
-    console.log('SOURCE_EXCURSION', JSON.stringify(snapshot))
-}
 
 function librespotCheck() {
 
@@ -300,13 +259,6 @@ function readFunc() {
                 sinkErrorAdjustms = sinkErrorAdjust * sampleTimeMS
                 sendTime = sendTime - sinkErrorAdjustms
 
-                if (Math.abs(sinkErrorAdjust) >= settings.debugExcursionsThresholdSamples) {
-                    logSourceExcursion('sinkErrorAdjustApplied', {
-                        sinkErrorAdjustms: numberFormat(sinkErrorAdjustms, 3),
-                        dateNow: dateNow
-                    })
-                }
-
             }
 
             sourceErrorAdjust = sourceErrorSamples / errorDistrobutionMultiplier
@@ -314,13 +266,6 @@ function readFunc() {
             sourceErrorAdjustReport = sourceErrorAdjustReport + sourceErrorAdjust
             sourceErrorAdjustms = sourceErrorAdjust * sampleTimeMS
             sendTime = sendTime - sourceErrorAdjustms
-
-            if (Math.abs(sourceErrorAdjust) >= settings.debugExcursionsThresholdSamples) {
-                logSourceExcursion('sourceErrorAdjustApplied', {
-                    sourceErrorAdjustms: numberFormat(sourceErrorAdjustms, 3),
-                    dateNow: dateNow
-                })
-            }
 
 
             //console.log(audioDataLength)
@@ -332,30 +277,7 @@ function readFunc() {
 
             if (sendTime < dateNow) {
                 console.log('SEND TIME RESET!!!!!', sendTime, dateNow, sendTime - dateNow)
-                logSourceExcursion('sendTimeReset', {
-                    dateNow: dateNow,
-                    sendLeadMS: numberFormat(sendTime - dateNow, 3),
-                    reported_period_time: numberFormat(reported_period_time, 3),
-                    expectedLeadWindow: getExpectedSendLeadWindow()
-                })
                 sendTime = dateNow + reported_period_time // reset sendTime if it get's too far behind, typically due to pause or first scan.  
-            }
-            const sendLeadMS = sendTime - dateNow
-            const expectedSendLeadWindow = getExpectedSendLeadWindow()
-            if (sendLeadMS < expectedSendLeadWindow.minMS || sendLeadMS > expectedSendLeadWindow.maxMS) {
-                logSourceExcursion('sendLeadAnomaly', {
-                    dateNow: dateNow,
-                    sendLeadMS: numberFormat(sendLeadMS, 3),
-                    reported_period_time: numberFormat(reported_period_time, 3),
-                    source_buffer_time: numberFormat(source_buffer_time, 3),
-                    expectedLeadWindow: {
-                        minMS: numberFormat(expectedSendLeadWindow.minMS, 3),
-                        maxMS: numberFormat(expectedSendLeadWindow.maxMS, 3),
-                        targetMinMS: numberFormat(expectedSendLeadWindow.targetMinMS, 3),
-                        targetMaxMS: numberFormat(expectedSendLeadWindow.targetMaxMS, 3),
-                        slackMS: numberFormat(expectedSendLeadWindow.slackMS, 3)
-                    }
-                })
             }
             if (captureState == 'active') { buffertoudp.sendAudioUDP(audioData, sendTime, sampleIndex) }
 
@@ -384,19 +306,6 @@ buffertoudp.syncErrorData.on("syncErrorData", function (data) {
             if (!value.sampleAdjustSource) { value.sampleAdjustSource = 0 }
             value.sampleAdjustSource = value.sampleAdjustSource + data.sampleAdjustSource
             sourceErrorSamples = sourceErrorSamples + data.sampleAdjustSource //  / buffertoudp.audioSinkList.length)
-
-            if (
-                Math.abs(data.sampleAdjustSink) >= settings.debugExcursionsThresholdSamples
-                ||
-                Math.abs(data.sampleAdjustSource) >= settings.debugExcursionsThresholdSamples
-            ) {
-                logSourceExcursion('syncErrorDataReceived', {
-                    hostname: data.hostname,
-                    port: data.port,
-                    receivedSampleAdjustSink: numberFormat(data.sampleAdjustSink, 3),
-                    receivedSampleAdjustSource: numberFormat(data.sampleAdjustSource, 3)
-                })
-            }
 
         }
     })
